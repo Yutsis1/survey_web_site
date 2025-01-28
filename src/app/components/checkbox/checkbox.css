@@ -1,0 +1,74 @@
+.checkbox-wrapper input[type="checkbox"] {
+  display: none;
+  visibility: hidden;
+}
+
+.checkbox-wrapper {
+  --size: 90px;
+}
+
+.checkbox-wrapper .block {
+  position: relative;
+  clear: both;
+  float: left;
+}
+
+.checkbox-wrapper label {
+  width: var(--size);
+  height: calc(var(--size) / 2);
+  box-sizing: border-box;
+  border: 3px solid;
+  float: left;
+  border-radius: 100px;
+  position: relative;
+  cursor: pointer;
+  transition: 0.3s ease;
+  color: var(--main-comp-color-active);
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + label {
+  background: var(--shadow-color-active);
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + label:before {
+  left: calc(var(--size) / 2);
+}
+
+.checkbox-wrapper label:before {
+  transition: 0.3s ease;
+  content: "";
+  width: calc((var(--size) / 2) - 10px);
+  height: calc((var(--size) / 2) - 10px);
+  position: absolute;
+  background: var(--main-comp-color);
+  left: 2px;
+  top: 2px;
+  box-sizing: border-box;
+  border: 3px solid;
+  color: var(--shadow-color-inactive);
+  border-radius: 100px;
+}
+
+.checkbox-wrapper .checkbox-label {
+  position: absolute;
+  width: calc(var(--size) / 2);
+  text-align: center;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: 0.3s ease;
+  color: #333;
+  font-size: 14px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Here I've tried to keep it inside the togle component */
+/* Unchecked state - label on left */
+/* .checkbox-wrapper input[type="checkbox"]:not(:checked) + label .checkbox-label {
+  left: 30px;
+} */
+
+/* Checked state - label on right */
+/* .checkbox-wrapper input[type="checkbox"]:checked + label .checkbox-label {
+  right: 20px;
+} */
