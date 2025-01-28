@@ -1,7 +1,7 @@
 /* CSS */
 .button-base {
   align-items: center;
-  background-color: #e3fef1;
+  background-color: var(--main-comp-color);
   border: 2px solid #111;
   border-radius: 8px;
   box-sizing: border-box;
@@ -24,7 +24,7 @@
 }
 
 .button-base:after {
-  background-color: #c11414;
+  background-color: var(--shadow-color-inactive);
   border-radius: 8px;
   content: "";
   display: block;
@@ -45,7 +45,7 @@
 .button-base:hover:after {
   transform: translate(5, 5);
   transition: transform 0.2s ease-out;
-  background-color: aquamarine;
+  background-color: var(--shadow-color-active);
 }
 
 .button-base:hover {
@@ -53,7 +53,7 @@
 }
 
 .button-base:active {
-  background-color: #e3fef1b7;
+  background-color: var(--main-comp-color-active);
   outline: 0;
 }
 

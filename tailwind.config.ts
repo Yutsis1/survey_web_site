@@ -9,8 +9,19 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Use CSS variables for theming
         background: "var(--background)",
         foreground: "var(--foreground)",
+
+        // Define additional custom colors
+        primary: "var(--color-primary)",
+        secondary: "var(--color-secondary)",
+        success: "var(--color-success)",
+        danger: "var(--color-danger)",
+        warning: "var(--color-warning)",
+        info: "var(--color-info)",
+        light: "var(--color-light)",
+        dark: "var(--color-dark)",
       },
     },
   },
