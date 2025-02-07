@@ -1,2 +1,37 @@
-// todo
-// write a text field 
+import React from "react";
+import "./text-field.css";
+
+interface TextFieldProps {
+  label?: string;
+  placeholder?: string;
+  value?: string;
+  test_id?: string;
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+  className?: string;
+}
+
+const TextInput: React.FC<TextFieldProps> = ({
+  label,
+  placeholder = "Enter text...",
+  value,
+  test_id,
+  onChange,
+  type = "text",
+  className = "",
+}) => {
+  return (
+    <div className={`text-input-container ${className}`} data-testid={test_id}>
+      {label && <label className="text-input-label">{label}</label>}
+      <input
+        type={type}
+        className="text-input"
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+      />
+    </div>
+  );
+};
+
+export default TextInput;
