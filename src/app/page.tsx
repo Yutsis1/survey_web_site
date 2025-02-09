@@ -26,7 +26,11 @@ export default function Home() {
         onChange={(e) => setText(e.target.value)}
       />
       <p>Typed Value: {text}</p>
-      <div> <Question questionText={"ababab"} options={[{label: "kek", value: "0", component: "Checkbox"}]} onOptionChange={function (index: number, value: string): void {
+      <div> <Question questionText={"ababab"} options={[{
+        label: "kek", value: "0", component: "Checkbox",
+        activeLabel: "",
+        inactiveLabel: ""
+      }]} onOptionChange={function (index: number, value: string): void {
           throw new Error("Function not implemented.");
         } }/> </div>
       </div>
