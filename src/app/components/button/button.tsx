@@ -15,13 +15,3 @@ const Button: React.FC<ButtonProps> = ({ label, className, test_id }) => {
 };
 
 export { Button };
-//  todo
-// create css styles with left-right shadow
-// creaete the logick of clikcing
-
-// Create checkboxes
-// Create togle box
-
-// create range selector 
-
-// text input
