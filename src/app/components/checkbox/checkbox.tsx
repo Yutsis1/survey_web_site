@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import "./checkbox.css"
 
 interface CheckboxProps {
-  activeLabel: string;
-  inactiveLabel: string;
+  activeLabel?: string;
+  inactiveLabel?: string;
   test_id?: string;
   className?: string;
 }
