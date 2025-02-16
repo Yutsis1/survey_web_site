@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import "./checkbox.css";
 
-interface ToggleSwitchProps {
+export interface ToggleSwitchProps {
   activeLabel?: string;
   inactiveLabel?: string;
   initialState?: boolean;
