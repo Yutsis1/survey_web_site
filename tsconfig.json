@@ -19,7 +19,7 @@
       "jest",
       "@testing-library/jest-dom"
     ],
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
       {

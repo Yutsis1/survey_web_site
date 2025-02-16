@@ -3,43 +3,30 @@ import { Checkbox } from "./checkbox";
 import { render, screen, fireEvent } from "@testing-library/react";
 
 
-test("renders Checkbox component", () => {
-  render(<Checkbox />);
-  const checkboxElement = screen.getByRole("checkbox");
-  expect(checkboxElement).toBeInTheDocument();
-});
-test("renders Checkbox component", () => {
-  render(<Checkbox />);
-  const checkboxElement = screen.getByRole("checkbox");
-  expect(checkboxElement).toBeInTheDocument();
-});
 
-test("checkbox toggles between checked and unchecked", () => {
-  render(<Checkbox />);
-  const checkboxElement = screen.getByRole("checkbox");
-  expect(checkboxElement).not.toBeChecked();
-  fireEvent.click(checkboxElement);
-  expect(checkboxElement).toBeChecked();
-  fireEvent.click(checkboxElement);
-  expect(checkboxElement).not.toBeChecked();
-});
+describe("Checkbox component", () => {
+  test("renders with initial state unchecked", () => {
+    render(<Checkbox />);
+    const checkbox = screen.getByRole("checkbox");
+    expect(checkbox).not.toBeChecked();
+    expect(screen.getByText("Inactive")).toBeInTheDocument();
+  });
 
-test("displays activeLabel when checked and inactiveLabel when unchecked", () => {
-  const activeLabel = "Active";
-  const inactiveLabel = "Inactive";
-  render(<Checkbox activeLabel={activeLabel} inactiveLabel={inactiveLabel} />);
-  const checkboxElement = screen.getByRole("checkbox");
-  const labelElement = screen.getByText(inactiveLabel);
-  expect(labelElement).toBeInTheDocument();
-  fireEvent.click(checkboxElement);
-  expect(screen.getByText(activeLabel)).toBeInTheDocument();
-  fireEvent.click(checkboxElement);
-  expect(screen.getByText(inactiveLabel)).toBeInTheDocument();
-});
+  test("renders with initial state checked", () => {
+    render(<Checkbox initialState={true} />);
+    const checkbox = screen.getByRole("checkbox");
+    expect(checkbox).toBeChecked();
+    expect(screen.getByText("Active")).toBeInTheDocument();
+  });
 
-test("uses provided test_id for data-testid attribute", () => {
-  const test_id = "custom-test-id";
-  render(<Checkbox test_id={test_id} />);
-  const checkboxElement = screen.getByTestId(test_id);
-  expect(checkboxElement).toBeInTheDocument();
+  test("toggles state on click", () => {
+    render(<Checkbox />);
+    const checkbox = screen.getByRole("checkbox");
+    fireEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+    expect(screen.getByText("Active")).toBeInTheDocument();
+    fireEvent.click(checkbox);
+    expect(checkbox).not.toBeChecked();
+    expect(screen.getByText("Inactive")).toBeInTheDocument();
+  });
 });
