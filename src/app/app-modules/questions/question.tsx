@@ -1,44 +1,53 @@
-import { Checkbox } from "@/app/components/checkbox/checkbox";
-import { RadioBar } from "@/app/components/radios/radio-bar";
-import { TextInput } from "@/app/components/text-field/text-field";
+import {
+  Checkbox,
+  ToggleSwitchProps,
+} from "@/app/components/checkbox/checkbox";
+import { RadioBar, RadioBarProps } from "@/app/components/radios/radio-bar";
+import {
+  TextFieldProps,
+  TextInput,
+} from "@/app/components/text-field/text-field";
 import React from "react";
 
-interface Option {
-  activeLabel: string;
-  inactiveLabel: string;
-  label: string;
-  value: string;
+interface Option<T> {
+  optionProps: T;
 }
 
-interface QuestionProps {
+type ComponentPropsMapping = {
+  TextInput: TextFieldProps;
+  Checkbox: ToggleSwitchProps;
+  RadioBar: RadioBarProps;
+};
+
+export interface QuestionProps<T extends keyof ComponentPropsMapping> {
   questionText: string;
-  component: 'TextInput' | 'Checkbox' | 'RadioBar';
-  options: Option[];
-  onOptionChange: (index: number, value: string) => void;
+  component: T;
+  options: Option<ComponentPropsMapping[T]>[];
 }
 
-const componentMapping =  {
+const componentMapping = {
   TextInput: TextInput,
   Checkbox: Checkbox,
   RadioBar: RadioBar,
 };
 
-const Question: React.FC<QuestionProps> = ({ questionText, options, component, onOptionChange }) => {
+const Question: React.FC<QuestionProps<keyof ComponentPropsMapping>> = ({
+  questionText,
+  options,
+  component,
+}) => {
+  const Component = componentMapping[component] as React.ComponentType<
+    ComponentPropsMapping[typeof component]
+  >;
+
   return (
     <div className="question">
       <h3>{questionText}</h3>
-      {options.map((option, index) => {
-        const Component = componentMapping[component];
-        return (
-          <div key={index} className="option">
-            <Component
-              buttons={[]} name={""} label={option.label}
-              value={option.value}
-              onChange={(e) => onOptionChange(index, e.target.value)}
-              {...(component === "Checkbox" && { activeLabel: option.activeLabel || "Active", inactiveLabel: option.inactiveLabel || "Inactive" })}            />
-          </div>
-        );
-      })}
+      {options.map((option, index) => (
+        <div key={index} className="option">
+          <Component {...option.optionProps} />
+        </div>
+      ))}
     </div>
   );
 };

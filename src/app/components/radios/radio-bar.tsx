@@ -8,9 +8,9 @@ interface RadioProps {
   value: string;
 }
 
-interface RadioBarProps {
+export interface RadioBarProps {
   buttons: RadioProps[];
-  name: string;
+  name?: string;
   test_id?: string;
 }
 

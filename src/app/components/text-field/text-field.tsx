@@ -1,7 +1,7 @@
 import React from "react";
 import "./text-field.css";
 
-interface TextFieldProps {
+export interface TextFieldProps {
   label?: string;
   placeholder?: string;
   value?: string;
