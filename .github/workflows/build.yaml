@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} is updated main on GitHub 🚀
 on: 
   push:
     branches:
-      - main
+      - master
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
