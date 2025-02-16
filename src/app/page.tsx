@@ -10,6 +10,16 @@ import { Question } from "./app-modules/questions/question";
 export default function Home() {
   const [text, setText] = useState("");
 
+  const defaultProps = {
+    questionText: "What is your favorite color?",
+    component: "RadioBar",
+    options: [
+        { label: "Red", value: "red", activeLabel: "", inactiveLabel: "" },
+        { label: "Blue", value: "blue", activeLabel: "Yes", inactiveLabel: "No" },
+        { label: "Green", value: "green",  activeLabel: "", inactiveLabel: "" },
+    ],
+};1
+
   return (
     <>
       <a>Hello</a>
@@ -17,8 +27,8 @@ export default function Home() {
         <Button label={"kek"} className="button-base"/>
         <Button label={"lol"} className="button-base right"/>
         <p>kek</p>
-        <Checkbox activeLabel="ON" inactiveLabel="OFF" className="checkbox-wrapper"/>
-        {/* <RadioBar buttons={[{label: "kek", value: "kek"}, {label: "lol", value: "lol"}]} name="kek"/> */}
+        <Checkbox activeLabel="ON" inactiveLabel="OFF"/>
+        <RadioBar buttons={[{label: "kek", value: "kek"}, {label: "lol", value: "lol"}]} name="kek"/>
         <TextInput
         label="Your Name"
         placeholder="Enter your name"
@@ -26,13 +36,7 @@ export default function Home() {
         onChange={(e) => setText(e.target.value)}
       />
       <p>Typed Value: {text}</p>
-      <div> <Question questionText={"ababab"} options={[{
-        label: "kek", value: "0", component: "Checkbox",
-        activeLabel: "",
-        inactiveLabel: ""
-      }]} onOptionChange={function (index: number, value: string): void {
-          throw new Error("Function not implemented.");
-        } }/> </div>
+      {/* <Question {...defaultProps} /> */}
       </div>
     </>
   );

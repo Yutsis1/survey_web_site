@@ -8,34 +8,34 @@ interface Option {
   inactiveLabel: string;
   label: string;
   value: string;
-  component: "TextInput" | "Checkbox" | "RadioBar";
 }
 
 interface QuestionProps {
   questionText: string;
+  component: 'TextInput' | 'Checkbox' | 'RadioBar';
   options: Option[];
   onOptionChange: (index: number, value: string) => void;
 }
 
-const componentMapping = {
+const componentMapping =  {
   TextInput: TextInput,
   Checkbox: Checkbox,
   RadioBar: RadioBar,
 };
 
-const Question: React.FC<QuestionProps> = ({ questionText, options, onOptionChange }) => {
+const Question: React.FC<QuestionProps> = ({ questionText, options, component, onOptionChange }) => {
   return (
     <div className="question">
       <h3>{questionText}</h3>
       {options.map((option, index) => {
-        const Component = componentMapping[option.component];
+        const Component = componentMapping[component];
         return (
           <div key={index} className="option">
             <Component
               buttons={[]} name={""} label={option.label}
               value={option.value}
               onChange={(e) => onOptionChange(index, e.target.value)}
-              {...(option.component === "Checkbox" && { activeLabel: option.activeLabel || "Active", inactiveLabel: option.inactiveLabel || "Inactive" })}            />
+              {...(component === "Checkbox" && { activeLabel: option.activeLabel || "Active", inactiveLabel: option.inactiveLabel || "Inactive" })}            />
           </div>
         );
       })}
