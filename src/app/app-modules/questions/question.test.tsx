@@ -1,51 +1,83 @@
-// import React from "react";
-// import { render } from "@testing-library/react";
-// import { Question, QuestionProps } from "./question";
+import React from "react";
+import { render } from "@testing-library/react";
+import { Question, QuestionProps } from "./question";
 
-// describe("Question Component", () => {
-//     const renderComponent = (props: QuestionProps<any>) => render(<Question {...props} />);
+describe("Question Component", () => {
+    describe("Checkbox", () => {
+        const props: QuestionProps<"Checkbox"> = {
+            questionText: "KEK",
+            component: "Checkbox",
+            options: [
+                { optionProps: { activeLabel: "ON", inactiveLabel: "OFF" } },
+            ],
+        };
 
-//     it("should render question text", () => {
-//         const props: QuestionProps<"TextInput"> = {
-//             questionText: "What is your name?",
-//             component: "TextInput",
-//             options: [{ optionProps: { placeholder: "Enter your name" } }],
-//         };
+        it("renders the question text", () => {
+            const { getByText } = render(<Question {...props} />);
+            expect(getByText(props.questionText)).toBeInTheDocument();
+        });
 
-//         const { getByText } = renderComponent(props);
-//         expect(getByText("What is your name?")).toBeInTheDocument();
-//     });
+        it("renders the checkbox component", () => {
+            const component = render(<Question {...props} />);
+            expect(component.getByText("OFF")).toBeInTheDocument();
+            component.getByRole("checkbox").click();
+            expect(component.getByText("ON")).toBeInTheDocument();
+        });
+    });
+    describe("RadioBar", () => {
+        const props: QuestionProps<"RadioBar"> = {
+            questionText: "KEK",
+            component: "RadioBar",
+            options: [
+                {
+                    optionProps: {
+                        buttons: [
+                            { label: "kek", value: "kek" },
+                            { label: "lol", value: "lol" },
+                        ],
+                        name: "kek",
+                    },
+                },
+            ],
+        };
 
-//     it("should render TextInput component with correct props", () => {
-//         const props: QuestionProps<"TextInput"> = {
-//             questionText: "What is your name?",
-//             component: "TextInput",
-//             options: [{ optionProps: { placeholder: "Enter your name" } }],
-//         };
+        it("renders the question text", () => {
+            const { getByText } = render(<Question {...props} />);
+            expect(getByText(props.questionText)).toBeInTheDocument();
+        });
 
-//         const { getByPlaceholderText } = renderComponent(props);
-//         expect(getByPlaceholderText("Enter your name")).toBeInTheDocument();
-//     });
+        it("renders the radio bar component", () => {
+            const component = render(<Question {...props} />);
+            expect(component.getByText("kek")).toBeInTheDocument();
+            component.getByText("lol").click();
+            expect(component.getByText("lol")).toBeInTheDocument();
+        });
+    });
+    describe("TextInput", () => {
+        const props: QuestionProps<"TextInput"> = {
+            questionText: "KEK",
+            component: "TextInput",
+            options: [
+                {
+                    optionProps: {
+                        label: "Your Name",
+                        placeholder: "Enter your name",
+                        value: "test",
+                        onChange: jest.fn(),
+                    },
+                },
+            ],
+        };
 
-//     it("should render Checkbox component with correct props", () => {
-//         const props: QuestionProps<"Checkbox"> = {
-//             questionText: "Do you agree?",
-//             component: "Checkbox",
-//             options: [{ optionProps: { checked: true } }],
-//         };
+        it("renders the question text", () => {
+            const { getByText } = render(<Question {...props} />);
+            expect(getByText(props.questionText)).toBeInTheDocument();
+        });
 
-//         const { getByRole } = renderComponent(props);
-//         expect(getByRole("checkbox")).toBeChecked();
-//     });
+        it("renders the text input component", () => {
+            const component = render(<Question {...props} />);
+            expect(component.getByDisplayValue("test")).toBeInTheDocument();
+        });
+    });
+});
 
-//     it("should render RadioBar component with correct props", () => {
-//         const props: QuestionProps<"RadioBar"> = {
-//             questionText: "Choose an option",
-//             component: "RadioBar",
-//             options: [{ optionProps: { selected: true } }],
-//         };
-
-//         const { getByRole } = renderComponent(props);
-//         expect(getByRole("radio")).toBeChecked();
-//     });
-// });
