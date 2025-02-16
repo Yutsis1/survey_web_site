@@ -1,74 +1,47 @@
-.checkbox-wrapper input[type="checkbox"] {
-  display: none;
-  visibility: hidden;
-}
 
-.checkbox-wrapper {
-  --size: 90px;
-}
-
-.checkbox-wrapper .block {
-  position: relative;
-  clear: both;
-  float: left;
-}
-
-.checkbox-wrapper label {
-  width: var(--size);
-  height: calc(var(--size) / 2);
-  box-sizing: border-box;
-  border: 3px solid;
-  float: left;
-  border-radius: 100px;
-  position: relative;
+.toggle-switch {
+  display: flex;
+  align-items: center;
   cursor: pointer;
-  transition: 0.3s ease;
-  color: var(--main-comp-color-active);
 }
 
-.checkbox-wrapper input[type="checkbox"]:checked + label {
-  background: var(--shadow-color-active);
+.toggle-switch input {
+  display: none;
 }
 
-.checkbox-wrapper input[type="checkbox"]:checked + label:before {
-  left: calc(var(--size) / 2);
+.slider {
+  width: 50px;
+  height: 25px;
+  background-color: var(--main-comp-color-active);
+  border-radius: 25px;
+  position: relative;
+  transition: background 0.3s;
+  margin-right: 10px;
 }
 
-.checkbox-wrapper label:before {
-  transition: 0.3s ease;
+.slider::before {
   content: "";
-  width: calc((var(--size) / 2) - 10px);
-  height: calc((var(--size) / 2) - 10px);
   position: absolute;
-  background: var(--main-comp-color);
-  left: 2px;
-  top: 2px;
-  box-sizing: border-box;
-  border: 3px solid;
-  color: var(--shadow-color-inactive);
-  border-radius: 100px;
-}
-
-.checkbox-wrapper .checkbox-label {
-  position: absolute;
-  width: calc(var(--size) / 2);
-  text-align: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--color-light);
   top: 50%;
+  left: 3px;
   transform: translateY(-50%);
-  transition: 0.3s ease;
-  color: var(--main-comp-color-active);
-  font-size: 14px;
-  pointer-events: none;
-  white-space: nowrap;
+  transition: 0.3s;
+  border: 3px solid var(--shadow-color-inactive);
 }
 
-/* Here I've tried to keep it inside the togle component */
-/* Unchecked state - label on left */
-/* .checkbox-wrapper input[type="checkbox"]:not(:checked) + label .checkbox-label {
-  left: 30px;
-} */
+input:checked + .slider {
+  background-color: var(--shadow-color-active);
+}
 
-/* Checked state - label on right */
-/* .checkbox-wrapper input[type="checkbox"]:checked + label .checkbox-label {
-  right: 20px;
-} */
+input:checked + .slider::before {
+  left: 25px;
+}
+
+.label {
+  font-size: 1rem;
+  color: var(--color-light);
+}
