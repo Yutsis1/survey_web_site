@@ -4,10 +4,16 @@ import React, { useState } from "react";
 import "./checkbox.css";
 
 interface ToggleSwitchProps {
+  activeLabel?: string;
+  inactiveLabel?: string;
   initialState?: boolean;
 }
 
-const Checkbox: React.FC<ToggleSwitchProps> = ({ initialState = false }) => {
+const Checkbox: React.FC<ToggleSwitchProps> = ({
+  activeLabel = "Active",
+  inactiveLabel = "Inactive",
+  initialState = false,
+}) => {
   const [isChecked, setIsChecked] = useState(initialState);
 
   return (
@@ -18,7 +24,7 @@ const Checkbox: React.FC<ToggleSwitchProps> = ({ initialState = false }) => {
         onChange={() => setIsChecked(!isChecked)}
       />
       <span className="slider"></span>
-      <span className="label">{isChecked ? "Active" : "Inactive"}</span>
+      <span className="label">{isChecked ? activeLabel : inactiveLabel}</span>
     </label>
   );
 };
