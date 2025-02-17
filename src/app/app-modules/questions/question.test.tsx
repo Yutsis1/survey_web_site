@@ -8,7 +8,13 @@ describe("Question Component", () => {
             questionText: "KEK",
             component: "Checkbox",
             options: [
-                { optionProps: { activeLabel: "ON", inactiveLabel: "OFF" } },
+                { optionProps: {
+                    activeLabel: "ON", inactiveLabel: "OFF",
+                    checked: false,
+                    onChange: function (checked: boolean): void {
+                        props.options[0].optionProps.checked = checked;
+                    }
+                } },
             ],
         };
 
@@ -20,7 +26,7 @@ describe("Question Component", () => {
         it("renders the checkbox component", () => {
             const component = render(<Question {...props} />);
             expect(component.getByText("OFF")).toBeInTheDocument();
-            component.getByRole("checkbox").click();
+            component.getByText("OFF").click();
             expect(component.getByText("ON")).toBeInTheDocument();
         });
     });
@@ -80,4 +86,8 @@ describe("Question Component", () => {
         });
     });
 });
+
+function setIsChecked(_checked: boolean) {
+    throw new Error("Function not implemented.");
+}
 
