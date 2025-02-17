@@ -1,27 +1,38 @@
 "use client";
-
-import React, { useState } from "react";
+import React from "react";
 import "./checkbox.css";
 
 export interface ToggleSwitchProps {
   activeLabel?: string;
   inactiveLabel?: string;
-  initialState?: boolean;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
 }
 
 const Checkbox: React.FC<ToggleSwitchProps> = ({
   activeLabel = "Active",
   inactiveLabel = "Inactive",
-  initialState = false,
+  checked,
+  onChange,
 }) => {
-  const [isChecked, setIsChecked] = useState(initialState);
+  const [isChecked, setIsChecked] = React.useState(checked);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newChecked = e.target.checked;
+    setIsChecked(newChecked);
+    onChange(newChecked);
+  };
+
+  React.useEffect(() => {
+    setIsChecked(checked);
+  }, [checked]);
 
   return (
     <label className="toggle-switch">
       <input
         type="checkbox"
         checked={isChecked}
-        onChange={() => setIsChecked(!isChecked)}
+        onChange={handleChange}
       />
       <span className="slider"></span>
       <span className="label">{isChecked ? activeLabel : inactiveLabel}</span>
