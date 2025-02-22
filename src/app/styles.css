@@ -1,0 +1,15 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.sidebar-container {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.grid-container {
+  width: 100%;
+}
