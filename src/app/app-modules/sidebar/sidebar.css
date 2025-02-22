@@ -52,7 +52,7 @@ Sidebar Nav
           
           &:hover{
             background-color: rgba(0,0,0,0.9);
-            @include transition(all 0.6s ease);
+            transition: all 0.6s ease;
           }
         }
   /* -------------
@@ -91,8 +91,8 @@ Sidebar Nav
       left: 2.5em;
       top: 0;
       height: 100vh;
-      @include transform(translateX(100%));
-      @include transition(all 0.5s ease);
+      transform: translateX(100%);
+      transition: all 0.5s ease;
       
       a:hover{
         background-color: rgba(255,255,255, 0.05)
@@ -104,8 +104,8 @@ Sidebar Nav
   ----------------*/
     & ul > li:hover{
         .nav-flyout{
-        @include transform(translateX(0));
-          @include transition(all 0.5s ease);
+        transform: translateX(0);
+          transition: all 0.5s ease;
       }
     }
   }
