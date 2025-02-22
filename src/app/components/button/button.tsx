@@ -11,7 +11,7 @@ export interface ButtonProps {
 
 const Button: React.FC<ButtonProps> = ({ label, className='button-base', test_id, onClick }) => {
     return (
-        <button className={className} data-testid={test_id || undefined} onClick={onClick}>{label}</button>
+        <button className={className} data-testid={test_id} onClick={onClick}>{label}</button>
     );
 };
 
