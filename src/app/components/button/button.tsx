@@ -2,15 +2,16 @@ import React from "react";
 import "./button.css"
 
 
-interface ButtonProps {
+export interface ButtonProps {
     label: string;
-    test_id?: string;
+    onClick?: () => void;
     className?: string;
+    test_id?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({ label, className, test_id }) => {
+const Button: React.FC<ButtonProps> = ({ label, className='button-base', test_id, onClick }) => {
     return (
-        <button className={className} data-testid={test_id}>{label}</button>
+        <button className={className} data-testid={test_id || undefined} onClick={onClick}>{label}</button>
     );
 };
 
