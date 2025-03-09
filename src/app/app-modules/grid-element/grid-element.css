@@ -1,0 +1,10 @@
+.sidebar-container {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.grid-container {
+  height: 100%;
+  margin: 0 0 0 250;
+  display: grid;
+}

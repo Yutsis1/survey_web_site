@@ -5,8 +5,7 @@ import {
   QuestionProps,
   ComponentPropsMapping,
 } from "../questions/question";
-// Todo:
-// update the component between sidebar and right panel
+import "./grid-element.css";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -29,7 +28,7 @@ const GridElement = (props: GridElementProps) => {
   return (
     <>
       <ResponsiveGridLayout
-        className="layout"
+        className="grid-container"
         layouts={{ lg: props.layout ?? layout }}
         breakpoints={props.breakpoints ?? { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
         cols={props.cols ?? { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
