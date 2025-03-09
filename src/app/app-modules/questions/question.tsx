@@ -13,7 +13,7 @@ interface Option<T> {
   optionProps: T;
 }
 
-type ComponentPropsMapping = {
+export type ComponentPropsMapping = {
   TextInput: TextFieldProps;
   Checkbox: ToggleSwitchProps;
   RadioBar: RadioBarProps;
