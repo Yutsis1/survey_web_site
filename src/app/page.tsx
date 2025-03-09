@@ -34,28 +34,30 @@ export default function Home() {
   return (
     <>
       <Sidebar buttons={buttonProps}></Sidebar>
-      <GridElement
-        questionProps={{
-          questionText: "KEK",
-          component: "Checkbox",
-          options: [
-            {
-              optionProps: {
-                activeLabel: "ON",
-                inactiveLabel: "OFF",
-                checked: isChecked,
-                onChange: (
-                  checked: boolean | ((prevState: boolean) => boolean)
-                ) => {
-                  if (!isDragging) {
-                    setIsChecked(checked);
-                  }
+      <main>
+        <GridElement
+          questionProps={{
+            questionText: "KEK",
+            component: "Checkbox",
+            options: [
+              {
+                optionProps: {
+                  activeLabel: "ON",
+                  inactiveLabel: "OFF",
+                  checked: isChecked,
+                  onChange: (
+                    checked: boolean | ((prevState: boolean) => boolean)
+                  ) => {
+                    if (!isDragging) {
+                      setIsChecked(checked);
+                    }
+                  },
                 },
               },
-            },
-          ],
-        }}
-      />
+            ],
+          }}
+        />
+      </main>
     </>
   );
 }
