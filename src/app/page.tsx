@@ -12,8 +12,6 @@ export default function Home() {
   const [isChecked, setIsChecked] = useState(false);
   const [isDragging, setIsDragging] = useState(false); // Track drag state
 
-  const layout = [{ i: "question", x: 2, y: 0, w: 2, h: 2 }];
-
   const buttonProps = [
     {
       label: "Button 1",
@@ -35,33 +33,29 @@ export default function Home() {
 
   return (
     <>
-      <div className="container">
-        <div className="sidebar-container">
-          <Sidebar buttons={buttonProps}></Sidebar>
-        </div>
-        <div className="grid-container">
-          <GridElement
-            questionProps={{
-              questionText: "KEK",
-              component: "Checkbox",
-              options: [
-                {
-                  optionProps: {
-                    activeLabel: "ON",
-                    inactiveLabel: "OFF",
-                    checked: isChecked,
-                    onChange: (checked: boolean | ((prevState: boolean) => boolean)) => {
-                      if (!isDragging) {
-                        setIsChecked(checked);
-                      }
-                    },
-                  },
+      <Sidebar buttons={buttonProps}></Sidebar>
+      <GridElement
+        questionProps={{
+          questionText: "KEK",
+          component: "Checkbox",
+          options: [
+            {
+              optionProps: {
+                activeLabel: "ON",
+                inactiveLabel: "OFF",
+                checked: isChecked,
+                onChange: (
+                  checked: boolean | ((prevState: boolean) => boolean)
+                ) => {
+                  if (!isDragging) {
+                    setIsChecked(checked);
+                  }
                 },
-              ],
-            }}         
-          />
-        </div>
-      </div>
+              },
+            },
+          ],
+        }}
+      />
     </>
   );
 }
