@@ -6,8 +6,6 @@ import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { Sidebar } from "./app-modules/sidebar/sidebar";
 
-const ResponsiveGridLayout = WidthProvider(Responsive);
-
 export default function Home() {
   const [isChecked, setIsChecked] = useState(false);
   const [isDragging, setIsDragging] = useState(false); // Track drag state
@@ -32,32 +30,36 @@ export default function Home() {
   ];
 
   return (
-    <>
-      <Sidebar buttons={buttonProps}></Sidebar>
-      <main>
-        <GridElement
-          questionProps={{
-            questionText: "KEK",
-            component: "Checkbox",
-            options: [
-              {
-                optionProps: {
-                  activeLabel: "ON",
-                  inactiveLabel: "OFF",
-                  checked: isChecked,
-                  onChange: (
-                    checked: boolean | ((prevState: boolean) => boolean)
-                  ) => {
-                    if (!isDragging) {
-                      setIsChecked(checked);
-                    }
+    <div className="app-container">
+      <aside className="sidebar">
+        <Sidebar buttons={buttonProps}></Sidebar>
+      </aside>
+      <main className="content">
+        <div className="grid-container">
+          <GridElement
+            questionProps={{
+              questionText: "KEK",
+              component: "Checkbox",
+              options: [
+                {
+                  optionProps: {
+                    activeLabel: "ON",
+                    inactiveLabel: "OFF",
+                    checked: isChecked,
+                    onChange: (
+                      checked: boolean | ((prevState: boolean) => boolean)
+                    ) => {
+                      if (!isDragging) {
+                        setIsChecked(checked);
+                      }
+                    },
                   },
                 },
-              },
-            ],
-          }}
-        />
+              ],
+            }}
+          />
+        </div>
       </main>
-    </>
+    </div>
   );
 }

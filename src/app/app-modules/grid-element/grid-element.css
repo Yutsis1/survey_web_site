@@ -1,10 +1,22 @@
-.sidebar-container {
-  width: 100%;
-  margin-bottom: 20px;
-}
 
 .grid-container {
   height: 100%;
-  margin: 0 0 0 250;
+  margin: 0 0 0 0;
   display: grid;
+  width: 100%;
+  flex: 1;
+  padding: 10px;
+}
+
+/* In your grid-element.css */
+.react-grid-layout {
+  position: relative;
+  width: 100%; 
+  height: 100%;
+}
+
+.react-grid-item {
+  position: absolute; /* Required by react-grid-layout */
+  overflow: visible !important; /* Ensure content isn't clipped */
+  pointer-events: auto; /* Ensure click events work */
 }
