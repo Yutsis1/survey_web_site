@@ -1,0 +1,17 @@
+/* Suggested adjustments for your Question component styles */
+.question-component {
+    position: relative; /* Use relative positioning */
+    z-index: 2; /* Ensure it's above other elements */
+    pointer-events: auto; /* Explicitly enable pointer events */
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* Make sure clickable elements inside the Question are properly styled */
+  .question-component button,
+  .question-component input,
+  .question-component label {
+    position: relative;
+    z-index: 3; /* Higher than the parent */
+    cursor: pointer; /* Visual feedback */
+  }

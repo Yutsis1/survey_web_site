@@ -41,7 +41,7 @@ const Question: React.FC<QuestionProps<keyof ComponentPropsMapping>> = ({
   >;
 
   return (
-    <div className="question">
+    <div className="question-component">
       <h3>{questionText}</h3>
       {options.map((option, index) => (
         <div key={index} className="option">

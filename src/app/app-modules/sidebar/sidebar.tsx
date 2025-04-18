@@ -8,7 +8,7 @@ export interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ buttons }) => {
   return (
-    <aside className="sidebar">
+    <>
       <ul>
         {buttons.map((button, index) => (
           <li key={index} className="sidebar-button-item">
@@ -21,7 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({ buttons }) => {
           </li>
         ))}
       </ul>
-    </aside>
+    </>
   );
 };
 

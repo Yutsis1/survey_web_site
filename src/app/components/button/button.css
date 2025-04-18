@@ -1,20 +1,30 @@
 /* CSS */
 .button-base {
+  /* Use CSS custom properties for maintainability */
+  --button-height: 48px;
+  --button-padding: 25px;
+  
+  height: var(--button-height);
+  padding-inline: var(--button-padding);
+  
+  /* Remove duplicate properties */
+  display: flex;
   align-items: center;
+  justify-content: center;
+  
+  /* Add transitions for all interactive states */
+  transition: background-color 0.2s ease-out, transform 0.2s ease-out;
+
   background-color: var(--main-comp-color);
   border: 2px solid #111;
   border-radius: 8px;
   box-sizing: border-box;
   color: #111;
   cursor: pointer;
-  display: flex;
   font-family: Inter, sans-serif;
   font-size: 16px;
-  height: 48px;
-  justify-content: center;
   line-height: 24px;
   max-width: 100%;
-  padding: 0 25px;
   position: relative;
   text-align: center;
   text-decoration: none;
@@ -34,7 +44,6 @@
   position: absolute;
   top: -2px;
   transform: translate(8px, 8px);
-  /* transition: transform 0.2s ease-out; */
   z-index: -1;
 }
 /* colour #efe3fe */
@@ -43,8 +52,7 @@
 }
 
 .button-base:hover:after {
-  transform: translate(5, 5);
-  transition: transform 0.2s ease-out;
+  transform: translate(5px, 5px); /* Fixed syntax error */
   background-color: var(--shadow-color-active);
 }
 
