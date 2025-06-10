@@ -4,6 +4,7 @@ import { GridElement } from "./app-modules/grid-element/grid-element";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
+import "./styles.css"; // Import your styles
 import { Sidebar } from "./app-modules/sidebar/sidebar";
 
 export default function Home() {

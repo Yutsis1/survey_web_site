@@ -41,7 +41,7 @@ const GridElement = (props: GridElementProps) => {
         onDragStart={() => setIsDragging(true)}
         onDragStop={() => setIsDragging(false)}
       >
-        <div key="question">
+        <div key="question" className="grid-item">
           <Question
             {...(props.questionProps as QuestionProps<
               keyof ComponentPropsMapping
