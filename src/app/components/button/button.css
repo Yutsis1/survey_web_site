@@ -74,3 +74,18 @@
     padding: 0 40px;
   }
 }
+.button-cancel {
+  @apply button-base;
+  --main-comp-color: white;
+  --main-comp-color-active: #efe3fe;
+  --shadow-color-inactive: #efe3fe;
+  --shadow-color-active: #c4b7d3;
+}
+
+.button-secondary {
+  @apply button-base;
+  --main-comp-color: #efe3fe;
+  --main-comp-color-active: #c4b7d3;
+  --shadow-color-inactive: #c4b7d3;
+  --shadow-color-active: #afa4b9;
+}
