@@ -1,26 +1,36 @@
-.container {
-  display: flex;
-  width: 100%;
-}
-
-body {
-  margin: 0;
-  display: flex;
-}
-
-.content {
-  flex: 1;
-  border-inline: 1px solid #333; /* Logical properties */
-  padding-block: 20px;
-  height: 100%;
-  overflow: auto;
-  position: relative;
-}
-
-/* Use modern viewport units */
 .app-container {
-  display: flex;
-  width: 100%;
-  height: 100dvh; /* Use dynamic viewport height */
-  overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    min-height: 100vh;
+    min-width: 100vw;
+}
+.content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: var(--background);
+    color: var(--foreground);
+}
+aside {
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #f4f4f4;
+    overflow-y: auto;
+    padding: 10px;
+    box-shadow: 2px 0 5px #0000001a;
+    width: 250px;
+    flex-shrink: 0;
+    z-index: 10;
+    display: block;
+    unicode-bidi: isolate;
+}
+
+aside li {
+    padding: 10px 0;
+    font-size: 18px;
+    cursor: pointer;
+}
+.sidebar-button-item {
+    margin: 10px;
 }
