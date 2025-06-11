@@ -30,7 +30,7 @@ export const NewQuestionPopUp: React.FC<NewQuestionPopUpProps> = ({
                         label="Apply"
                         onClick={onApply}
                         test_id="apply-button"
-                        // className="button-primary"
+                        // className="button-cancel"
                     />
                 </div>
             </div>
