@@ -41,7 +41,7 @@ export default function Home() {
             questionProps={{
               questionText: "KEK",
               component: "Checkbox",
-              options: [
+              option: 
                 {
                   optionProps: {
                     activeLabel: "ON",
@@ -56,7 +56,7 @@ export default function Home() {
                     },
                   },
                 },
-              ],
+              
             }}
           />
         </div>
