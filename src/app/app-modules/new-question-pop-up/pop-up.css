@@ -27,14 +27,14 @@
     margin-top: 24px;
 }
 
-.button-primary {
-    background-color: #007bff;
-    color: white;
-    border: none;
+h1.popup-title {
+    font-size: 24px;
+    margin-bottom: 16px;
+    color: black;
 }
 
-.button-secondary {
-    background-color: #6c757d;
-    color: white;
-    border: none;
+p.popup-description {
+    font-size: 16px;
+    margin-bottom: 24px;
+    color: black;
 }
