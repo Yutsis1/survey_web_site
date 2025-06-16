@@ -7,15 +7,15 @@ describe("Question Component", () => {
         const props: QuestionProps<"Checkbox"> = {
             questionText: "KEK",
             component: "Checkbox",
-            options: [
+            option: 
                 { optionProps: {
                     activeLabel: "ON", inactiveLabel: "OFF",
                     checked: false,
                     onChange: function (checked: boolean): void {
-                        props.options[0].optionProps.checked = checked;
+                        props.option.optionProps.checked = checked;
                     }
                 } },
-            ],
+            
         };
 
         it("renders the question text", () => {
@@ -34,7 +34,7 @@ describe("Question Component", () => {
         const props: QuestionProps<"RadioBar"> = {
             questionText: "KEK",
             component: "RadioBar",
-            options: [
+            option: 
                 {
                     optionProps: {
                         buttons: [
@@ -44,7 +44,6 @@ describe("Question Component", () => {
                         name: "kek",
                     },
                 },
-            ],
         };
 
         it("renders the question text", () => {
@@ -63,7 +62,7 @@ describe("Question Component", () => {
         const props: QuestionProps<"TextInput"> = {
             questionText: "KEK",
             component: "TextInput",
-            options: [
+            option: 
                 {
                     optionProps: {
                         label: "Your Name",
@@ -72,7 +71,6 @@ describe("Question Component", () => {
                         onChange: jest.fn(),
                     },
                 },
-            ],
         };
 
         it("renders the question text", () => {
