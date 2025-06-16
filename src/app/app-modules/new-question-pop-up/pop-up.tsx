@@ -13,7 +13,7 @@ export interface NewQuestionPopUpProps<T extends keyof ComponentPropsMapping> {
     onApply: () => void
     popUpTitle: string
     popUpDescription?: string
-    component?: T
+    components?: T
     options?: Option<ComponentPropsMapping[T]>[]
 }
 
@@ -25,14 +25,14 @@ export const NewQuestionPopUp: React.FC<
     onApply,
     popUpTitle,
     popUpDescription,
-    component,
+    components,
     options,
 }) => {
     if (!isOpen) return null
 
-    const Component = component
-        ? (componentMapping[component] as React.ComponentType<
-              ComponentPropsMapping[typeof component]
+    const Component = components
+        ? (componentMapping[components] as React.ComponentType<
+              ComponentPropsMapping[typeof components]
           >)
         : null
 
