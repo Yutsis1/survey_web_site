@@ -13,7 +13,7 @@ export interface NewQuestionPopUpProps<T extends keyof ComponentPropsMapping> {
     onApply: () => void
     popUpTitle: string
     popUpDescription?: string
-    components?: T
+    components?: [T]
     options?: Option<ComponentPropsMapping[T]>[]
 }
 
@@ -30,11 +30,7 @@ export const NewQuestionPopUp: React.FC<
 }) => {
     if (!isOpen) return null
 
-    const Component = components
-        ? (componentMapping[components] as React.ComponentType<
-              ComponentPropsMapping[typeof components]
-          >)
-        : null
+
 
     return (
         <div className="popup-overlay">
@@ -46,13 +42,17 @@ export const NewQuestionPopUp: React.FC<
 
                 {/* Render components and options if provided */}
                 <div className="popup-container">
-                    {Component &&
+                    {components &&
                         options &&
-                        options.map((option, index) => (
-                            <div key={index} className="option">
-                                <Component {...option.optionProps} />
-                            </div>
-                        ))}
+                        components.map((componentType, index) => {
+                            const Component = componentMapping[componentType];
+                            const option = options[index];
+                            return (
+                                <div key={index} className="option">
+                                    <Component {...option.optionProps as any} /> {/* Cast to any to avoid type issues. Quick fix */}
+                                </div>
+                            );
+                        })}
                 </div>
 
                 <div className="popup-buttons">
