@@ -1,23 +1,7 @@
-import {
-  Checkbox,
-  ToggleSwitchProps,
-} from "@/app/components/checkbox/checkbox";
-import { RadioBar, RadioBarProps } from "@/app/components/radios/radio-bar";
-import {
-  TextFieldProps,
-  TextInput,
-} from "@/app/components/text-field/text-field";
+
 import React from "react";
+import { componentMapping, ComponentPropsMapping, Option } from "../interfaceMapping";
 
-interface Option<T> {
-  optionProps: T;
-}
-
-export type ComponentPropsMapping = {
-  TextInput: TextFieldProps;
-  Checkbox: ToggleSwitchProps;
-  RadioBar: RadioBarProps;
-};
 
 export interface QuestionProps<T extends keyof ComponentPropsMapping> {
   questionText: string;
@@ -25,11 +9,6 @@ export interface QuestionProps<T extends keyof ComponentPropsMapping> {
   options: Option<ComponentPropsMapping[T]>[];
 }
 
-const componentMapping = {
-  TextInput: TextInput,
-  Checkbox: Checkbox,
-  RadioBar: RadioBar,
-};
 
 const Question: React.FC<QuestionProps<keyof ComponentPropsMapping>> = ({
   questionText,
