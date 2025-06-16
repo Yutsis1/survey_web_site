@@ -7,7 +7,7 @@ import {
     Option,
 } from '../interfaceMapping'
 
-export interface NewQuestionPopUpProps<T extends keyof ComponentPropsMapping> {
+export interface PopUpProps<T extends keyof ComponentPropsMapping> {
     isOpen: boolean
     onClose: () => void
     onApply: () => void
@@ -17,8 +17,8 @@ export interface NewQuestionPopUpProps<T extends keyof ComponentPropsMapping> {
     options?: Option<ComponentPropsMapping[T]>[]
 }
 
-export const NewQuestionPopUp: React.FC<
-    NewQuestionPopUpProps<keyof ComponentPropsMapping>
+export const PopUp: React.FC<
+    PopUpProps<keyof ComponentPropsMapping>
 > = ({
     isOpen,
     onClose,

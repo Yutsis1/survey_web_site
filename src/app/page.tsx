@@ -1,11 +1,12 @@
 "use client";
 import { useState } from "react";
 import { GridElement } from "./app-modules/grid-element/grid-element";
-import { Responsive, WidthProvider } from "react-grid-layout";
+// import { Responsive, WidthProvider } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import "./styles.css"; // Import your styles
 import { Sidebar } from "./app-modules/sidebar/sidebar";
+import { PopUp } from "./app-modules/pop-up/pop-up";
 
 export default function Home() {
   const [isChecked, setIsChecked] = useState(false);
@@ -13,9 +14,10 @@ export default function Home() {
 
   const buttonProps = [
     {
-      label: "Button 1",
+      label: "New Question",
       onClick: () => {
-        console.log("Button 1 clicked");
+        console.log("New Question clicked");
+// TODO: Implement the logic to open the pop-up
       },
       className: "button-base",
       test_id: "button-1",
