@@ -11,6 +11,8 @@ interface RadioProps {
 export interface RadioBarProps {
   buttons: RadioProps[];
   name?: string;
+  onChange?: (value: string) => void;
+  selectedValue?: string;
   test_id?: string;
 }
 
