@@ -11,13 +11,25 @@ import { PopUp } from "./app-modules/pop-up/pop-up";
 export default function Home() {
   const [isChecked, setIsChecked] = useState(false);
   const [isDragging, setIsDragging] = useState(false); // Track drag state
+  const [isPopUpOpen, setIsPopUpOpen] = useState(false); // Add popup state
+
+
+    const handlePopUpApply = () => {
+    // Add your apply logic here
+    console.log("Apply clicked");
+    setIsPopUpOpen(false); // Close popup after applying
+  };
+
+  const handlePopUpClose = () => {
+    setIsPopUpOpen(false);
+  };
 
   const buttonProps = [
     {
       label: "New Question",
       onClick: () => {
         console.log("New Question clicked");
-// TODO: Implement the logic to open the pop-up
+        setIsPopUpOpen(true); 
       },
       className: "button-base",
       test_id: "button-1",
@@ -63,6 +75,17 @@ export default function Home() {
           />
         </div>
       </main>
+      {/* Add the PopUp component */}
+      <PopUp
+        isOpen={isPopUpOpen}
+        onClose={handlePopUpClose}
+        onApply={handlePopUpApply}
+        popUpTitle="Create New Question"
+        popUpDescription="Configure your new question settings below"
+        // Add components and options if needed
+        // components={["Checkbox"]}
+        // options={[{ optionProps: { /* your option props */ } }]}
+      />
     </div>
   );
 }
