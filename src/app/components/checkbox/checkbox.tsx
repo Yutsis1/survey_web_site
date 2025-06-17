@@ -5,7 +5,7 @@ import "./checkbox.css";
 export interface ToggleSwitchProps {
   activeLabel?: string;
   inactiveLabel?: string;
-  checked: boolean;
+  checked?: boolean;
   onChange: (checked: boolean) => void;
 }
 
@@ -16,6 +16,9 @@ const Checkbox: React.FC<ToggleSwitchProps> = ({
   onChange,
 }) => {
   const [isChecked, setIsChecked] = React.useState(checked);
+  if (checked === undefined) {
+    checked = false; // Default to false if checked is not provided
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newChecked = e.target.checked;

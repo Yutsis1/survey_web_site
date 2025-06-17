@@ -1,21 +1,35 @@
 "use client";
 import { useState } from "react";
 import { GridElement } from "./app-modules/grid-element/grid-element";
-import { Responsive, WidthProvider } from "react-grid-layout";
+// import { Responsive, WidthProvider } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import "./styles.css"; // Import your styles
 import { Sidebar } from "./app-modules/sidebar/sidebar";
+import { PopUp } from "./app-modules/pop-up/pop-up";
 
 export default function Home() {
   const [isChecked, setIsChecked] = useState(false);
   const [isDragging, setIsDragging] = useState(false); // Track drag state
+  const [isPopUpOpen, setIsPopUpOpen] = useState(false); // Add popup state
+
+
+    const handlePopUpApply = () => {
+    // Add your apply logic here
+    console.log("Apply clicked");
+    setIsPopUpOpen(false); // Close popup after applying
+  };
+
+  const handlePopUpClose = () => {
+    setIsPopUpOpen(false);
+  };
 
   const buttonProps = [
     {
-      label: "Button 1",
+      label: "New Question",
       onClick: () => {
-        console.log("Button 1 clicked");
+        console.log("New Question clicked");
+        setIsPopUpOpen(true); 
       },
       className: "button-base",
       test_id: "button-1",
@@ -41,7 +55,7 @@ export default function Home() {
             questionProps={{
               questionText: "KEK",
               component: "Checkbox",
-              options: [
+              option: 
                 {
                   optionProps: {
                     activeLabel: "ON",
@@ -56,11 +70,22 @@ export default function Home() {
                     },
                   },
                 },
-              ],
+              
             }}
           />
         </div>
       </main>
+      {/* Add the PopUp component */}
+      <PopUp
+        isOpen={isPopUpOpen}
+        onClose={handlePopUpClose}
+        onApply={handlePopUpApply}
+        popUpTitle="Create New Question"
+        popUpDescription="Configure your new question settings below"
+        // Add components and options if needed
+        // components={["Checkbox"]}
+        // options={[{ optionProps: { /* your option props */ } }]}
+      />
     </div>
   );
 }
