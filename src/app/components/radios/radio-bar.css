@@ -62,3 +62,8 @@
     color: var(--main-comp-color);
     cursor: pointer;
   }
+
+  .radio-wrapper span {
+    font-size: 16px;
+    color: var(--color-dark);
+  }
