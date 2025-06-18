@@ -16,11 +16,15 @@ export interface RadioBarProps {
   test_id?: string;
 }
 
-const RadioBar: React.FC<RadioBarProps> = ({ buttons, name, test_id }) => {
-  const [selectedValue, setSelectedValue] = useState<string | null>(null);
+const RadioBar: React.FC<RadioBarProps> = ({ buttons, name, test_id, onChange, selectedValue }) => {
+    const [internalSelectedValue, setInternalSelectedValue] = useState<string | null>(null);
+     // Use external selectedValue if provided, otherwise use internal state
+    const currentSelectedValue = selectedValue ?? internalSelectedValue;
+
 
   const handleChange = (value: string) => {
-    setSelectedValue(value);
+    setInternalSelectedValue(value);
+    onChange?.(value); // Call the external onChange if provided
   };
 
   return (
@@ -31,7 +35,7 @@ const RadioBar: React.FC<RadioBarProps> = ({ buttons, name, test_id }) => {
             type="radio"
             name={name}
             value={button.value}
-            checked={selectedValue === button.value}
+            checked={currentSelectedValue === button.value}
             onChange={() => handleChange(button.value)}
           />
           <span className="radio-label">{button.label}</span>

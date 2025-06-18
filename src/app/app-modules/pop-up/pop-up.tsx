@@ -11,6 +11,7 @@ export interface PopUpProps<T extends keyof ComponentPropsMapping> {
     isOpen: boolean
     onClose: () => void
     onCancel?: () => void
+    onValueChange?: (value: any) => void // Add this line
     onApply: () => void
     popUpTitle: string
     popUpDescription?: string
@@ -18,13 +19,12 @@ export interface PopUpProps<T extends keyof ComponentPropsMapping> {
     options?: Option<ComponentPropsMapping[T]>[]
 }
 
-export const PopUp: React.FC<
-    PopUpProps<keyof ComponentPropsMapping>
-> = ({
+export const PopUp: React.FC<PopUpProps<keyof ComponentPropsMapping>> = ({
     isOpen,
     onClose,
     onCancel,
     onApply,
+    onValueChange,
     popUpTitle,
     popUpDescription,
     components,
@@ -35,15 +35,15 @@ export const PopUp: React.FC<
     React.useEffect(() => {
         const handleEscape = (event: KeyboardEvent) => {
             if (event.key === 'Escape' && onClose) {
-                onClose();
+                onClose()
             }
-        };
+        }
 
-        document.addEventListener('keydown', handleEscape);
+        document.addEventListener('keydown', handleEscape)
         return () => {
-            document.removeEventListener('keydown', handleEscape);
-        };
-    }, [onClose]);
+            document.removeEventListener('keydown', handleEscape)
+        }
+    }, [onClose])
 
     return (
         <div className="popup-overlay">
@@ -58,13 +58,31 @@ export const PopUp: React.FC<
                     {components &&
                         options &&
                         components.map((componentType, index) => {
-                            const Component = componentMapping[componentType];
-                            const option = options[index];
+                            const Component = componentMapping[componentType]
+                            const option = options[index]
+                            // Enhance the option props with the onValueChange callback
+                            const enhancedProps = {
+                                ...option.optionProps,
+                                onChange: (
+                                    value: ComponentPropsMapping[typeof componentType]['onChange'] extends (
+                                        value: infer T
+                                    ) => void
+                                        ? T
+                                        : never
+                                ) => {
+                                    // Call the original onChange if it exists
+                                    option.optionProps.onChange?.(value)
+                                    // Call the PopUp's onValueChange callback
+                                    onValueChange?.(value)
+                                },
+                            }
+
                             return (
                                 <div key={index} className="option">
-                                    <Component {...option.optionProps as any} /> {/* Cast to any to avoid type issues. Quick fix */}
+                                    <Component {...(enhancedProps as any)} />
+                                    {/* Cast to any to avoid type issues. Quick fix */}
                                 </div>
-                            );
+                            )
                         })}
                 </div>
 

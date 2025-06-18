@@ -26,15 +26,15 @@ export default function Home() {
                     optionProps: {
                         ...(selectedQuestionType === 'Checkbox'
                             ? {
-                                activeLabel: 'ON',
-                                inactiveLabel: 'OFF',
-                                checked: false,
-                                onChange: (checked: boolean) => {
-                                    if (!isDragging) {
-                                        // Handle checkbox change
-                                    }
-                                },
-                            }
+                                  activeLabel: 'ON',
+                                  inactiveLabel: 'OFF',
+                                  checked: false,
+                                  onChange: (checked: boolean) => {
+                                      if (!isDragging) {
+                                          // Handle checkbox change
+                                      }
+                                  },
+                              }
                             : {}),
                     },
                 },
@@ -44,8 +44,8 @@ export default function Home() {
                     x: (questions.length * 2) % 12, // Distribute horizontally
                     y: Math.floor((questions.length * 2) / 12), // Move to next row when needed
                     w: 2,
-                    h: 2
-                }
+                    h: 2,
+                },
             }
 
             setQuestions([...questions, newQuestion])
@@ -105,7 +105,9 @@ export default function Home() {
                                 },
                             },
                         }}
-                        layout={[{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }]}
+                        layout={[
+                            { i: 'default-question', x: 0, y: 0, w: 2, h: 2 },
+                        ]}
                     />
                     {/* Render dynamically created questions */}
                     {questions.map((question) => (
@@ -121,6 +123,11 @@ export default function Home() {
                 isOpen={isPopUpOpen}
                 onClose={handlePopUpClose}
                 onApply={handlePopUpApply}
+                onValueChange={(value) => {
+                    setSelectedQuestionType(value)
+                    // You can also do other things with the value here
+                    console.log('Selected value:', value)
+                }}
                 popUpTitle="Create New Question"
                 popUpDescription="Configure your new question settings below"
                 components={['RadioBar']}
@@ -135,11 +142,11 @@ export default function Home() {
                             ),
                             name: 'Which question type do you want to create?',
                             test_id: 'radio-bar-question-type',
-                            onChange: (value: string) => setSelectedQuestionType(value),
                             selectedValue: selectedQuestionType,
                         },
                     },
-                ]}            />
+                ]}
+            />
         </div>
     )
 }
