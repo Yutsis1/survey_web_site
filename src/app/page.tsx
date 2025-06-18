@@ -29,11 +29,19 @@ export default function Home() {
                                   activeLabel: 'ON',
                                   inactiveLabel: 'OFF',
                                   checked: false,
-                                  onChange: (checked: boolean) => {
-                                      if (!isDragging) {
-                                          // Handle checkbox change
-                                      }
-                                  },
+                              }
+                            : {}),
+                        ...(selectedQuestionType === 'RadioBar'
+                            ? {
+                                  buttons: Object.keys(componentMapping).map(
+                                      (key) => ({
+                                          label: key,
+                                          value: key,
+                                      })
+                                  ),
+                                  name: 'Select an option',
+                                  test_id: 'radio-bar-question-type',
+                                //   selectedValue: '',
                               }
                             : {}),
                     },
