@@ -10,6 +10,7 @@ import {
 export interface PopUpProps<T extends keyof ComponentPropsMapping> {
     isOpen: boolean
     onClose: () => void
+    onCancel?: () => void
     onApply: () => void
     popUpTitle: string
     popUpDescription?: string
@@ -22,6 +23,7 @@ export const PopUp: React.FC<
 > = ({
     isOpen,
     onClose,
+    onCancel,
     onApply,
     popUpTitle,
     popUpDescription,
@@ -30,7 +32,18 @@ export const PopUp: React.FC<
 }) => {
     if (!isOpen) return null
 
+    React.useEffect(() => {
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape' && onClose) {
+                onClose();
+            }
+        };
 
+        document.addEventListener('keydown', handleEscape);
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, [onClose]);
 
     return (
         <div className="popup-overlay">
@@ -58,7 +71,7 @@ export const PopUp: React.FC<
                 <div className="popup-buttons">
                     <Button
                         label="Cancel"
-                        onClick={onClose}
+                        onClick={onCancel ?? onClose}
                         test_id="cancel-button"
                         className="button-secondary"
                     />

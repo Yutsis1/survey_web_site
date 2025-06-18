@@ -139,8 +139,7 @@ export default function Home() {
                             selectedValue: selectedQuestionType,
                         },
                     },
-                ]}
-            />
+                ]}            />
         </div>
     )
 }
