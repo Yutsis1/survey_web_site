@@ -64,16 +64,17 @@ export default function Home() {
         {
             label: 'New Question',
             onClick: () => {
-                console.log('New Question clicked')
                 setIsPopUpOpen(true)
+                console.log('New Question clicked')
             },
             className: 'button-base',
             test_id: 'button-1',
         },
         {
-            label: 'Button 2',
+            label: 'Clear Questions',
             onClick: () => {
-                console.log('Button 2 clicked')
+                setQuestions([]) // Clear all questions
+                console.log('Clear clicked')
             },
             className: 'button-base',
             test_id: 'button-2',
@@ -125,7 +126,6 @@ export default function Home() {
                 onApply={handlePopUpApply}
                 onValueChange={(value) => {
                     setSelectedQuestionType(value)
-                    // You can also do other things with the value here
                     console.log('Selected value:', value)
                 }}
                 popUpTitle="Create New Question"
