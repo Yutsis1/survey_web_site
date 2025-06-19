@@ -85,7 +85,4 @@ describe("Question Component", () => {
     });
 });
 
-function setIsChecked(_checked: boolean) {
-    throw new Error("Function not implemented.");
-}
 

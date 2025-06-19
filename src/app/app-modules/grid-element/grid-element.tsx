@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { Responsive, WidthProvider } from "react-grid-layout";
-import {
-  Question,
-  QuestionProps,
-  ComponentPropsMapping,
-} from "../questions/question";
+
 import "./grid-element.css";
+import { Question, QuestionProps } from "../questions/question";
+import { ComponentPropsMapping } from "../interfaceMapping";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 

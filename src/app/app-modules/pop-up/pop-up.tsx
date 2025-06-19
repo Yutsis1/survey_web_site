@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React from 'react'
 import { Button } from '../../components/button/button'
 import './pop-up.css'
 import {
