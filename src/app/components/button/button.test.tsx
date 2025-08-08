@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "./button";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, test, expect, vi } from "vitest";
 
 describe("Button component", () => {
   test("renders button with label", () => {
@@ -22,7 +23,7 @@ describe("Button component", () => {
   });
 
   test("calls onClick prop when clicked", () => {
-    const handleClick = jest.fn();
+    const handleClick = vi.fn();
     render(<Button label="Click me" onClick={handleClick} />);
     const buttonElement = screen.getByText(/Click me/i);
     fireEvent.click(buttonElement);

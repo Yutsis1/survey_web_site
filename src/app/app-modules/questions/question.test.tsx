@@ -1,5 +1,6 @@
 import React from "react";
 import { render } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
 import { Question, QuestionProps } from "./question";
 
 describe("Question Component", () => {
@@ -68,7 +69,7 @@ describe("Question Component", () => {
                         label: "Your Name",
                         placeholder: "Enter your name",
                         value: "test",
-                        onChange: jest.fn(),
+                        onChange: vi.fn(),
                     },
                 },
         };

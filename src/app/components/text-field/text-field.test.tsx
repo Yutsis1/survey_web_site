@@ -1,6 +1,7 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react";
 import { TextInput } from "./text-field";
+import { describe, it, expect, vi } from "vitest";
 
 describe("TextInput Component", () => {
     it("renders without crashing", () => {
@@ -32,7 +33,7 @@ describe("TextInput Component", () => {
     });
 
     it("calls onChange when input value changes", () => {
-        const handleChange = jest.fn();
+        const handleChange = vi.fn();
         const { getByPlaceholderText } = render(
             <TextInput onChange={handleChange} />
         );

@@ -1,11 +1,12 @@
-import { fireEvent, render } from "@testing-library/react"
-import { PopUp } from "./pop-up"
+import { fireEvent, render } from "@testing-library/react";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { PopUp } from "./pop-up";
 
 describe('PopUp Component', () => {
-    const mockOnClose = jest.fn()
-    const mockOnCancel = jest.fn()
-    const mockOnApply = jest.fn()
-    const mockOnValueChange = jest.fn()
+    const mockOnClose = vi.fn()
+    const mockOnCancel = vi.fn()
+    const mockOnApply = vi.fn()
+    const mockOnValueChange = vi.fn()
 
     const defaultProps = {
         isOpen: true,
@@ -18,7 +19,7 @@ describe('PopUp Component', () => {
     }
 
     beforeEach(() => {
-        jest.clearAllMocks()
+        vi.clearAllMocks()
     })
 
     it('renders nothing when isOpen is false', () => {

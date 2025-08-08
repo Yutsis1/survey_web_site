@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
 import { RadioBar } from './radio-bar';
+import { describe, test, expect } from 'vitest';
 
 describe('RadioBar Component', () => {
     const buttons = [

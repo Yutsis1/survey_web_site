@@ -1,6 +1,7 @@
 import React from "react";
 import { Checkbox } from "./checkbox";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, test, expect, vi } from "vitest";
 
   describe("Checkbox component", () => {
       test("defaults to unchecked when no checked prop is provided", () => {
@@ -25,7 +26,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
       });
 
       test("toggles state on click", () => {
-        const handleChange = jest.fn();
+        const handleChange = vi.fn();
         render(<Checkbox checked={false} onChange={handleChange} />);
         const checkbox = screen.getByRole("checkbox");
         fireEvent.click(checkbox);
