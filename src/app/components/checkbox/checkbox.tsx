@@ -15,10 +15,7 @@ const Checkbox: React.FC<ToggleSwitchProps> = ({
   checked,
   onChange,
 }) => {
-  const [isChecked, setIsChecked] = React.useState(checked);
-  if (checked === undefined) {
-    checked = false; // Default to false if checked is not provided
-  }
+  const [isChecked, setIsChecked] = React.useState(checked ?? false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newChecked = e.target.checked;
@@ -27,7 +24,7 @@ const Checkbox: React.FC<ToggleSwitchProps> = ({
   };
 
   React.useEffect(() => {
-    setIsChecked(checked);
+    setIsChecked(checked ?? false);
   }, [checked]);
 
   return (

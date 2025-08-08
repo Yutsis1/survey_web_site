@@ -2,7 +2,14 @@ import React from "react";
 import { Checkbox } from "./checkbox";
 import { render, screen, fireEvent } from "@testing-library/react";
 
-    describe("Checkbox component", () => {
+  describe("Checkbox component", () => {
+      test("defaults to unchecked when no checked prop is provided", () => {
+        render(<Checkbox onChange={() => {}} />);
+        const checkbox = screen.getByRole("checkbox");
+        expect(checkbox).not.toBeChecked();
+        expect(screen.getByText("Inactive")).toBeInTheDocument();
+      });
+
       test("renders with initial state unchecked", () => {
         render(<Checkbox checked={false} onChange={() => {}} />);
         const checkbox = screen.getByRole("checkbox");
