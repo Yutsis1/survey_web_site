@@ -15,9 +15,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "types": [
-      "node",
-      "vitest",
-      "@testing-library/jest-dom"
+
     ],
     "jsx": "preserve",
     "incremental": true,
