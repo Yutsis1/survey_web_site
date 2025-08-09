@@ -1,9 +1,19 @@
 import React from "react";
 import { render } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { Question, QuestionProps } from "./question";
 
 describe("Question Component", () => {
+
+    beforeEach(() => {
+        document.body.innerHTML = ''
+        vi.clearAllMocks()
+        vi.resetModules()
+    })
+
+    afterEach(() => {
+        vi.resetAllMocks()
+    })
     describe("Checkbox", () => {
         const props: QuestionProps<"Checkbox"> = {
             questionText: "KEK",

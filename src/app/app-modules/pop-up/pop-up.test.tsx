@@ -1,6 +1,7 @@
 import { fireEvent, render } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { PopUp } from "./pop-up";
+import { afterEach } from "node:test";
 
 describe('PopUp Component', () => {
     const mockOnClose = vi.fn()
@@ -19,8 +20,15 @@ describe('PopUp Component', () => {
     }
 
     beforeEach(() => {
+        document.body.innerHTML = ''
         vi.clearAllMocks()
+        vi.resetModules()
     })
+
+    afterEach(() => {
+        vi.resetAllMocks()
+    })
+
 
     it('renders nothing when isOpen is false', () => {
         const { container } = render(

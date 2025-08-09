@@ -1,9 +1,18 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react";
 import { TextInput } from "./text-field";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 
 describe("TextInput Component", () => {
+    beforeEach(() => {
+        document.body.innerHTML = ''
+        vi.clearAllMocks()
+        vi.resetModules()
+    })
+
+    afterEach(() => {
+        vi.resetAllMocks()
+    })
     it("renders without crashing", () => {
         const { getByPlaceholderText } = render(
             <TextInput onChange={() => {}} />

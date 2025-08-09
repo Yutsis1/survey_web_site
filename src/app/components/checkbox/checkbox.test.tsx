@@ -1,9 +1,19 @@
 import React from "react";
 import { Checkbox } from "./checkbox";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, test, expect, vi } from "vitest";
+import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 
   describe("Checkbox component", () => {
+
+        beforeEach(() => {
+            document.body.innerHTML = ''
+            vi.clearAllMocks()
+            vi.resetModules()
+        })
+    
+        afterEach(() => {
+            vi.resetAllMocks()
+        })
       test("defaults to unchecked when no checked prop is provided", () => {
         render(<Checkbox onChange={() => {}} />);
         const checkbox = screen.getByRole("checkbox");
