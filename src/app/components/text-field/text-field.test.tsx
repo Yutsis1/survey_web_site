@@ -1,8 +1,18 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react";
 import { TextInput } from "./text-field";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 
 describe("TextInput Component", () => {
+    beforeEach(() => {
+        document.body.innerHTML = ''
+        vi.clearAllMocks()
+        vi.resetModules()
+    })
+
+    afterEach(() => {
+        vi.resetAllMocks()
+    })
     it("renders without crashing", () => {
         const { getByPlaceholderText } = render(
             <TextInput onChange={() => {}} />
@@ -32,7 +42,7 @@ describe("TextInput Component", () => {
     });
 
     it("calls onChange when input value changes", () => {
-        const handleChange = jest.fn();
+        const handleChange = vi.fn();
         const { getByPlaceholderText } = render(
             <TextInput onChange={handleChange} />
         );
