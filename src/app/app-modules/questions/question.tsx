@@ -3,7 +3,7 @@ import {
     componentMapping,
     ComponentPropsMapping,
     Option,
-} from '../interfaceMapping'
+} from '../../components/interfaceMapping'
 
 export interface QuestionProps<T extends keyof ComponentPropsMapping> {
     questionText: string

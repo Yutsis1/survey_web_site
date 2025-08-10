@@ -4,7 +4,7 @@ import './pop-up.css'
 import {
     ComponentPropsMapping,
     Option,
-} from '../interfaceMapping'
+} from '../../components/interfaceMapping'
 import { Checkbox, ToggleSwitchProps } from '../../components/checkbox/checkbox'
 import { TextInput, TextFieldProps } from '../../components/text-field/text-field'
 import { RadioBar, RadioBarProps } from '../../components/radios/radio-bar'

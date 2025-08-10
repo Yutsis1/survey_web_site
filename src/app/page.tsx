@@ -10,8 +10,9 @@ import {
     componentMapping,
     ComponentPropsMapping,
     Option,
-} from './app-modules/interfaceMapping'
+} from './components/interfaceMapping'
 import type { Layout } from 'react-grid-layout'
+import { DynamicComponentRenderer } from './components/dynamic-component-renderer'
 
 interface QuestionItem {
     id: string
@@ -33,7 +34,7 @@ export default function Home() {
             const newQuestion = {
                 id: `question-${Date.now()}`, // Add unique identifier
                 questionText: `New ${selectedQuestionType} Question`,
-                component: selectedQuestionType,
+                component: selectedQuestionType as keyof ComponentPropsMapping,
                 option: {
                     optionProps: {
                         ...(selectedQuestionType === 'Checkbox'
@@ -53,7 +54,7 @@ export default function Home() {
                                   ),
                                   name: 'Select an option',
                                   test_id: 'radio-bar-question-type',
-                                //   selectedValue: '',
+                                  //   selectedValue: '',
                               }
                             : {}),
                     },
@@ -131,9 +132,14 @@ export default function Home() {
                     {/* Render dynamically created questions */}
                     {questions.map((question) => (
                         <GridElement
-                            key={question.id}
                             questionProps={question}
                             layout={[question.layout]}
+                            renderComponent={({ component, option }) => (
+                                <DynamicComponentRenderer
+                                    component={component}
+                                    option={option}
+                                />
+                            )}
                         />
                     ))}
                 </div>

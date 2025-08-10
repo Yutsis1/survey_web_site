@@ -1,10 +1,10 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import type { Layout, Layouts } from "react-grid-layout";
 
 import "./grid-element.css";
 import { Question, QuestionProps } from "../questions/question";
-import { ComponentPropsMapping } from "../interfaceMapping";
+import { ComponentPropsMapping } from "../../components/interfaceMapping";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -17,6 +17,7 @@ export interface GridElementProps {
   breakpoints?: Record<string, number>;
   containerPadding?: [number, number];
   questionProps?: QuestionProps<keyof ComponentPropsMapping>;
+  renderComponent?: (props: QuestionProps<keyof ComponentPropsMapping>) => React.ReactNode;
 }
 
 const layout: Layout[] = [{ i: "question", x: 0, y: 0, w: 1, h: 2 }];
@@ -41,11 +42,15 @@ const GridElement = (props: GridElementProps) => {
         onDragStop={() => setIsDragging(false)}
       >
         <div key="question" className="grid-item">
-          <Question
-            {...(props.questionProps as QuestionProps<
-              keyof ComponentPropsMapping
-            >)}
-          />
+          {props.renderComponent ? (
+            props.renderComponent(props.questionProps as QuestionProps<keyof ComponentPropsMapping>)
+          ) : (
+            <Question
+              {...(props.questionProps as QuestionProps<
+                keyof ComponentPropsMapping
+              >)}
+            />
+          )}
         </div>
       </ResponsiveGridLayout>
     </>
