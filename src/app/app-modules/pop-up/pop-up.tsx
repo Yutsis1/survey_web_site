@@ -2,28 +2,28 @@ import React from 'react'
 import { Button } from '../../components/button/button'
 import './pop-up.css'
 import {
-    componentMapping,
     ComponentPropsMapping,
     Option,
 } from '../interfaceMapping'
+import { Checkbox, ToggleSwitchProps } from '../../components/checkbox/checkbox'
+import { TextInput, TextFieldProps } from '../../components/text-field/text-field'
+import { RadioBar, RadioBarProps } from '../../components/radios/radio-bar'
 
-export interface PopUpProps<T extends keyof ComponentPropsMapping> {
+export interface PopUpProps {
     isOpen: boolean
     onClose: () => void
     onCancel?: () => void
     onValueChange?: (
-        value: Parameters<
-            NonNullable<ComponentPropsMapping[T]['onChange']>
-        >[0]
+        value: string | boolean | React.ChangeEvent<HTMLInputElement>
     ) => void
     onApply: () => void
     popUpTitle: string
     popUpDescription?: string
-    components?: T[]
-    options?: Option<ComponentPropsMapping[T]>[]
+    components?: (keyof ComponentPropsMapping)[]
+    options?: Option<ComponentPropsMapping[keyof ComponentPropsMapping]>[]
 }
 
-export const PopUp: React.FC<PopUpProps<keyof ComponentPropsMapping>> = ({
+export const PopUp: React.FC<PopUpProps> = ({
     isOpen,
     onClose,
     onCancel,
@@ -63,29 +63,55 @@ export const PopUp: React.FC<PopUpProps<keyof ComponentPropsMapping>> = ({
                     {components?.map((componentType, index) => {
                         const option = options?.[index]
                         if (!option) return null
-                        const Component = componentMapping[componentType]
-                        // Enhance the option props with the onValueChange callback
-                        const enhancedProps: ComponentPropsMapping[typeof componentType] = {
-                            ...option.optionProps,
-                            onChange: (
-                                value: Parameters<
-                                    NonNullable<
-                                        ComponentPropsMapping[typeof componentType]['onChange']
-                                    >
-                                >[0]
-                            ) => {
-                                option.optionProps.onChange?.(value)
-                                onValueChange?.(value)
-                            },
-                        }
 
-                        return (
-                            <div key={index} className="option">
-                                <Component
-                                    {...(enhancedProps as ComponentPropsMapping[typeof componentType])}
-                                />
-                            </div>
-                        )
+                        switch (componentType) {
+                            case 'TextInput': {
+                                const props =
+                                    option.optionProps as TextFieldProps
+                                return (
+                                    <div key={index} className="option">
+                                        <TextInput
+                                            {...props}
+                                            onChange={(event) => {
+                                                props.onChange(event)
+                                                onValueChange?.(event)
+                                            }}
+                                        />
+                                    </div>
+                                )
+                            }
+                            case 'Checkbox': {
+                                const props =
+                                    option.optionProps as ToggleSwitchProps
+                                return (
+                                    <div key={index} className="option">
+                                        <Checkbox
+                                            {...props}
+                                            onChange={(checked) => {
+                                                props.onChange(checked)
+                                                onValueChange?.(checked)
+                                            }}
+                                        />
+                                    </div>
+                                )
+                            }
+                            case 'RadioBar': {
+                                const props = option.optionProps as RadioBarProps
+                                return (
+                                    <div key={index} className="option">
+                                        <RadioBar
+                                            {...props}
+                                            onChange={(value: string) => {
+                                                props.onChange?.(value)
+                                                onValueChange?.(value)
+                                            }}
+                                        />
+                                    </div>
+                                )
+                            }
+                            default:
+                                return null
+                        }
                     })}
                 </div>
 
