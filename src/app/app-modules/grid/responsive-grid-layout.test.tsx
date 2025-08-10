@@ -1,4 +1,4 @@
-import { render, fireEvent } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import React from "react";
 import { ResponsiveGridLayout } from "./responsive-grid-layout";
 import { describe, expect, it, vi } from "vitest";

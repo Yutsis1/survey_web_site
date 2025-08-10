@@ -104,12 +104,11 @@ export default function Home() {
                 isOpen={isPopUpOpen}
                 onClose={handleClose}
                 onApply={handleApply}
-                onValueChange={(v) => console.log('PopUp value changed:', v)}
-                popUpTitle="Create New Question"
+                popUpTitle={popup.questionText}
                 popUpDescription="Choose a type and configure its options."
-                components={popup.components}
-                options={popup.options}
-            />
+            >
+                {popup.components}
+            </PopUp>
         </div>
     )
 }
