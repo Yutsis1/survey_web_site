@@ -12,7 +12,9 @@ export interface PopUpProps<T extends keyof ComponentPropsMapping> {
     onClose: () => void
     onCancel?: () => void
     onValueChange?: (
-        value: Parameters<ComponentPropsMapping[T]['onChange']>[0]
+        value: Parameters<
+            NonNullable<ComponentPropsMapping[T]['onChange']>
+        >[0]
     ) => void
     onApply: () => void
     popUpTitle: string
@@ -58,32 +60,33 @@ export const PopUp: React.FC<PopUpProps<keyof ComponentPropsMapping>> = ({
 
                 {/* Render components and options if provided */}
                 <div className="popup-container">
-                    {components &&
-                        options &&
-                        components.map((componentType, index) => {
-                            const Component = componentMapping[componentType]
-                            const option = options[index]
-                            // Enhance the option props with the onValueChange callback
-                            const enhancedProps: ComponentPropsMapping[typeof componentType] = {
-                                ...option.optionProps,
-                                onChange: (
-                                    value: Parameters<ComponentPropsMapping[typeof componentType]['onChange']>[0]
-                                ) => {
-                                    // Call the original onChange if it exists
-                                    option.optionProps.onChange?.(value)
-                                    // Call the PopUp's onValueChange callback
-                                    onValueChange?.(value)
-                                },
-                            }
+                    {components?.map((componentType, index) => {
+                        const option = options?.[index]
+                        if (!option) return null
+                        const Component = componentMapping[componentType]
+                        // Enhance the option props with the onValueChange callback
+                        const enhancedProps: ComponentPropsMapping[typeof componentType] = {
+                            ...option.optionProps,
+                            onChange: (
+                                value: Parameters<
+                                    NonNullable<
+                                        ComponentPropsMapping[typeof componentType]['onChange']
+                                    >
+                                >[0]
+                            ) => {
+                                option.optionProps.onChange?.(value)
+                                onValueChange?.(value)
+                            },
+                        }
 
-                            return (
-                                <div key={index} className="option">
-                                    <Component
-                                        {...(enhancedProps as ComponentPropsMapping[typeof componentType])}
-                                    />
-                                </div>
-                            )
-                        })}
+                        return (
+                            <div key={index} className="option">
+                                <Component
+                                    {...(enhancedProps as ComponentPropsMapping[typeof componentType])}
+                                />
+                            </div>
+                        )
+                    })}
                 </div>
 
                 <div className="popup-buttons">
