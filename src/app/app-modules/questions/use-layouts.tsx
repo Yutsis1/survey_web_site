@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Layouts } from 'react-grid-layout'
+import type { Layouts, Layout } from 'react-grid-layout'
 
 const BASE: Layouts = {
   lg: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
@@ -12,7 +12,7 @@ const BASE: Layouts = {
 export function useLayouts() {
   const [layouts, setLayouts] = useState<Layouts>(BASE)
 
-  const append = (layout: any) =>
+  const append = (layout: Layout) =>
     setLayouts(prev => ({
       lg: [...(prev.lg || []), layout],
       md: [...(prev.md || []), layout],

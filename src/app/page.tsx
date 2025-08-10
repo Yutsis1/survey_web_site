@@ -13,7 +13,6 @@ import { createNewQuestion } from './app-modules/questions/questions-factory'
 import './styles.css'
 
 export default function Home() {
-    const [isChecked, setIsChecked] = useState(false)
     const [isPopUpOpen, setIsPopUpOpen] = useState(false)
     const [questions, setQuestions] = useState<QuestionItem[]>([])
 
