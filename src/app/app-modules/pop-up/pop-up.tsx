@@ -1,26 +1,15 @@
 import React from 'react'
 import { Button } from '../../components/button/button'
 import './pop-up.css'
-import {
-    ComponentPropsMapping,
-    Option,
-} from '../../components/interfaceMapping'
-import { Checkbox, ToggleSwitchProps } from '../../components/checkbox/checkbox'
-import { TextInput, TextFieldProps } from '../../components/text-field/text-field'
-import { RadioBar, RadioBarProps } from '../../components/radios/radio-bar'
 
 export interface PopUpProps {
     isOpen: boolean
     onClose: () => void
     onCancel?: () => void
-    onValueChange?: (
-        value: string | boolean | React.ChangeEvent<HTMLInputElement>
-    ) => void
     onApply: () => void
     popUpTitle: string
     popUpDescription?: string
-    components?: (keyof ComponentPropsMapping)[]
-    options?: Option<ComponentPropsMapping[keyof ComponentPropsMapping]>[]
+    children?: React.ReactNode
 }
 
 export const PopUp: React.FC<PopUpProps> = ({
@@ -28,11 +17,9 @@ export const PopUp: React.FC<PopUpProps> = ({
     onClose,
     onCancel,
     onApply,
-    onValueChange,
     popUpTitle,
     popUpDescription,
-    components,
-    options,
+    children,
 }) => {
     React.useEffect(() => {
         if (!isOpen) return
@@ -58,61 +45,9 @@ export const PopUp: React.FC<PopUpProps> = ({
                     <p className="popup-description">{popUpDescription}</p>
                 )}
 
-                {/* Render components and options if provided */}
+                {/* Render children components */}
                 <div className="popup-container">
-                    {components?.map((componentType, index) => {
-                        const option = options?.[index]
-                        if (!option) return null
-
-                        switch (componentType) {
-                            case 'TextInput': {
-                                const props =
-                                    option.optionProps as TextFieldProps
-                                return (
-                                    <div key={index} className="option">
-                                        <TextInput
-                                            {...props}
-                                            onChange={(event) => {
-                                                props.onChange(event)
-                                                onValueChange?.(event)
-                                            }}
-                                        />
-                                    </div>
-                                )
-                            }
-                            case 'Checkbox': {
-                                const props =
-                                    option.optionProps as ToggleSwitchProps
-                                return (
-                                    <div key={index} className="option">
-                                        <Checkbox
-                                            {...props}
-                                            onChange={(checked) => {
-                                                props.onChange(checked)
-                                                onValueChange?.(checked)
-                                            }}
-                                        />
-                                    </div>
-                                )
-                            }
-                            case 'RadioBar': {
-                                const props = option.optionProps as RadioBarProps
-                                return (
-                                    <div key={index} className="option">
-                                        <RadioBar
-                                            {...props}
-                                            onChange={(value: string) => {
-                                                props.onChange?.(value)
-                                                onValueChange?.(value)
-                                            }}
-                                        />
-                                    </div>
-                                )
-                            }
-                            default:
-                                return null
-                        }
-                    })}
+                    {children}
                 </div>
 
                 <div className="popup-buttons">
