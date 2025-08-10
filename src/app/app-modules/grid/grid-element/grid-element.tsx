@@ -3,8 +3,9 @@ import { Responsive, WidthProvider } from "react-grid-layout";
 import type { Layout, Layouts } from "react-grid-layout";
 
 import "./grid-element.css";
-import { Question, QuestionProps } from "../questions/question";
-import { ComponentPropsMapping } from "../../components/interfaceMapping";
+import { Question, QuestionProps } from "../../questions/question";
+import { ComponentPropsMapping } from "@/app/components/interfaceMapping";
+
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 

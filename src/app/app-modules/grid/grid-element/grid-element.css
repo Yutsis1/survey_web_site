@@ -1,0 +1,29 @@
+.grid-item {
+    background-color: var(--color-light);
+    border: 1px solid var(--color-border, #e1e5e9);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+}
+
+.grid-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark mode grid items */
+@media (prefers-color-scheme: dark) {
+    .grid-item {
+        background-color: var(--color-dark);
+        border-color: var(--color-border-dark, #374151);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .grid-item:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    }
+}

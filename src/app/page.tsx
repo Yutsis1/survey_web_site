@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { GridElement } from './app-modules/grid-element/grid-element'
+
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import './styles.css'
@@ -11,8 +11,9 @@ import {
     ComponentPropsMapping,
     Option,
 } from './components/interfaceMapping'
-import type { Layout } from 'react-grid-layout'
+import type { Layout, Layouts } from 'react-grid-layout'
 import { DynamicComponentRenderer } from './components/dynamic-component-renderer'
+import { ResponsiveGridLayout } from './app-modules/grid/responsive-grid-layout'
 
 interface QuestionItem {
     id: string
@@ -27,10 +28,19 @@ export default function Home() {
     const [isPopUpOpen, setIsPopUpOpen] = useState(false)
     const [selectedQuestionType, setSelectedQuestionType] = useState<string>('')
     const [questions, setQuestions] = useState<QuestionItem[]>([])
+    const [layouts, setLayouts] = useState<Layouts>({
+        lg: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
+        md: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
+        sm: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
+        xs: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
+        xxs: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
+    })
 
-    const createNewQuestion = (questionType: keyof ComponentPropsMapping): QuestionItem => {
+    const createNewQuestion = (
+        questionType: keyof ComponentPropsMapping
+    ): QuestionItem => {
         const baseId = `question-${Date.now()}`
-        
+
         switch (questionType) {
             case 'Checkbox':
                 return {
@@ -42,7 +52,8 @@ export default function Home() {
                             activeLabel: 'ON',
                             inactiveLabel: 'OFF',
                             checked: false,
-                            onChange: (checked: boolean) => console.log('Checkbox changed:', checked),
+                            onChange: (checked: boolean) =>
+                                console.log('Checkbox changed:', checked),
                         },
                     },
                     layout: {
@@ -60,13 +71,16 @@ export default function Home() {
                     component: 'RadioBar',
                     option: {
                         optionProps: {
-                            buttons: Object.keys(componentMapping).map((key) => ({
-                                label: key,
-                                value: key,
-                            })),
+                            buttons: Object.keys(componentMapping).map(
+                                (key) => ({
+                                    label: key,
+                                    value: key,
+                                })
+                            ),
                             name: 'Select an option',
                             test_id: 'radio-bar-question-type',
-                            onChange: (value: string) => console.log('Radio changed:', value),
+                            onChange: (value: string) =>
+                                console.log('Radio changed:', value),
                         },
                     },
                     layout: {
@@ -86,8 +100,13 @@ export default function Home() {
                         optionProps: {
                             label: 'Enter text',
                             placeholder: 'Type here...',
-                            onChange: (event: React.ChangeEvent<HTMLInputElement>) => 
-                                console.log('Text changed:', event.target.value),
+                            onChange: (
+                                event: React.ChangeEvent<HTMLInputElement>
+                            ) =>
+                                console.log(
+                                    'Text changed:',
+                                    event.target.value
+                                ),
                         },
                     },
                     layout: {
@@ -103,9 +122,22 @@ export default function Home() {
         }
     }
 
+    const handleLayoutChange = (layout: Layout[], layouts: Layouts) => {
+        setLayouts(layouts)
+    }
+
     const handlePopUpApply = () => {
         if (selectedQuestionType) {
-            const newQuestion = createNewQuestion(selectedQuestionType as keyof ComponentPropsMapping)
+            const newQuestion = createNewQuestion(
+                selectedQuestionType as keyof ComponentPropsMapping
+            )
+            setLayouts((prevLayouts) => ({
+                lg: [...(prevLayouts.lg || []), newQuestion.layout],
+                md: [...(prevLayouts.md || []), newQuestion.layout],
+                sm: [...(prevLayouts.sm || []), newQuestion.layout],
+                xs: [...(prevLayouts.xs || []), newQuestion.layout],
+                xxs: [...(prevLayouts.xxs || []), newQuestion.layout],
+            }))
             setQuestions([...questions, newQuestion])
         }
         setIsPopUpOpen(false)
@@ -132,6 +164,13 @@ export default function Home() {
             label: 'Clear Questions',
             onClick: () => {
                 setQuestions([]) // Clear all questions
+                setLayouts({
+                    lg: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
+                    md: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
+                    sm: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
+                    xs: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
+                    xxs: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
+                }) // Reset layouts to only include default question
                 console.log('Clear clicked')
             },
             className: 'button-base',
@@ -146,48 +185,45 @@ export default function Home() {
             </aside>
             <main className="content">
                 <div className="grid-container">
-                    {/* Render existing checkbox question */}
-                    <GridElement
-                        questionProps={{
-                            questionText: 'KEK',
-                            component: 'Checkbox',
-                            option: {
-                                optionProps: {
-                                    activeLabel: 'ON',
-                                    inactiveLabel: 'OFF',
-                                    checked: isChecked,
-                                    onChange: (checked: boolean) => {
-                                        setIsChecked(checked)
-                                    },
-                                },
-                            },
-                        }}
-                        layout={[
-                            { i: 'default-question', x: 0, y: 0, w: 2, h: 2 },
-                        ]}
-                        renderComponent={({ questionText, component, option }) => (
+                    <ResponsiveGridLayout
+                        className="layout"
+                        layouts={layouts}
+                        onLayoutChange={handleLayoutChange}
+                        rowHeight={60}
+                        isDraggable={true}
+                        isResizable={true}
+                        compactType={null}
+                        preventCollision={false}
+                    >
+                        {/* Default checkbox question */}
+                        <div key="default-question" className="grid-item">
                             <DynamicComponentRenderer
-                                component={component}
-                                option={option}
-                                questionText={questionText}
+                                component="Checkbox"
+                                option={{
+                                    optionProps: {
+                                        activeLabel: 'ON',
+                                        inactiveLabel: 'OFF',
+                                        checked: isChecked,
+                                        onChange: (checked: boolean) => {
+                                            setIsChecked(checked)
+                                        },
+                                    },
+                                }}
+                                questionText="KEK"
                             />
-                        )}
-                    />
-                    {/* Render dynamically created questions */}
-                    {questions.map((question) => (
-                        <GridElement
-                            key={question.id}
-                            questionProps={question}
-                            layout={[question.layout]}
-                            renderComponent={({ questionText, component, option }) => (
+                        </div>
+                        
+                        {/* Dynamically created questions */}
+                        {questions.map((question) => (
+                            <div key={question.id} className="grid-item">
                                 <DynamicComponentRenderer
-                                    component={component}
-                                    option={option}
-                                    questionText={questionText}
+                                    component={question.component}
+                                    option={question.option}
+                                    questionText={question.questionText}
                                 />
-                            )}
-                        />
-                    ))}
+                            </div>
+                        ))}
+                    </ResponsiveGridLayout>
                 </div>
             </main>
             <PopUp
