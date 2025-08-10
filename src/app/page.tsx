@@ -10,6 +10,7 @@ import { QuestionItem } from './app-modules/questions/question-types'
 import { useQuestionBuilder } from './app-modules/questions/question-builder'
 import { getPopupComponentsAndOptions } from './app-modules/pop-up/pop-up-questions-config'
 import { createNewQuestion } from './app-modules/questions/questions-factory'
+import "./styles.css"
 
 
 
