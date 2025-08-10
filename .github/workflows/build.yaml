@@ -1,11 +1,8 @@
 name: Build
 run-name: ${{ github.actor }} app Build
 
-on:
-    push:
-        branches: [ main ]
-    pull_request:
-        branches: [ main ]
+on: 
+  push:
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
