@@ -2,24 +2,28 @@ import React from 'react'
 import { Button } from '../../components/button/button'
 import './pop-up.css'
 import {
-    componentMapping,
     ComponentPropsMapping,
     Option,
-} from '../interfaceMapping'
+} from '../../components/interfaceMapping'
+import { Checkbox, ToggleSwitchProps } from '../../components/checkbox/checkbox'
+import { TextInput, TextFieldProps } from '../../components/text-field/text-field'
+import { RadioBar, RadioBarProps } from '../../components/radios/radio-bar'
 
-export interface PopUpProps<T extends keyof ComponentPropsMapping> {
+export interface PopUpProps {
     isOpen: boolean
     onClose: () => void
     onCancel?: () => void
-    onValueChange?: (value: any) => void // Add this line
+    onValueChange?: (
+        value: string | boolean | React.ChangeEvent<HTMLInputElement>
+    ) => void
     onApply: () => void
     popUpTitle: string
     popUpDescription?: string
-    components?: [T]
-    options?: Option<ComponentPropsMapping[T]>[]
+    components?: (keyof ComponentPropsMapping)[]
+    options?: Option<ComponentPropsMapping[keyof ComponentPropsMapping]>[]
 }
 
-export const PopUp: React.FC<PopUpProps<keyof ComponentPropsMapping>> = ({
+export const PopUp: React.FC<PopUpProps> = ({
     isOpen,
     onClose,
     onCancel,
@@ -30,11 +34,10 @@ export const PopUp: React.FC<PopUpProps<keyof ComponentPropsMapping>> = ({
     components,
     options,
 }) => {
-    if (!isOpen) return null
-
     React.useEffect(() => {
+        if (!isOpen) return
         const handleEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape' && onClose) {
+            if (event.key === 'Escape') {
                 onClose()
             }
         }
@@ -43,7 +46,9 @@ export const PopUp: React.FC<PopUpProps<keyof ComponentPropsMapping>> = ({
         return () => {
             document.removeEventListener('keydown', handleEscape)
         }
-    }, [onClose])
+    }, [isOpen, onClose])
+
+    if (!isOpen) return null
 
     return (
         <div className="popup-overlay">
@@ -55,35 +60,59 @@ export const PopUp: React.FC<PopUpProps<keyof ComponentPropsMapping>> = ({
 
                 {/* Render components and options if provided */}
                 <div className="popup-container">
-                    {components &&
-                        options &&
-                        components.map((componentType, index) => {
-                            const Component = componentMapping[componentType]
-                            const option = options[index]
-                            // Enhance the option props with the onValueChange callback
-                            const enhancedProps = {
-                                ...option.optionProps,
-                                onChange: (
-                                    value: ComponentPropsMapping[typeof componentType]['onChange'] extends (
-                                        value: infer T
-                                    ) => void
-                                        ? T
-                                        : never
-                                ) => {
-                                    // Call the original onChange if it exists
-                                    option.optionProps.onChange?.(value)
-                                    // Call the PopUp's onValueChange callback
-                                    onValueChange?.(value)
-                                },
-                            }
+                    {components?.map((componentType, index) => {
+                        const option = options?.[index]
+                        if (!option) return null
 
-                            return (
-                                <div key={index} className="option">
-                                    <Component {...(enhancedProps as any)} />
-                                    {/* Cast to any to avoid type issues. Quick fix */}
-                                </div>
-                            )
-                        })}
+                        switch (componentType) {
+                            case 'TextInput': {
+                                const props =
+                                    option.optionProps as TextFieldProps
+                                return (
+                                    <div key={index} className="option">
+                                        <TextInput
+                                            {...props}
+                                            onChange={(event) => {
+                                                props.onChange(event)
+                                                onValueChange?.(event)
+                                            }}
+                                        />
+                                    </div>
+                                )
+                            }
+                            case 'Checkbox': {
+                                const props =
+                                    option.optionProps as ToggleSwitchProps
+                                return (
+                                    <div key={index} className="option">
+                                        <Checkbox
+                                            {...props}
+                                            onChange={(checked) => {
+                                                props.onChange(checked)
+                                                onValueChange?.(checked)
+                                            }}
+                                        />
+                                    </div>
+                                )
+                            }
+                            case 'RadioBar': {
+                                const props = option.optionProps as RadioBarProps
+                                return (
+                                    <div key={index} className="option">
+                                        <RadioBar
+                                            {...props}
+                                            onChange={(value: string) => {
+                                                props.onChange?.(value)
+                                                onValueChange?.(value)
+                                            }}
+                                        />
+                                    </div>
+                                )
+                            }
+                            default:
+                                return null
+                        }
+                    })}
                 </div>
 
                 <div className="popup-buttons">

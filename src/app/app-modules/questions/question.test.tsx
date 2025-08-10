@@ -1,10 +1,9 @@
-import React from "react";
-import { render } from "@testing-library/react";
-import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { Question, QuestionProps } from "./question";
+import React from 'react'
+import { render } from '@testing-library/react'
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
+import { Question, QuestionProps } from './question'
 
-describe("Question Component", () => {
-
+describe('Question Component', () => {
     beforeEach(() => {
         document.body.innerHTML = ''
         vi.clearAllMocks()
@@ -14,86 +13,104 @@ describe("Question Component", () => {
     afterEach(() => {
         vi.resetAllMocks()
     })
-    describe("Checkbox", () => {
-        const props: QuestionProps<"Checkbox"> = {
-            questionText: "KEK",
-            component: "Checkbox",
-            option: 
-                { optionProps: {
-                    activeLabel: "ON", inactiveLabel: "OFF",
+    describe('Checkbox', () => {
+        const props: QuestionProps<'Checkbox'> = {
+            questionText: 'KEK',
+            component: 'Checkbox',
+            option: {
+                optionProps: {
+                    activeLabel: 'ON',
+                    inactiveLabel: 'OFF',
                     checked: false,
                     onChange: function (checked: boolean): void {
-                        props.option.optionProps.checked = checked;
-                    }
-                } },
-            
-        };
-
-        it("renders the question text", () => {
-            const { getByText } = render(<Question {...props} />);
-            expect(getByText(props.questionText)).toBeInTheDocument();
-        });
-
-        it("renders the checkbox component", () => {
-            const component = render(<Question {...props} />);
-            expect(component.getByText("OFF")).toBeInTheDocument();
-            component.getByText("OFF").click();
-            expect(component.getByText("ON")).toBeInTheDocument();
-        });
-    });
-    describe("RadioBar", () => {
-        const props: QuestionProps<"RadioBar"> = {
-            questionText: "KEK",
-            component: "RadioBar",
-            option: 
-                {
-                    optionProps: {
-                        buttons: [
-                            { label: "kek", value: "kek" },
-                            { label: "lol", value: "lol" },
-                        ],
-                        name: "kek",
+                        props.option.optionProps.checked = checked
                     },
                 },
-        };
+            },
+            showQuestionText: true,
+        }
 
-        it("renders the question text", () => {
-            const { getByText } = render(<Question {...props} />);
-            expect(getByText(props.questionText)).toBeInTheDocument();
-        });
+        it('renders the question text', () => {
+            const { getByText } = render(<Question {...props} />)
+            expect(getByText(props.questionText)).toBeInTheDocument()
+        })
 
-        it("renders the radio bar component", () => {
-            const component = render(<Question {...props} />);
-            expect(component.getByText("kek")).toBeInTheDocument();
-            component.getByText("lol").click();
-            expect(component.getByText("lol")).toBeInTheDocument();
-        });
-    });
-    describe("TextInput", () => {
-        const props: QuestionProps<"TextInput"> = {
-            questionText: "KEK",
-            component: "TextInput",
-            option: 
-                {
-                    optionProps: {
-                        label: "Your Name",
-                        placeholder: "Enter your name",
-                        value: "test",
-                        onChange: vi.fn(),
-                    },
+        it('renders the checkbox component', () => {
+            const component = render(<Question {...props} />)
+            expect(component.getByText('OFF')).toBeInTheDocument()
+            component.getByText('OFF').click()
+            expect(component.getByText('ON')).toBeInTheDocument()
+        })
+    })
+    describe('RadioBar', () => {
+        const props: QuestionProps<'RadioBar'> = {
+            questionText: 'KEK',
+            component: 'RadioBar',
+            option: {
+                optionProps: {
+                    buttons: [
+                        { label: 'kek', value: 'kek' },
+                        { label: 'lol', value: 'lol' },
+                    ],
+                    name: 'kek',
                 },
-        };
+            },
+            showQuestionText: true,
+        }
 
-        it("renders the question text", () => {
-            const { getByText } = render(<Question {...props} />);
-            expect(getByText(props.questionText)).toBeInTheDocument();
-        });
+        it('renders the question text', () => {
+            const { getByText } = render(<Question {...props} />)
+            expect(getByText(props.questionText)).toBeInTheDocument()
+        })
 
-        it("renders the text input component", () => {
-            const component = render(<Question {...props} />);
-            expect(component.getByDisplayValue("test")).toBeInTheDocument();
-        });
-    });
-});
+        it('renders the radio bar component', () => {
+            const component = render(<Question {...props} />)
+            expect(component.getByText('kek')).toBeInTheDocument()
+            component.getByText('lol').click()
+            expect(component.getByText('lol')).toBeInTheDocument()
+        })
+    })
+    describe('TextInput', () => {
+        const props: QuestionProps<'TextInput'> = {
+            questionText: 'KEK',
+            component: 'TextInput',
+            option: {
+                optionProps: {
+                    label: 'Your Name',
+                    placeholder: 'Enter your name',
+                    value: 'test',
+                    onChange: vi.fn(),
+                },
+            },
+            showQuestionText: true,
+        }
 
+        it('renders the question text', () => {
+            const { getByText } = render(<Question {...props} />)
+            expect(getByText(props.questionText)).toBeInTheDocument()
+        })
 
+        it('renders the text input component', () => {
+            const component = render(<Question {...props} />)
+            expect(component.getByDisplayValue('test')).toBeInTheDocument()
+        })
+    })
+    describe('DynamicComponentRenderer', () => {
+        const props: QuestionProps<'TextInput'> = {
+            questionText: 'KEK',
+            component: 'TextInput',
+            option: {
+                optionProps: {
+                    label: 'Your Name',
+                    placeholder: 'Enter your name',
+                    value: 'test',
+                    onChange: vi.fn(),
+                },
+            },
+        }
+        it('renders the dynamic component', () => {
+            const component = render(<Question {...props} />)
+            expect(component.queryByText('KEK')).toBeNull()
+        })
+    })
+})
