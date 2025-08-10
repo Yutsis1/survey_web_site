@@ -3,6 +3,10 @@ import { Responsive, WidthProvider } from "react-grid-layout";
 import type { Layout, Layouts } from "react-grid-layout";
 import "./responsive-grid-layout.css";
 
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
+
+
 
 const ResponsiveGridLayoutComponent = WidthProvider(Responsive);
 
@@ -22,6 +26,8 @@ export interface ResponsiveGridLayoutProps {
   children?: React.ReactNode;
   draggableCancel?: string;
   draggableHandle?: string;
+  onDragStop?: (layout: Layout[], layouts: Layouts) => void;
+  onResizeStop?: (layout: Layout[], layouts: Layouts) => void;
 }
 
 const ResponsiveGridLayout = (props: ResponsiveGridLayoutProps) => {
@@ -45,8 +51,8 @@ const ResponsiveGridLayout = (props: ResponsiveGridLayoutProps) => {
       compactType={props.compactType ?? null}
       preventCollision={props.preventCollision ?? false}
       onLayoutChange={props.onLayoutChange}
-      draggableCancel={props.draggableCancel}
-      draggableHandle={props.draggableHandle}
+      draggableCancel={props.draggableCancel ?? ".no-drag, input, textarea, select, button, label, a, [role='button']"}
+      draggableHandle={props.draggableHandle ?? ".drag-handle"}
     >
       {props.children}
     </ResponsiveGridLayoutComponent>

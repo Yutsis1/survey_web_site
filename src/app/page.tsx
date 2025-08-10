@@ -82,25 +82,9 @@ export default function Home() {
                         isResizable
                         compactType={null}
                         preventCollision={false}
-                        draggableHandle=".drag-handle"
-                        draggableCancel=".no-drag, input, textarea, select, button, label, a, [role='button']"
+                        onDragStop={(_, l) => layoutsApi.setLayouts(l)}
+                        onResizeStop={(_, l) => layoutsApi.setLayouts(l)}
                     >
-                        {/* <div key="default-question" className="grid-item">
-              <DynamicComponentRenderer
-                component="Checkbox"
-                option={{ optionProps: {
-                  activeLabel: 'ON', inactiveLabel: 'OFF',
-                  checked: isChecked, onChange: setIsChecked
-                }}}
-                questionText="KEK"
-              />
-            </div>
-
-            {questions.map(q => (
-              <div key={q.id} className="grid-item">
-                <DynamicComponentRenderer component={q.component} option={q.option} questionText={q.questionText}/>
-              </div>
-            ))} */}
                         {questions.map((q) => (
                             <div key={q.id} className="grid-item">
                                 <div className="drag-handle">⋮⋮</div>
