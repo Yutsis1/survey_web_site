@@ -23,7 +23,7 @@ export interface ResponsiveGridLayoutProps {
 }
 
 const ResponsiveGridLayout = (props: ResponsiveGridLayoutProps) => {
-  const [isDragging, setIsDragging] = useState(false);
+  const [, setIsDragging] = useState(false);
 
   return (
     <ResponsiveGridLayoutComponent
