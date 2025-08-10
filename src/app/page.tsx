@@ -1,12 +1,12 @@
 'use client'
-import { Dispatch, SetStateAction, useState } from 'react'
+import { useState } from 'react'
 import { Sidebar } from './app-modules/sidebar/sidebar'
 import { PopUp } from './app-modules/pop-up/pop-up'
 import { ResponsiveGridLayout } from './app-modules/grid/responsive-grid-layout'
 import { DynamicComponentRenderer } from './components/dynamic-component-renderer'
 import type { ComponentPropsMapping } from './components/interfaceMapping'
 import { useLayouts } from './app-modules/questions/use-layouts'
-import { CreateConfig, QuestionItem } from './app-modules/questions/question-types'
+import { QuestionItem } from './app-modules/questions/question-types'
 import { useQuestionBuilder } from './app-modules/questions/question-builder'
 import { getPopupComponentsAndOptions } from './app-modules/pop-up/pop-up-questions-config'
 import { createNewQuestion } from './app-modules/questions/questions-factory'
@@ -69,7 +69,7 @@ export default function Home() {
             compactType={null}
             preventCollision={false}
           >
-            <div key="default-question" className="grid-item">
+            {/* <div key="default-question" className="grid-item">
               <DynamicComponentRenderer
                 component="Checkbox"
                 option={{ optionProps: {
@@ -83,6 +83,15 @@ export default function Home() {
             {questions.map(q => (
               <div key={q.id} className="grid-item">
                 <DynamicComponentRenderer component={q.component} option={q.option} questionText={q.questionText}/>
+              </div>
+            ))} */}
+            {questions.map(q => (
+              <div key={q.id} className="grid-item">
+                <DynamicComponentRenderer
+                  component={q.component}
+                  option={q.option}
+                  questionText={q.questionText}
+                />
               </div>
             ))}
           </ResponsiveGridLayout>
