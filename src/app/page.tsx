@@ -10,67 +10,82 @@ import { QuestionItem } from './app-modules/questions/question-types'
 import { useQuestionBuilder } from './app-modules/questions/question-builder'
 import { getPopupComponentsAndOptions } from './app-modules/pop-up/pop-up-questions-config'
 import { createNewQuestion } from './app-modules/questions/questions-factory'
-import "./styles.css"
-
-
+import './styles.css'
 
 export default function Home() {
-  const [isChecked, setIsChecked] = useState(false)
-  const [isPopUpOpen, setIsPopUpOpen] = useState(false)
-  const [questions, setQuestions] = useState<QuestionItem[]>([])
+    const [isChecked, setIsChecked] = useState(false)
+    const [isPopUpOpen, setIsPopUpOpen] = useState(false)
+    const [questions, setQuestions] = useState<QuestionItem[]>([])
 
-  const layoutsApi = useLayouts()
-  const builder = useQuestionBuilder()
+    const layoutsApi = useLayouts()
+    const builder = useQuestionBuilder()
 
-  const handleApply = () => {
-    if (!builder.selectedType) return setIsPopUpOpen(false)
-    const item = createNewQuestion(
-      builder.selectedType as keyof ComponentPropsMapping,
-      builder.buildConfig(),
-      questions.length
-    )
-    layoutsApi.append(item.layout)
-    setQuestions(prev => [...prev, item])
-    setIsPopUpOpen(false)
-    builder.reset()
-  }
+    const handleApply = () => {
+        if (!builder.selectedType) return setIsPopUpOpen(false)
+        const item = createNewQuestion(
+            builder.selectedType as keyof ComponentPropsMapping,
+            builder.buildConfig(),
+            questions.length
+        )
+        layoutsApi.append(item.layout)
+        setQuestions((prev) => [...prev, item])
+        setIsPopUpOpen(false)
+        builder.reset()
+    }
 
-  const handleClose = () => {
-    setIsPopUpOpen(false)
-    builder.reset()
-  }
+    const handleClose = () => {
+        setIsPopUpOpen(false)
+        builder.reset()
+    }
 
-  const popup = getPopupComponentsAndOptions({
-    selectedType: builder.selectedType,
-    setSelectedType: builder.setSelectedType,
-    setQuestionText: builder.setQuestionText,
-    checkbox: builder.checkbox,
-    textInput: builder.textInput,
-    radioBar: builder.radioBar,
-  })
+    const popup = getPopupComponentsAndOptions({
+        selectedType: builder.selectedType,
+        setSelectedType: builder.setSelectedType,
+        setQuestionText: builder.setQuestionText,
+        checkbox: builder.checkbox,
+        textInput: builder.textInput,
+        radioBar: builder.radioBar,
+    })
 
-  return (
-    <div className="app-container">
-      <aside className="sidebar">
-        <Sidebar buttons={[
-          { label: 'New Question', onClick: () => setIsPopUpOpen(true), className: 'button-base', test_id: 'button-1' },
-          { label: 'Clear Questions', onClick: () => { setQuestions([]); layoutsApi.reset() }, className: 'button-base', test_id: 'button-2' },
-        ]}/>
-      </aside>
+    return (
+        <div className="app-container">
+            <aside className="sidebar">
+                <Sidebar
+                    buttons={[
+                        {
+                            label: 'New Question',
+                            onClick: () => setIsPopUpOpen(true),
+                            className: 'button-base',
+                            test_id: 'button-1',
+                        },
+                        {
+                            label: 'Clear Questions',
+                            onClick: () => {
+                                setQuestions([])
+                                layoutsApi.reset()
+                            },
+                            className: 'button-base',
+                            test_id: 'button-2',
+                        },
+                    ]}
+                />
+            </aside>
 
-      <main className="content">
-        <div className="grid-container">
-          <ResponsiveGridLayout
-            className="layout"
-            layouts={layoutsApi.layouts}
-            onLayoutChange={(_, l) => layoutsApi.setLayouts(l)}
-            rowHeight={60}
-            isDraggable
-            isResizable
-            compactType={null}
-            preventCollision={false}
-          >
-            {/* <div key="default-question" className="grid-item">
+            <main className="content">
+                <div className="grid-container">
+                    <ResponsiveGridLayout
+                        className="layout"
+                        layouts={layoutsApi.layouts}
+                        onLayoutChange={(_, l) => layoutsApi.setLayouts(l)}
+                        rowHeight={60}
+                        isDraggable
+                        isResizable
+                        compactType={null}
+                        preventCollision={false}
+                        draggableHandle=".drag-handle"
+                        draggableCancel=".no-drag, input, textarea, select, button, label, a, [role='button']"
+                    >
+                        {/* <div key="default-question" className="grid-item">
               <DynamicComponentRenderer
                 component="Checkbox"
                 option={{ optionProps: {
@@ -86,29 +101,32 @@ export default function Home() {
                 <DynamicComponentRenderer component={q.component} option={q.option} questionText={q.questionText}/>
               </div>
             ))} */}
-            {questions.map(q => (
-              <div key={q.id} className="grid-item">
-                <DynamicComponentRenderer
-                  component={q.component}
-                  option={q.option}
-                  questionText={q.questionText}
-                />
-              </div>
-            ))}
-          </ResponsiveGridLayout>
-        </div>
-      </main>
+                        {questions.map((q) => (
+                            <div key={q.id} className="grid-item">
+                                <div className="drag-handle">⋮⋮</div>
+                                <div className="no-drag">
+                                    <DynamicComponentRenderer
+                                        component={q.component}
+                                        option={q.option}
+                                        questionText={q.questionText}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </ResponsiveGridLayout>
+                </div>
+            </main>
 
-      <PopUp
-        isOpen={isPopUpOpen}
-        onClose={handleClose}
-        onApply={handleApply}
-        onValueChange={(v) => console.log('PopUp value changed:', v)}
-        popUpTitle="Create New Question"
-        popUpDescription="Choose a type and configure its options."
-        components={popup.components}
-        options={popup.options}
-      />
-    </div>
-  )
+            <PopUp
+                isOpen={isPopUpOpen}
+                onClose={handleClose}
+                onApply={handleApply}
+                onValueChange={(v) => console.log('PopUp value changed:', v)}
+                popUpTitle="Create New Question"
+                popUpDescription="Choose a type and configure its options."
+                components={popup.components}
+                options={popup.options}
+            />
+        </div>
+    )
 }

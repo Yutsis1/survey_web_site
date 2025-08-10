@@ -20,6 +20,8 @@ export interface ResponsiveGridLayoutProps {
   compactType?: "vertical" | "horizontal" | null;
   preventCollision?: boolean;
   children?: React.ReactNode;
+  draggableCancel?: string;
+  draggableHandle?: string;
 }
 
 const ResponsiveGridLayout = (props: ResponsiveGridLayoutProps) => {
@@ -43,6 +45,8 @@ const ResponsiveGridLayout = (props: ResponsiveGridLayoutProps) => {
       compactType={props.compactType ?? null}
       preventCollision={props.preventCollision ?? false}
       onLayoutChange={props.onLayoutChange}
+      draggableCancel={props.draggableCancel}
+      draggableHandle={props.draggableHandle}
     >
       {props.children}
     </ResponsiveGridLayoutComponent>
