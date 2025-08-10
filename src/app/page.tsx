@@ -1,261 +1,114 @@
 'use client'
 import { useState } from 'react'
-
-import 'react-grid-layout/css/styles.css'
-import 'react-resizable/css/styles.css'
-import './styles.css'
 import { Sidebar } from './app-modules/sidebar/sidebar'
 import { PopUp } from './app-modules/pop-up/pop-up'
-import {
-    componentMapping,
-    ComponentPropsMapping,
-    Option,
-} from './components/interfaceMapping'
-import type { Layout, Layouts } from 'react-grid-layout'
-import { DynamicComponentRenderer } from './components/dynamic-component-renderer'
 import { ResponsiveGridLayout } from './app-modules/grid/responsive-grid-layout'
-
-interface QuestionItem {
-    id: string
-    questionText: string
-    component: keyof ComponentPropsMapping
-    option: Option<ComponentPropsMapping[keyof ComponentPropsMapping]>
-    layout: Layout
-}
+import { DynamicComponentRenderer } from './components/dynamic-component-renderer'
+import type { ComponentPropsMapping } from './components/interfaceMapping'
+import { useLayouts } from './app-modules/questions/use-layouts'
+import { QuestionItem } from './app-modules/questions/question-types'
+import { useQuestionBuilder } from './app-modules/questions/question-builder'
+import { getPopupComponentsAndOptions } from './app-modules/pop-up/pop-up-questions-config'
+import { createNewQuestion } from './app-modules/questions/questions-factory'
+import './styles.css'
 
 export default function Home() {
-    const [isChecked, setIsChecked] = useState(false)
     const [isPopUpOpen, setIsPopUpOpen] = useState(false)
-    const [selectedQuestionType, setSelectedQuestionType] = useState<string>('')
     const [questions, setQuestions] = useState<QuestionItem[]>([])
-    const [layouts, setLayouts] = useState<Layouts>({
-        lg: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
-        md: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
-        sm: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
-        xs: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
-        xxs: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
+
+    const layoutsApi = useLayouts()
+    const builder = useQuestionBuilder()
+
+    const handleApply = () => {
+        if (!builder.selectedType) return setIsPopUpOpen(false)
+        const item = createNewQuestion(
+            builder.selectedType as keyof ComponentPropsMapping,
+            builder.buildConfig(),
+            questions.length
+        )
+        layoutsApi.append(item.layout)
+        setQuestions((prev) => [...prev, item])
+        setIsPopUpOpen(false)
+        builder.reset()
+    }
+
+    const handleClose = () => {
+        setIsPopUpOpen(false)
+        builder.reset()
+    }
+
+    const popup = getPopupComponentsAndOptions({
+        selectedType: builder.selectedType,
+        setSelectedType: builder.setSelectedType,
+        setQuestionText: builder.setQuestionText,
+        checkbox: builder.checkbox,
+        textInput: builder.textInput,
+        radioBar: builder.radioBar,
     })
-
-    const createNewQuestion = (
-        questionType: keyof ComponentPropsMapping
-    ): QuestionItem => {
-        const baseId = `question-${Date.now()}`
-
-        switch (questionType) {
-            case 'Checkbox':
-                return {
-                    id: baseId,
-                    questionText: `New ${questionType} Question`,
-                    component: 'Checkbox',
-                    option: {
-                        optionProps: {
-                            activeLabel: 'ON',
-                            inactiveLabel: 'OFF',
-                            checked: false,
-                            onChange: (checked: boolean) =>
-                                console.log('Checkbox changed:', checked),
-                        },
-                    },
-                    layout: {
-                        i: baseId,
-                        x: (questions.length * 2) % 12,
-                        y: Math.floor((questions.length * 2) / 12),
-                        w: 2,
-                        h: 2,
-                    },
-                }
-            case 'RadioBar':
-                return {
-                    id: baseId,
-                    questionText: `New ${questionType} Question`,
-                    component: 'RadioBar',
-                    option: {
-                        optionProps: {
-                            buttons: Object.keys(componentMapping).map(
-                                (key) => ({
-                                    label: key,
-                                    value: key,
-                                })
-                            ),
-                            name: 'Select an option',
-                            test_id: 'radio-bar-question-type',
-                            onChange: (value: string) =>
-                                console.log('Radio changed:', value),
-                        },
-                    },
-                    layout: {
-                        i: baseId,
-                        x: (questions.length * 2) % 12,
-                        y: Math.floor((questions.length * 2) / 12),
-                        w: 2,
-                        h: 2,
-                    },
-                }
-            case 'TextInput':
-                return {
-                    id: baseId,
-                    questionText: `New ${questionType} Question`,
-                    component: 'TextInput',
-                    option: {
-                        optionProps: {
-                            label: 'Enter text',
-                            placeholder: 'Type here...',
-                            onChange: (
-                                event: React.ChangeEvent<HTMLInputElement>
-                            ) =>
-                                console.log(
-                                    'Text changed:',
-                                    event.target.value
-                                ),
-                        },
-                    },
-                    layout: {
-                        i: baseId,
-                        x: (questions.length * 2) % 12,
-                        y: Math.floor((questions.length * 2) / 12),
-                        w: 2,
-                        h: 2,
-                    },
-                }
-            default:
-                throw new Error(`Unsupported question type: ${questionType}`)
-        }
-    }
-
-    const handleLayoutChange = (layout: Layout[], layouts: Layouts) => {
-        setLayouts(layouts)
-    }
-
-    const handlePopUpApply = () => {
-        if (selectedQuestionType) {
-            const newQuestion = createNewQuestion(
-                selectedQuestionType as keyof ComponentPropsMapping
-            )
-            setLayouts((prevLayouts) => ({
-                lg: [...(prevLayouts.lg || []), newQuestion.layout],
-                md: [...(prevLayouts.md || []), newQuestion.layout],
-                sm: [...(prevLayouts.sm || []), newQuestion.layout],
-                xs: [...(prevLayouts.xs || []), newQuestion.layout],
-                xxs: [...(prevLayouts.xxs || []), newQuestion.layout],
-            }))
-            setQuestions([...questions, newQuestion])
-        }
-        setIsPopUpOpen(false)
-        setSelectedQuestionType('')
-    }
-
-    const handlePopUpClose = () => {
-        setIsPopUpOpen(false)
-        setSelectedQuestionType('')
-        console.log('Pop-up closed')
-    }
-
-    const buttonProps = [
-        {
-            label: 'New Question',
-            onClick: () => {
-                setIsPopUpOpen(true)
-                console.log('New Question clicked')
-            },
-            className: 'button-base',
-            test_id: 'button-1',
-        },
-        {
-            label: 'Clear Questions',
-            onClick: () => {
-                setQuestions([]) // Clear all questions
-                setLayouts({
-                    lg: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
-                    md: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
-                    sm: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
-                    xs: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
-                    xxs: [{ i: 'default-question', x: 0, y: 0, w: 2, h: 2 }],
-                }) // Reset layouts to only include default question
-                console.log('Clear clicked')
-            },
-            className: 'button-base',
-            test_id: 'button-2',
-        },
-    ]
 
     return (
         <div className="app-container">
             <aside className="sidebar">
-                <Sidebar buttons={buttonProps}></Sidebar>
+                <Sidebar
+                    buttons={[
+                        {
+                            label: 'New Question',
+                            onClick: () => setIsPopUpOpen(true),
+                            className: 'button-base',
+                            test_id: 'button-1',
+                        },
+                        {
+                            label: 'Clear Questions',
+                            onClick: () => {
+                                setQuestions([])
+                                layoutsApi.reset()
+                            },
+                            className: 'button-base',
+                            test_id: 'button-2',
+                        },
+                    ]}
+                />
             </aside>
+
             <main className="content">
                 <div className="grid-container">
                     <ResponsiveGridLayout
                         className="layout"
-                        layouts={layouts}
-                        onLayoutChange={handleLayoutChange}
+                        layouts={layoutsApi.layouts}
+                        onLayoutChange={(_, l) => layoutsApi.setLayouts(l)}
                         rowHeight={60}
-                        isDraggable={true}
-                        isResizable={true}
+                        isDraggable
+                        isResizable
                         compactType={null}
                         preventCollision={false}
+                        onDragStop={(_, l) => layoutsApi.setLayouts(l)}
+                        onResizeStop={(_, l) => layoutsApi.setLayouts(l)}
                     >
-                        {/* Default checkbox question */}
-                        <div key="default-question" className="grid-item">
-                            <DynamicComponentRenderer
-                                component="Checkbox"
-                                option={{
-                                    optionProps: {
-                                        activeLabel: 'ON',
-                                        inactiveLabel: 'OFF',
-                                        checked: isChecked,
-                                        onChange: (checked: boolean) => {
-                                            setIsChecked(checked)
-                                        },
-                                    },
-                                }}
-                                questionText="KEK"
-                            />
-                        </div>
-                        
-                        {/* Dynamically created questions */}
-                        {questions.map((question) => (
-                            <div key={question.id} className="grid-item">
-                                <DynamicComponentRenderer
-                                    component={question.component}
-                                    option={question.option}
-                                    questionText={question.questionText}
-                                />
+                        {questions.map((q) => (
+                            <div key={q.id} className="grid-item">
+                                <div className="drag-handle">⋮⋮</div>
+                                <div className="no-drag">
+                                    <DynamicComponentRenderer
+                                        component={q.component}
+                                        option={q.option}
+                                        questionText={q.questionText}
+                                    />
+                                </div>
                             </div>
                         ))}
                     </ResponsiveGridLayout>
                 </div>
             </main>
+
             <PopUp
                 isOpen={isPopUpOpen}
-                onClose={handlePopUpClose}
-                onApply={handlePopUpApply}
-                onValueChange={(value) => {
-                    setSelectedQuestionType(value as string)
-                    console.log('Selected value:', value)
-                }}
-                popUpTitle="Create New Question"
-                popUpDescription="Configure your new question settings below"
-                components={['RadioBar']}
-                options={[
-                    {
-                        optionProps: {
-                            buttons: Object.keys(componentMapping).map(
-                                (key) => ({
-                                    label: key,
-                                    value: key,
-                                })
-                            ),
-                            name: 'Which question type do you want to create?',
-                            test_id: 'radio-bar-question-type',
-                            selectedValue: selectedQuestionType,
-                            onChange: (value: string) => {
-                                setSelectedQuestionType(value)
-                            },
-                        },
-                    },
-                ]}
-            />
+                onClose={handleClose}
+                onApply={handleApply}
+                popUpTitle={popup.questionText}
+                popUpDescription="Choose a type and configure its options."
+            >
+                {popup.components}
+            </PopUp>
         </div>
     )
 }

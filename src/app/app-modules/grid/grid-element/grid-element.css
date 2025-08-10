@@ -14,6 +14,14 @@
 .grid-item:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
+.drag-handle {
+    cursor: move;
+    user-select: none;
+    margin-bottom: 8px;
+}
+.no-drag {
+    cursor: auto;
+}
 
 /* Dark mode grid items */
 @media (prefers-color-scheme: dark) {
