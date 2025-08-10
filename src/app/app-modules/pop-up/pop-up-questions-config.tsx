@@ -1,6 +1,3 @@
-// import { componentMapping, Option } from '@/components/interfaceMapping'
-// import type { ComponentPropsMapping } from '@/components/interfaceMapping'
-
 import { componentMapping, ComponentPropsMapping, Option } from "@/app/components/interfaceMapping"
 
 type Builders = {
@@ -39,12 +36,12 @@ export function getPopupComponentsAndOptions(b: Builders): {
   switch (b.selectedType) {
     case 'Checkbox':
       return {
-        components: ['RadioBar', 'TextInput', 'TextInput', 'Checkbox'],
+        components: ['RadioBar', 'TextInput', 'TextInput', 'TextInput', 'Checkbox'],
         options: [
           typeSelector, questionTextField,
           { optionProps: { label: 'Active label', onChange: (e: any) => b.checkbox.set((s: any)=>({ ...s, activeLabel: e.target.value })) }},
           { optionProps: { label: 'Inactive label', onChange: (e: any) => b.checkbox.set((s: any)=>({ ...s, inactiveLabel: e.target.value })) }},
-          { optionProps: { activeLabel: 'Default ON', inactiveLabel: 'Default OFF', checked: b.checkbox.value.checked,
+          { optionProps: { activeLabel: 'Default ON', inactiveLabel: 'Default OFF', checked: b.checkbox.value?.checked ?? false,
               onChange: (checked: boolean) => b.checkbox.set((s: any)=>({ ...s, checked })) } },
         ],
       }
@@ -63,7 +60,7 @@ export function getPopupComponentsAndOptions(b: Builders): {
         options: [
           typeSelector, questionTextField,
           { optionProps: { label: 'Group name', onChange: (e: any) => b.radioBar.set((s: any)=>({ ...s, name: e.target.value })) }},
-          { optionProps: { label: 'Options (comma-separated)', onChange: (e: any) => {
+          { optionProps: { label: 'Options (comma-separated)',  placeholder: 'Example: Red,Green,Blue', onChange: (e: any) => {
               const parsed = String(e.target.value).split(',').map((t)=>t.trim()).filter(Boolean)
               b.radioBar.set((s: any)=>({ ...s, buttons: parsed }))
             }}},
