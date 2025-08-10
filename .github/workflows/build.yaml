@@ -1,10 +1,10 @@
-name: Build
+name: GitHub Actions Build
 run-name: ${{ github.actor }} app Build
 
 on: 
   push:
 jobs:
-  unit-tests:
+  app-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
