@@ -6,14 +6,26 @@ import 'react-resizable/css/styles.css'
 import './styles.css'
 import { Sidebar } from './app-modules/sidebar/sidebar'
 import { PopUp } from './app-modules/pop-up/pop-up'
-import { componentMapping } from './app-modules/interfaceMapping'
+import {
+    componentMapping,
+    ComponentPropsMapping,
+    Option,
+} from './app-modules/interfaceMapping'
+import type { Layout } from 'react-grid-layout'
+
+interface QuestionItem {
+    id: string
+    questionText: string
+    component: keyof ComponentPropsMapping
+    option: Option<ComponentPropsMapping[keyof ComponentPropsMapping]>
+    layout: Layout
+}
 
 export default function Home() {
     const [isChecked, setIsChecked] = useState(false)
-    const [isDragging, setIsDragging] = useState(false)
     const [isPopUpOpen, setIsPopUpOpen] = useState(false)
     const [selectedQuestionType, setSelectedQuestionType] = useState<string>('')
-    const [questions, setQuestions] = useState<Array<any>>([])
+    const [questions, setQuestions] = useState<QuestionItem[]>([])
 
     const handlePopUpApply = () => {
         if (selectedQuestionType) {
@@ -107,9 +119,7 @@ export default function Home() {
                                     inactiveLabel: 'OFF',
                                     checked: isChecked,
                                     onChange: (checked: boolean) => {
-                                        if (!isDragging) {
-                                            setIsChecked(checked)
-                                        }
+                                        setIsChecked(checked)
                                     },
                                 },
                             },
@@ -133,7 +143,7 @@ export default function Home() {
                 onClose={handlePopUpClose}
                 onApply={handlePopUpApply}
                 onValueChange={(value) => {
-                    setSelectedQuestionType(value)
+                    setSelectedQuestionType(value as string)
                     console.log('Selected value:', value)
                 }}
                 popUpTitle="Create New Question"

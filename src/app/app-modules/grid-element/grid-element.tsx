@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Responsive, WidthProvider } from "react-grid-layout";
+import type { Layout, Layouts } from "react-grid-layout";
 
 import "./grid-element.css";
 import { Question, QuestionProps } from "../questions/question";
@@ -10,18 +11,18 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 export interface GridElementProps {
   className?: string;
   rowHeight?: number;
-  onLayoutChange?: (layout: any, layouts: any) => void;
-  cols?: any;
-  layout?: any;
-  breakpoints?: any;
-  containerPadding?: number[];
+  onLayoutChange?: (layout: Layout[], layouts: Layouts) => void;
+  cols?: Record<string, number>;
+  layout?: Layout[];
+  breakpoints?: Record<string, number>;
+  containerPadding?: [number, number];
   questionProps?: QuestionProps<keyof ComponentPropsMapping>;
 }
 
-const layout = [{ i: "question", x: 0, y: 0, w: 1, h: 2 }];
+const layout: Layout[] = [{ i: "question", x: 0, y: 0, w: 1, h: 2 }];
 
 const GridElement = (props: GridElementProps) => {
-  const [isDragging, setIsDragging] = useState(false); // Track drag state
+  const [, setIsDragging] = useState(false); // Track drag state
 
   return (
     <>
