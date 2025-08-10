@@ -28,47 +28,84 @@ export default function Home() {
     const [selectedQuestionType, setSelectedQuestionType] = useState<string>('')
     const [questions, setQuestions] = useState<QuestionItem[]>([])
 
+    const createNewQuestion = (questionType: keyof ComponentPropsMapping): QuestionItem => {
+        const baseId = `question-${Date.now()}`
+        
+        switch (questionType) {
+            case 'Checkbox':
+                return {
+                    id: baseId,
+                    questionText: `New ${questionType} Question`,
+                    component: 'Checkbox',
+                    option: {
+                        optionProps: {
+                            activeLabel: 'ON',
+                            inactiveLabel: 'OFF',
+                            checked: false,
+                            onChange: (checked: boolean) => console.log('Checkbox changed:', checked),
+                        },
+                    },
+                    layout: {
+                        i: baseId,
+                        x: (questions.length * 2) % 12,
+                        y: Math.floor((questions.length * 2) / 12),
+                        w: 2,
+                        h: 2,
+                    },
+                }
+            case 'RadioBar':
+                return {
+                    id: baseId,
+                    questionText: `New ${questionType} Question`,
+                    component: 'RadioBar',
+                    option: {
+                        optionProps: {
+                            buttons: Object.keys(componentMapping).map((key) => ({
+                                label: key,
+                                value: key,
+                            })),
+                            name: 'Select an option',
+                            test_id: 'radio-bar-question-type',
+                            onChange: (value: string) => console.log('Radio changed:', value),
+                        },
+                    },
+                    layout: {
+                        i: baseId,
+                        x: (questions.length * 2) % 12,
+                        y: Math.floor((questions.length * 2) / 12),
+                        w: 2,
+                        h: 2,
+                    },
+                }
+            case 'TextInput':
+                return {
+                    id: baseId,
+                    questionText: `New ${questionType} Question`,
+                    component: 'TextInput',
+                    option: {
+                        optionProps: {
+                            label: 'Enter text',
+                            placeholder: 'Type here...',
+                            onChange: (event: React.ChangeEvent<HTMLInputElement>) => 
+                                console.log('Text changed:', event.target.value),
+                        },
+                    },
+                    layout: {
+                        i: baseId,
+                        x: (questions.length * 2) % 12,
+                        y: Math.floor((questions.length * 2) / 12),
+                        w: 2,
+                        h: 2,
+                    },
+                }
+            default:
+                throw new Error(`Unsupported question type: ${questionType}`)
+        }
+    }
+
     const handlePopUpApply = () => {
         if (selectedQuestionType) {
-            // Create a new question with grid properties
-            const newQuestion = {
-                id: `question-${Date.now()}`, // Add unique identifier
-                questionText: `New ${selectedQuestionType} Question`,
-                component: selectedQuestionType as keyof ComponentPropsMapping,
-                option: {
-                    optionProps: {
-                        ...(selectedQuestionType === 'Checkbox'
-                            ? {
-                                  activeLabel: 'ON',
-                                  inactiveLabel: 'OFF',
-                                  checked: false,
-                              }
-                            : {}),
-                        ...(selectedQuestionType === 'RadioBar'
-                            ? {
-                                  buttons: Object.keys(componentMapping).map(
-                                      (key) => ({
-                                          label: key,
-                                          value: key,
-                                      })
-                                  ),
-                                  name: 'Select an option',
-                                  test_id: 'radio-bar-question-type',
-                                  //   selectedValue: '',
-                              }
-                            : {}),
-                    },
-                },
-                // Add grid layout properties
-                layout: {
-                    i: `question-${Date.now()}`,
-                    x: (questions.length * 2) % 12, // Distribute horizontally
-                    y: Math.floor((questions.length * 2) / 12), // Move to next row when needed
-                    w: 2,
-                    h: 2,
-                },
-            }
-
+            const newQuestion = createNewQuestion(selectedQuestionType as keyof ComponentPropsMapping)
             setQuestions([...questions, newQuestion])
         }
         setIsPopUpOpen(false)
@@ -128,16 +165,25 @@ export default function Home() {
                         layout={[
                             { i: 'default-question', x: 0, y: 0, w: 2, h: 2 },
                         ]}
+                        renderComponent={({ questionText, component, option }) => (
+                            <DynamicComponentRenderer
+                                component={component}
+                                option={option}
+                                questionText={questionText}
+                            />
+                        )}
                     />
                     {/* Render dynamically created questions */}
                     {questions.map((question) => (
                         <GridElement
+                            key={question.id}
                             questionProps={question}
                             layout={[question.layout]}
-                            renderComponent={({ component, option }) => (
+                            renderComponent={({ questionText, component, option }) => (
                                 <DynamicComponentRenderer
                                     component={component}
                                     option={option}
+                                    questionText={questionText}
                                 />
                             )}
                         />
@@ -167,6 +213,9 @@ export default function Home() {
                             name: 'Which question type do you want to create?',
                             test_id: 'radio-bar-question-type',
                             selectedValue: selectedQuestionType,
+                            onChange: (value: string) => {
+                                setSelectedQuestionType(value)
+                            },
                         },
                     },
                 ]}
