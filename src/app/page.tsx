@@ -10,11 +10,16 @@ import { QuestionItem } from './app-modules/questions/question-types'
 import { useQuestionBuilder } from './app-modules/questions/question-builder'
 import { getPopupComponentsAndOptions } from './app-modules/pop-up/pop-up-questions-config'
 import { createNewQuestion } from './app-modules/questions/questions-factory'
+import { DeleteDropzone } from './components/deleteDropzone/deleteDropzone'
 import './styles.css'
 
 export default function Home() {
     const [isPopUpOpen, setIsPopUpOpen] = useState(false)
     const [questions, setQuestions] = useState<QuestionItem[]>([])
+
+    const [isDragging, setIsDragging] = useState(false)
+    const [draggingId, setDraggingId] = useState<string | null>(null)
+    const [isOverTrash, setIsOverTrash] = useState(false)
 
     const layoutsApi = useLayouts()
     const builder = useQuestionBuilder()
@@ -45,6 +50,59 @@ export default function Home() {
         textInput: builder.textInput,
         radioBar: builder.radioBar,
     })
+
+    // Helpers
+    const removeQuestions = (id: string) => {
+        setQuestions((prev) => prev.filter((it) => it.id !== id))
+    }
+
+    const onDragStart = (e: React.DragEvent<HTMLDivElement>, id: string) => {
+        // Required for HTML5 DnD
+        e.dataTransfer.setData('text/plain', String(id))
+        e.dataTransfer.effectAllowed = 'move'
+        setDraggingId(id)
+        setIsDragging(true)
+    }
+
+    const onDragEnd = () => {
+        setIsDragging(false)
+        setDraggingId(null)
+        setIsOverTrash(false)
+    }
+    // Trash (toast) handlers
+    const onTrashDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        // Allow dropping
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+    }
+
+    const onTrashDragEnter = () => {
+        setIsOverTrash(true)
+        // Delete-on-hover behavior (as requested)
+        if (draggingId !== null) {
+            removeQuestions(draggingId)
+            // Reset drag state so the toast can hide cleanly
+            setDraggingId(null)
+            setIsDragging(false)
+            setIsOverTrash(false)
+        }
+    }
+
+    const onTrashDragLeave = () => {
+        setIsOverTrash(false)
+    }
+
+    const onTrashDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        const data = e.dataTransfer.getData('text/plain')
+        const id = Number.parseInt(data, 10)
+        // if (!Number.isNaN(id)) {
+        //   removeQuestions(id);
+        // }
+        setIsDragging(false)
+        setDraggingId(null)
+        setIsOverTrash(false)
+    }
 
     return (
         <div className="app-container">
@@ -109,6 +167,15 @@ export default function Home() {
             >
                 {popup.components}
             </PopUp>
+            {/* Toast-like Delete Dropzone (now a class component) */}
+            <DeleteDropzone
+                isDragging={isDragging}
+                isOverTrash={isOverTrash}
+                onDragOver={onTrashDragOver}
+                onDragEnter={onTrashDragEnter}
+                onDragLeave={onTrashDragLeave}
+                onDrop={onTrashDrop}
+            />
         </div>
     )
 }
