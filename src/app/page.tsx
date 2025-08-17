@@ -57,14 +57,14 @@ export default function Home() {
         // Required for HTML5 DnD
         e.dataTransfer.setData('text/plain', String(id))
         e.dataTransfer.effectAllowed = 'move'
-    setDraggingId(id)
-    setIsDragging(true)
+        setDraggingId(id)
+        setIsDragging(true)
     }
 
     const onDragEnd = () => {
-    setIsDragging(false)
-    setDraggingId(null)
-    setIsOverTrash(false)
+        setIsDragging(false)
+        setDraggingId(null)
+        setIsOverTrash(false)
     }
     // Trash (toast) handlers
     const onTrashDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -76,13 +76,13 @@ export default function Home() {
     const onTrashDragEnter = () => {
         setIsOverTrash(true)
         // Delete-on-hover behavior (as requested)
-        if (draggingId !== null) {
-            removeQuestions(draggingId)
-            // Reset drag state so the toast can hide cleanly
-            setDraggingId(null)
-            setIsDragging(false)
-            setIsOverTrash(false)
-        }
+        // if (draggingId !== null) {
+        //     removeQuestions(draggingId)
+        //     // Reset drag state so the toast can hide cleanly
+        //     setDraggingId(null)
+        //     setIsDragging(false)
+        //     setIsOverTrash(false)
+        // }
     }
 
     const removeQuestions = (id: string) => {
@@ -146,10 +146,7 @@ export default function Home() {
                         onResizeStop={(_, l) => layoutsApi.setLayouts(l)}
                     >
                         {questions.map((q) => (
-                            <div
-                                key={q.id}
-                                className="grid-item"
-                            >
+                            <div key={q.id} className="grid-item">
                                 <div
                                     className="drag-handle"
                                     draggable
