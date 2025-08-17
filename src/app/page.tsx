@@ -53,19 +53,19 @@ export default function Home() {
 
     // Helpers
 
-    const onDragStart = (e: React.DragEvent<HTMLDivElement>, id: string) => {
-        // Required for HTML5 DnD
-        e.dataTransfer.setData('text/plain', String(id))
-        e.dataTransfer.effectAllowed = 'move'
-        setDraggingId(id)
-        setIsDragging(true)
-    }
+    // const onDragStart = (e: React.DragEvent<HTMLDivElement>, id: string) => {
+    //     // Required for HTML5 DnD
+    //     e.dataTransfer.setData('text/plain', String(id))
+    //     e.dataTransfer.effectAllowed = 'move'
+    //     setDraggingId(id)
+    //     setIsDragging(true)
+    // }
 
-    const onDragEnd = () => {
-        setIsDragging(false)
-        setDraggingId(null)
-        setIsOverTrash(false)
-    }
+    // const onDragEnd = () => {
+    //     setIsDragging(false)
+    //     setDraggingId(null)
+    //     setIsOverTrash(false)
+    // }
     // Trash (toast) handlers
     const onTrashDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         // Allow dropping
@@ -75,18 +75,11 @@ export default function Home() {
 
     const onTrashDragEnter = () => {
         setIsOverTrash(true)
-        // Delete-on-hover behavior (as requested)
-        // if (draggingId !== null) {
-        //     removeQuestions(draggingId)
-        //     // Reset drag state so the toast can hide cleanly
-        //     setDraggingId(null)
-        //     setIsDragging(false)
-        //     setIsOverTrash(false)
-        // }
     }
 
     const removeQuestions = (id: string) => {
         setQuestions((prev) => prev.filter((it) => it.id !== id))
+        builder.reset()
     }
 
     const onTrashDragLeave = () => {
@@ -95,9 +88,8 @@ export default function Home() {
 
     const onTrashDrop = (e: React.DragEvent) => {
         e.preventDefault()
-        const id = e.dataTransfer.getData('text/plain')
-        if (id) {
-            setQuestions((prev) => prev.filter((q) => q.id !== id))
+        if (draggingId){
+            removeQuestions(draggingId)
         }
         setIsDragging(false)
         setIsOverTrash(false)
@@ -147,14 +139,7 @@ export default function Home() {
                     >
                         {questions.map((q) => (
                             <div key={q.id} className="grid-item">
-                                <div
-                                    className="drag-handle"
-                                    draggable
-                                    onDragStart={(e) => onDragStart(e, q.id)}
-                                    onDragEnd={onDragEnd}
-                                >
-                                    ⋮⋮
-                                </div>
+                                <div className="drag-handle">⋮⋮</div>
                                 <div className="no-drag">
                                     <DynamicComponentRenderer
                                         component={q.component}
