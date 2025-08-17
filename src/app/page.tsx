@@ -18,7 +18,7 @@ export default function Home() {
     const [questions, setQuestions] = useState<QuestionItem[]>([])
 
     const [isDragging, setIsDragging] = useState(false)
-    const [draggingId, setDraggingId] = useState<string | null>(null)
+    // draggingId was removed because we use dataTransfer for identifying drops
     const [isOverTrash, setIsOverTrash] = useState(false)
 
     const layoutsApi = useLayouts()
@@ -52,22 +52,17 @@ export default function Home() {
     })
 
     // Helpers
-    const removeQuestions = (id: string) => {
-        setQuestions((prev) => prev.filter((it) => it.id !== id))
-    }
 
     const onDragStart = (e: React.DragEvent<HTMLDivElement>, id: string) => {
         // Required for HTML5 DnD
         e.dataTransfer.setData('text/plain', String(id))
         e.dataTransfer.effectAllowed = 'move'
-        setDraggingId(id)
-        setIsDragging(true)
+    setIsDragging(true)
     }
 
     const onDragEnd = () => {
-        setIsDragging(false)
-        setDraggingId(null)
-        setIsOverTrash(false)
+    setIsDragging(false)
+    setIsOverTrash(false)
     }
     // Trash (toast) handlers
     const onTrashDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -79,29 +74,27 @@ export default function Home() {
     const onTrashDragEnter = () => {
         setIsOverTrash(true)
         // Delete-on-hover behavior (as requested)
-        if (draggingId !== null) {
-            removeQuestions(draggingId)
-            // Reset drag state so the toast can hide cleanly
-            setDraggingId(null)
-            setIsDragging(false)
-            setIsOverTrash(false)
-        }
+        // if (draggingId !== null) {
+        //     removeQuestions(draggingId)
+        //     // Reset drag state so the toast can hide cleanly
+        //     setDraggingId(null)
+        //     setIsDragging(false)
+        //     setIsOverTrash(false)
+        // }
     }
 
     const onTrashDragLeave = () => {
         setIsOverTrash(false)
     }
 
-    const onTrashDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    const onTrashDrop = (e: React.DragEvent) => {
         e.preventDefault()
-        const data = e.dataTransfer.getData('text/plain')
-        const id = Number.parseInt(data, 10)
-        // if (!Number.isNaN(id)) {
-        //   removeQuestions(id);
-        // }
-        setIsDragging(false)
-        setDraggingId(null)
-        setIsOverTrash(false)
+        const id = e.dataTransfer.getData('text/plain')
+        if (id) {
+            setQuestions((prev) => prev.filter((q) => q.id !== id))
+        }
+    setIsDragging(false)
+    setIsOverTrash(false)
     }
 
     return (
@@ -134,16 +127,26 @@ export default function Home() {
                         className="layout"
                         layouts={layoutsApi.layouts}
                         onLayoutChange={(_, l) => layoutsApi.setLayouts(l)}
+                        onDragStart={() => setIsDragging(true)}
                         rowHeight={60}
                         isDraggable
                         isResizable
                         compactType={null}
                         preventCollision={false}
-                        onDragStop={(_, l) => layoutsApi.setLayouts(l)}
+                        onDragStop={(_, l) => {
+                            setIsDragging(false);
+                            layoutsApi.setLayouts(l);
+                        }}
                         onResizeStop={(_, l) => layoutsApi.setLayouts(l)}
                     >
                         {questions.map((q) => (
-                            <div key={q.id} className="grid-item">
+                            <div
+                                key={q.id}
+                                className="grid-item"
+                                draggable
+                                onDragStart={(e) => onDragStart(e, q.id)}
+                                onDragEnd={onDragEnd}
+                            >
                                 <div className="drag-handle">⋮⋮</div>
                                 <div className="no-drag">
                                     <DynamicComponentRenderer
