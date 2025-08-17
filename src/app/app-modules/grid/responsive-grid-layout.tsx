@@ -14,6 +14,7 @@ export interface ResponsiveGridLayoutProps {
   className?: string;
   rowHeight?: number;
   onLayoutChange?: (layout: Layout[], layouts: Layouts) => void;
+  onDragStart?: (...args: unknown[]) => void;
   cols?: Record<string, number>;
   layouts?: Layouts;
   breakpoints?: Record<string, number>;
@@ -46,8 +47,14 @@ const ResponsiveGridLayout = (props: ResponsiveGridLayoutProps) => {
       margin={props.margin || [10, 10]}
       isDraggable={props.isDraggable !== undefined ? props.isDraggable : true}
       isResizable={props.isResizable !== undefined ? props.isResizable : true}
-      onDragStart={() => setIsDragging(true)}
-      onDragStop={() => setIsDragging(false)}
+      onDragStart={(...args: unknown[]) => {
+        setIsDragging(true);
+        if (props.onDragStart) props.onDragStart(...args);
+      }}
+      onDragStop={(...args: unknown[]) => {
+        setIsDragging(false);
+        if (props.onDragStop) props.onDragStop(args[0] as Layout[], args[1] as Layouts);
+      }}
       compactType={props.compactType ?? null}
       preventCollision={props.preventCollision ?? false}
       onLayoutChange={props.onLayoutChange}
