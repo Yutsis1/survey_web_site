@@ -27,22 +27,24 @@ export const DeleteDropzone: React.FC<DeleteDropzoneProps> = ({
         (isDragging ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0")
       }
     >
-      <div
-        className={
-          "delete-dropzone-card pointer-events-auto mx-auto max-w-xl rounded-2xl shadow-lg border flex items-center justify-center py-3 " +
-          (isOverTrash
-            ? "bg-red-600 text-white border-red-700"
-            : "bg-white text-gray-800 border-gray-200")
-        }
-        onDragOver={onDragOver}
-        onDragEnter={onDragEnter}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        role="button"
-        aria-label="Delete area"
-      >
-        {isOverTrash ? "Release to delete" : "Drag here to delete"}
-      </div>
+    <div
+      className={
+        "delete-dropzone-card pointer-events-auto mx-auto max-w-xl rounded-2xl shadow-lg border flex items-center justify-center py-3"
+      }
+      style={{
+        backgroundColor: isOverTrash ? "var(--color-danger)" : "var(--foreground)",
+        color: isOverTrash ? "var(--color-light)" : "var(--background)",
+        borderColor: isOverTrash ? "var(--color-danger)" : "var(--color-dark)",
+      }}
+      onDragOver={onDragOver}
+      onDragEnter={onDragEnter}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      role="button"
+      aria-label="Delete area"
+    >
+      {isOverTrash ? "Release to delete" : "Drag here to delete"}
+    </div>
     </div>
   );
 };
