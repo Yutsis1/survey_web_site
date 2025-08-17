@@ -1,0 +1,41 @@
+/* Delete dropzone styles */
+.delete-dropzone-outer {
+	z-index: 60; /* above most content but below modals if any (adjust if needed) */
+	display: block;
+	will-change: transform, opacity;
+}
+
+.delete-dropzone-outer.opacity-0 {
+	pointer-events: none;
+}
+
+.delete-dropzone-card {
+	min-height: 56px;
+	padding-left: 1rem;
+	padding-right: 1rem;
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	box-sizing: border-box;
+}
+
+/* Make sure card doesn't stretch full width on small screens */
+@media (max-width: 640px) {
+	.delete-dropzone-card {
+		margin: 0 1rem;
+	}
+}
+
+/* utility-like classes used from component for smooth transitions */
+.translate-y-6 {
+	transform: translateY(1.5rem);
+}
+.translate-y-0 {
+	transform: translateY(0);
+}
+.opacity-0 {
+	opacity: 0;
+}
+.opacity-100 {
+	opacity: 1;
+}
+
