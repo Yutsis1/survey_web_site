@@ -16,9 +16,9 @@ import './styles.css'
 export default function Home() {
     const [isPopUpOpen, setIsPopUpOpen] = useState(false)
     const [questions, setQuestions] = useState<QuestionItem[]>([])
+    const [draggingId, setDraggingId] = useState<string | null>(null)
 
     const [isDragging, setIsDragging] = useState(false)
-    // draggingId was removed because we use dataTransfer for identifying drops
     const [isOverTrash, setIsOverTrash] = useState(false)
 
     const layoutsApi = useLayouts()
@@ -57,11 +57,13 @@ export default function Home() {
         // Required for HTML5 DnD
         e.dataTransfer.setData('text/plain', String(id))
         e.dataTransfer.effectAllowed = 'move'
+    setDraggingId(id)
     setIsDragging(true)
     }
 
     const onDragEnd = () => {
     setIsDragging(false)
+    setDraggingId(null)
     setIsOverTrash(false)
     }
     // Trash (toast) handlers
@@ -74,13 +76,17 @@ export default function Home() {
     const onTrashDragEnter = () => {
         setIsOverTrash(true)
         // Delete-on-hover behavior (as requested)
-        // if (draggingId !== null) {
-        //     removeQuestions(draggingId)
-        //     // Reset drag state so the toast can hide cleanly
-        //     setDraggingId(null)
-        //     setIsDragging(false)
-        //     setIsOverTrash(false)
-        // }
+        if (draggingId !== null) {
+            removeQuestions(draggingId)
+            // Reset drag state so the toast can hide cleanly
+            setDraggingId(null)
+            setIsDragging(false)
+            setIsOverTrash(false)
+        }
+    }
+
+    const removeQuestions = (id: string) => {
+        setQuestions((prev) => prev.filter((it) => it.id !== id))
     }
 
     const onTrashDragLeave = () => {
@@ -93,8 +99,8 @@ export default function Home() {
         if (id) {
             setQuestions((prev) => prev.filter((q) => q.id !== id))
         }
-    setIsDragging(false)
-    setIsOverTrash(false)
+        setIsDragging(false)
+        setIsOverTrash(false)
     }
 
     return (
@@ -134,8 +140,8 @@ export default function Home() {
                         compactType={null}
                         preventCollision={false}
                         onDragStop={(_, l) => {
-                            setIsDragging(false);
-                            layoutsApi.setLayouts(l);
+                            setIsDragging(false)
+                            layoutsApi.setLayouts(l)
                         }}
                         onResizeStop={(_, l) => layoutsApi.setLayouts(l)}
                     >
@@ -143,11 +149,15 @@ export default function Home() {
                             <div
                                 key={q.id}
                                 className="grid-item"
-                                draggable
-                                onDragStart={(e) => onDragStart(e, q.id)}
-                                onDragEnd={onDragEnd}
                             >
-                                <div className="drag-handle">⋮⋮</div>
+                                <div
+                                    className="drag-handle"
+                                    draggable
+                                    onDragStart={(e) => onDragStart(e, q.id)}
+                                    onDragEnd={onDragEnd}
+                                >
+                                    ⋮⋮
+                                </div>
                                 <div className="no-drag">
                                     <DynamicComponentRenderer
                                         component={q.component}
