@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Sidebar } from './app-modules/sidebar/sidebar'
 import { PopUp } from './app-modules/pop-up/pop-up'
 import { ResponsiveGridLayout } from './app-modules/grid/responsive-grid-layout'
@@ -51,21 +51,6 @@ export default function Home() {
         radioBar: builder.radioBar,
     })
 
-    // Helpers
-
-    // const onDragStart = (e: React.DragEvent<HTMLDivElement>, id: string) => {
-    //     // Required for HTML5 DnD
-    //     e.dataTransfer.setData('text/plain', String(id))
-    //     e.dataTransfer.effectAllowed = 'move'
-    //     setDraggingId(id)
-    //     setIsDragging(true)
-    // }
-
-    // const onDragEnd = () => {
-    //     setIsDragging(false)
-    //     setDraggingId(null)
-    //     setIsOverTrash(false)
-    // }
     // Trash (toast) handlers
     const onTrashDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         // Allow dropping
@@ -94,6 +79,30 @@ export default function Home() {
         setIsDragging(false)
         setIsOverTrash(false)
     }
+
+    // While react-grid-layout drag is active, track mouse position and set isOverTrash
+    // drop idea to use events such as onTrashDrop, onTrashDragLeave etc. 
+    // had to move dragable logic in css 
+    useEffect(() => {
+        // check is dragging or not
+        if (!isDragging) return
+        const onMove = (ev: MouseEvent) => {
+            // select drop element and if we hover on it 
+            const dropEl = document.querySelector('.delete-dropzone-card') as HTMLElement | null
+            if (!dropEl) return
+            // getting coordinates of dropDelete component 
+            const rect = dropEl.getBoundingClientRect()
+            // calculate is over rectangle of drop component
+            const over = ev.clientX >= rect.left && ev.clientX <= rect.right && ev.clientY >= rect.top && ev.clientY <= rect.bottom
+            setIsOverTrash(over)
+        }
+        window.addEventListener('mousemove', onMove)
+        return () => {
+            // cleanup event listener
+            window.removeEventListener('mousemove', onMove)
+            setIsOverTrash(false)
+        }
+    }, [isDragging])
 
     return (
         <div className="app-container">
@@ -125,15 +134,28 @@ export default function Home() {
                         className="layout"
                         layouts={layoutsApi.layouts}
                         onLayoutChange={(_, l) => layoutsApi.setLayouts(l)}
-                        onDragStart={() => setIsDragging(true)}
+                        onDragStart={(...args: unknown[]) => {
+                            // react-grid-layout passes several args; find an object with an 'i' id
+                            const item = args.find((a) => {
+                                return typeof a === 'object' && a !== null && 'i' in (a as Record<string, unknown>)
+                            }) as Record<string, unknown> | undefined
+                            if (item && typeof item.i === 'string') setDraggingId(String(item.i))
+                            setIsDragging(true)
+                        }}
                         rowHeight={60}
                         isDraggable
                         isResizable
                         compactType={null}
                         preventCollision={false}
-                        onDragStop={(_, l) => {
+                        onDragStop={(layout, layouts) => {
+                            // If pointer was over dropzone on stop, remove the dragged item
+                            if (isOverTrash && draggingId) {
+                                removeQuestions(draggingId)
+                            }
                             setIsDragging(false)
-                            layoutsApi.setLayouts(l)
+                            setDraggingId(null)
+                            setIsOverTrash(false)
+                            layoutsApi.setLayouts(layouts)
                         }}
                         onResizeStop={(_, l) => layoutsApi.setLayouts(l)}
                     >
