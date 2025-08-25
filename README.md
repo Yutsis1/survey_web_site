@@ -7,7 +7,9 @@ A small personal project to learn building a survey application. The repo contai
 - Node.js v22.8.0 or newer
 - npm (bundled with Node.js) or an alternative package manager
 - Python 3.9+ to run the backend locally
+- MongoDB 8
 - Docker (optional, for running the backend in a container)
+
 
 ## Getting started (frontend)
 
@@ -73,7 +75,4 @@ Replace `<your-uri>` and `<db-name>` with your MongoDB connection string and dat
 
 Small, focused pull requests are welcome. If you add features that require new env vars or new build steps, update this README accordingly.
 
-## License
-
-This project is a personal learning repository. Add a license file if you want to make the terms explicit.
 
