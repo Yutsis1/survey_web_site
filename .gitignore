@@ -43,3 +43,5 @@ next-env.d.ts
 
 # experemental 
 /experements
+# python
+__pycache__/
