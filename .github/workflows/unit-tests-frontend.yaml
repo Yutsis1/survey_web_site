@@ -1,4 +1,4 @@
-name: GitHub Actions Unit Tests
+name: GitHub Actions Unit Tests Frontend
 run-name: ${{ github.actor }} Unit tests run Frontend
 
 on:
