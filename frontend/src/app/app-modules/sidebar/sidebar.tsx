@@ -17,6 +17,7 @@ const Sidebar: React.FC<SidebarProps> = ({ buttons }) => {
               onClick={button.onClick}
               className={button.className}
               test_id={button.test_id || undefined}
+              disabled={button.disabled}
             />
           </li>
         ))}

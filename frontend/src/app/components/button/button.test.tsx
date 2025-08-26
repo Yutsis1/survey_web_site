@@ -31,6 +31,12 @@ describe('Button component', () => {
         expect(buttonElement).toBeInTheDocument()
     })
 
+    test('respects disabled prop', () => {
+        render(<Button label="Click me" disabled />)
+        const buttonElement = screen.getByText(/Click me/i)
+        expect(buttonElement).toBeDisabled()
+    })
+
     test('calls onClick prop when clicked', () => {
         const handleClick = vi.fn()
         render(<Button label="Click me" onClick={handleClick} />)
