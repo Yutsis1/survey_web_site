@@ -14,7 +14,13 @@ A small personal project to learn building a survey application. The repo contai
 ## Getting started (frontend)
 
 Install frontend dependencies:
+The frontend now lives in the frontend/ directory. Change into it before running install commands:
 
+```powershell
+cd frontend
+```
+
+If you use a different package manager, run the appropriate install command from that directory (e.g. yarn install or pnpm install) before running the npm scripts.
 ```powershell
 npm ci
 ```
