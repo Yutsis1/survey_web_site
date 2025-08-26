@@ -1,15 +1,23 @@
-name: GitHub Actions Unit Tests
-run-name: ${{ github.actor }} Unit tests run
+name: GitHub Actions Unit Tests Frontend
+run-name: ${{ github.actor }} Unit tests run Frontend
 
 on:
   pull_request:
     types: [opened, reopened, synchronize]
+    paths:
+      - 'frontend/**'
+env:                    
+  NODE_VERSION: 'lts/*'
+  WORKDIR: ./frontend
 
 jobs:
   unit-tests:
     # (extra safety) ensure the PR is open
     if: ${{ github.event.pull_request.state == 'open' }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKDIR }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,8 +25,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: ${{ env.WORKDIR }}/package-lock.json
 
       - name: Install dependencies
         run: npm ci

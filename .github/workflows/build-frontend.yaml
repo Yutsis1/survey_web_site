@@ -4,19 +4,35 @@ run-name: ${{ github.actor }} app Build
 on:
   pull_request:
     types: [opened, reopened, synchronize]
+    paths:
+      - 'frontend/**'
+
+env:                    
+  NODE_VERSION: 'lts/*'
+  WORKDIR: ./frontend
+
 jobs:
   app-build:
     # (extra safety) ensure the PR is open
     if: ${{ github.event.pull_request.state == 'open' }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKDIR }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 'latest'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKDIR }}/package-lock.json
+
       - name: Install dependencies
-        run: npm install
+        run: |
+           pwd
+           npm install
       - name: Run build
         run: npm run build
