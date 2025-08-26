@@ -6,6 +6,9 @@ on:
     types: [opened, reopened, synchronize]
     paths:
       - 'frontend/**'
+env:                    
+  NODE_VERSION: 'lts/*'
+  WORKDIR: ./frontend
 
 jobs:
   unit-tests:
@@ -14,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./frontend
+        working-directory: ${{ env.WORKDIR }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,7 +25,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
