@@ -71,6 +71,7 @@ export default function Home() {
             setQuestions(survey.questions)
             // Build responsive layouts from array order
             const layouts = generateLayouts(survey.questions)
+
             layoutsApi.setLayouts(layouts)
             alert('Survey loaded')
         } catch (e) {
