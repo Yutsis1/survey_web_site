@@ -41,6 +41,11 @@ npm start
 
 If a `dev` script is not present you can use `npm start` as the project was previously using that command.
 
+Environment variables (frontend):
+
+- `NEXT_PUBLIC_API_URL` — Base URL of the backend API (e.g. `http://localhost:8000`).
+  The frontend uses this to issue `fetch` requests to the `/surveys` endpoints.
+
 ## Backend (FastAPI)
 
 The backend lives in `backend/` and uses FastAPI. It expects a MongoDB database to store survey data.

@@ -7,11 +7,14 @@ export interface ButtonProps {
     onClick?: () => void;
     className?: string;
     test_id?: string;
+    disabled?: boolean;
 }
 
-const Button: React.FC<ButtonProps> = ({ label, className='button-base', test_id, onClick }) => {
+const Button: React.FC<ButtonProps> = ({ label, className = 'button-base', test_id, onClick, disabled }) => {
     return (
-        <button className={className} data-testid={test_id} onClick={onClick}>{label}</button>
+        <button className={className} data-testid={test_id} onClick={onClick} disabled={disabled}>
+            {label}
+        </button>
     );
 };
 

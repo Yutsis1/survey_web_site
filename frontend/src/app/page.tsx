@@ -12,6 +12,8 @@ import { getPopupComponentsAndOptions } from './app-modules/pop-up/pop-up-questi
 import { createNewQuestion } from './app-modules/questions/questions-factory'
 import { DeleteDropzone } from './components/deleteDropzone/deleteDropzone'
 import './styles.css'
+import { saveSurvey, fetchSurvey } from './services/surveys'
+import type { Layouts } from 'react-grid-layout'
 
 export default function Home() {
     const [isPopUpOpen, setIsPopUpOpen] = useState(false)
@@ -20,6 +22,8 @@ export default function Home() {
 
     const [isDragging, setIsDragging] = useState(false)
     const [isOverTrash, setIsOverTrash] = useState(false)
+    const [saving, setSaving] = useState(false)
+    const [loadingSurvey, setLoadingSurvey] = useState(false)
 
     const layoutsApi = useLayouts()
     const builder = useQuestionBuilder()
@@ -40,6 +44,43 @@ export default function Home() {
     const handleClose = () => {
         setIsPopUpOpen(false)
         builder.reset()
+    }
+
+    const handleSaveSurvey = async () => {
+        setSaving(true)
+        try {
+            const { id } = await saveSurvey({ questions })
+            alert(`Survey saved with id: ${id}`)
+        } catch (e) {
+            console.error(e)
+            alert('Failed to save survey')
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const handleLoadSurvey = async () => {
+        const id = prompt('Enter survey id')
+        if (!id) return
+        setLoadingSurvey(true)
+        try {
+            const survey = await fetchSurvey(id)
+            setQuestions(survey.questions)
+            const layouts: Layouts = {
+                lg: survey.questions.map(q => q.layout),
+                md: survey.questions.map(q => q.layout),
+                sm: survey.questions.map(q => q.layout),
+                xs: survey.questions.map(q => q.layout),
+                xxs: survey.questions.map(q => q.layout),
+            }
+            layoutsApi.setLayouts(layouts)
+            alert('Survey loaded')
+        } catch (e) {
+            console.error(e)
+            alert('Failed to load survey')
+        } finally {
+            setLoadingSurvey(false)
+        }
     }
 
     const popup = getPopupComponentsAndOptions({
@@ -123,6 +164,20 @@ export default function Home() {
                             },
                             className: 'button-base',
                             test_id: 'button-2',
+                        },
+                        {
+                            label: saving ? 'Saving...' : 'Save Survey',
+                            onClick: handleSaveSurvey,
+                            className: 'button-base',
+                            test_id: 'button-save',
+                            disabled: saving,
+                        },
+                        {
+                            label: loadingSurvey ? 'Loading...' : 'Load Survey',
+                            onClick: handleLoadSurvey,
+                            className: 'button-base',
+                            test_id: 'button-load',
+                            disabled: loadingSurvey,
                         },
                     ]}
                 />
