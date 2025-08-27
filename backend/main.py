@@ -2,6 +2,7 @@ import os
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import motor.motor_asyncio
 from bson import ObjectId
@@ -22,6 +23,16 @@ class Survey(BaseModel):
 
 
 app = FastAPI()
+# add CORS resolves
+origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,        # or ["*"] if NOT use cookies/auth
+    allow_credentials=True,       # when will sending cookies/Authorization
+    allow_methods=["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+    allow_headers=["Content-Type","Authorization"],
+)
 
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 MONGODB_DB = os.getenv("MONGODB_DB", "survey")
