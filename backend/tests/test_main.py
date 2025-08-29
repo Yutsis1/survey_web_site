@@ -5,7 +5,6 @@ from bson import ObjectId
 from backend.main import app
 from backend.db.mongoDB import surveys_collection
 
-# python
 
 # Relative import of the app and surveys_collection to test (package-aware)
 
