@@ -9,6 +9,16 @@ from .middleware.error_handling import cache_body_middleware, validation_excepti
 
 
 app = FastAPI()
+# add CORS resolves
+origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,        # or ["*"] if NOT use cookies/auth
+    allow_credentials=True,       # when will sending cookies/Authorization
+    allow_methods=["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+    allow_headers=["Content-Type","Authorization"],
+)
 
 app.include_router(surveys.router)
 
