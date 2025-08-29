@@ -1,4 +1,7 @@
 
+"""
+Route for managing surveys.
+"""
 from bson import ObjectId
 from fastapi import APIRouter, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -14,12 +17,12 @@ router = APIRouter(
 
 @router.post("/")
 async def create_survey(survey: Survey):
-    """_summary_
+    """Create a new survey.
 
-    :param survey: _description_
+    :param survey: The survey to create.
     :type survey: Survey
-    :return: _description_
-    :rtype: _type_
+    :return: The ID of the created survey.
+    :rtype: dict
     """
     try:
         survey_dict = survey.model_dump(exclude_none=True)

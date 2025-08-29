@@ -1,16 +1,11 @@
-import os
-from typing import List, Optional, Dict, Any, Union
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import motor.motor_asyncio
-from bson import ObjectId
 import uvicorn
 from fastapi.exceptions import RequestValidationError
 
 from .routers import surveys
 from .middleware.error_handling import cache_body_middleware, validation_exception_handler
-from .models.surveys import Survey, QuestionItem
 
 
 app = FastAPI()
