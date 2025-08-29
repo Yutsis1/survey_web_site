@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from types import SimpleNamespace
 from bson import ObjectId
-from .main import app, surveys_collection
+from ..main import app, surveys_collection
 
 # python
 
