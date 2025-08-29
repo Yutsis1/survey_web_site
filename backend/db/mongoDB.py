@@ -1,6 +1,6 @@
 
 import os
-import motor
+import motor.motor_asyncio
 
 
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")

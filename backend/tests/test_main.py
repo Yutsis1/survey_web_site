@@ -2,7 +2,8 @@ import pytest
 from fastapi.testclient import TestClient
 from types import SimpleNamespace
 from bson import ObjectId
-from ..main import app, surveys_collection
+from backend.main import app
+from backend.db.mongoDB import surveys_collection
 
 # python
 
@@ -53,7 +54,14 @@ async def test_get_survey_success(monkeypatch):
                 "id": "q1",
                 "questionText": "Are you satisfied?",
                 "component": "radio",
-                "option": ["yes", "no"],
+                "option": {
+                    "optionProps": {
+                        "buttons": [
+                            {"label": "yes", "value": "yes"},
+                            {"label": "no", "value": "no"}
+                        ]
+                    }
+                },
                 "layout": None,
             }
         ],
@@ -72,7 +80,14 @@ async def test_get_survey_success(monkeypatch):
     data = resp.json()
     assert data["id"] == str(object_id)
     assert data["title"] == fake_doc["title"]
-    assert data["questions"] == fake_doc["questions"]
+    assert len(data["questions"]) == 1
+    assert data["questions"][0]["id"] == "q1"
+    assert data["questions"][0]["questionText"] == "Are you satisfied?"
+    assert data["questions"][0]["component"] == "radio"
+    assert data["questions"][0]["option"]["optionProps"]["buttons"] == [
+        {"label": "yes", "value": "yes"},
+        {"label": "no", "value": "no"}
+    ]
 
 
 @pytest.mark.asyncio

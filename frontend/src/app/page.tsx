@@ -13,7 +13,6 @@ import { createNewQuestion } from './app-modules/questions/questions-factory'
 import { DeleteDropzone } from './components/deleteDropzone/deleteDropzone'
 import './styles.css'
 import { saveSurvey, fetchSurvey } from './services/surveys'
-import type { Layouts } from 'react-grid-layout'
 
 export default function Home() {
     const [isPopUpOpen, setIsPopUpOpen] = useState(false)
