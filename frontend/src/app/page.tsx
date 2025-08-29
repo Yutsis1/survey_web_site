@@ -13,7 +13,6 @@ import { createNewQuestion } from './app-modules/questions/questions-factory'
 import { DeleteDropzone } from './components/deleteDropzone/deleteDropzone'
 import './styles.css'
 import { saveSurvey, fetchSurvey } from './services/surveys'
-import type { Layouts } from 'react-grid-layout'
 
 export default function Home() {
     const [isPopUpOpen, setIsPopUpOpen] = useState(false)
@@ -35,7 +34,10 @@ export default function Home() {
             builder.buildConfig(),
             questions.length
         )
-        layoutsApi.append(item.layout)
+
+        // Append a default RGL item for this new question
+        layoutsApi.append({ i: String(item.id), x: 0, y: Infinity, w: 3, h: 2 })
+
         setQuestions((prev) => [...prev, item])
         setIsPopUpOpen(false)
         builder.reset()
@@ -66,13 +68,9 @@ export default function Home() {
         try {
             const survey = await fetchSurvey(id)
             setQuestions(survey.questions)
-            const layouts: Layouts = {
-                lg: survey.questions.map(q => q.layout),
-                md: survey.questions.map(q => q.layout),
-                sm: survey.questions.map(q => q.layout),
-                xs: survey.questions.map(q => q.layout),
-                xxs: survey.questions.map(q => q.layout),
-            }
+            // Build responsive layouts from array order
+            const layouts = generateLayouts(survey.questions)
+
             layoutsApi.setLayouts(layouts)
             alert('Survey loaded')
         } catch (e) {
@@ -104,7 +102,13 @@ export default function Home() {
     }
 
     const removeQuestions = (id: string) => {
-        setQuestions((prev) => prev.filter((it) => it.id !== id))
+        setQuestions((prev) => {
+            const next = prev.filter((it) => it.id !== id)
+            // Repack so there are no holes (optional)
+            const layouts = generateLayouts(next)
+            layoutsApi.setLayouts(layouts)
+            return next
+        })
         builder.reset()
     }
 
@@ -114,7 +118,7 @@ export default function Home() {
 
     const onTrashDrop = (e: React.DragEvent) => {
         e.preventDefault()
-        if (draggingId){
+        if (draggingId) {
             removeQuestions(draggingId)
         }
         setIsDragging(false)
@@ -122,19 +126,25 @@ export default function Home() {
     }
 
     // While react-grid-layout drag is active, track mouse position and set isOverTrash
-    // drop idea to use events such as onTrashDrop, onTrashDragLeave etc. 
-    // had to move dragable logic in css 
+    // drop idea to use events such as onTrashDrop, onTrashDragLeave etc.
+    // had to move dragable logic in css
     useEffect(() => {
         // check is dragging or not
         if (!isDragging) return
         const onMove = (ev: MouseEvent) => {
-            // select drop element and if we hover on it 
-            const dropEl = document.querySelector('.delete-dropzone-card') as HTMLElement | null
+            // select drop element and if we hover on it
+            const dropEl = document.querySelector(
+                '.delete-dropzone-card'
+            ) as HTMLElement | null
             if (!dropEl) return
-            // getting coordinates of dropDelete component 
+            // getting coordinates of dropDelete component
             const rect = dropEl.getBoundingClientRect()
             // calculate is over rectangle of drop component
-            const over = ev.clientX >= rect.left && ev.clientX <= rect.right && ev.clientY >= rect.top && ev.clientY <= rect.bottom
+            const over =
+                ev.clientX >= rect.left &&
+                ev.clientX <= rect.right &&
+                ev.clientY >= rect.top &&
+                ev.clientY <= rect.bottom
             setIsOverTrash(over)
         }
         window.addEventListener('mousemove', onMove)
@@ -144,6 +154,22 @@ export default function Home() {
             setIsOverTrash(false)
         }
     }, [isDragging])
+
+    type RGLItem = { i: string; x: number; y: number; w: number; h: number }
+
+    function generateLayouts(
+        questions: { id: string }[],
+        cols = 12,
+        w = 3,
+        h = 2
+    ) {
+        const base: RGLItem[] = questions.map((q, idx) => {
+            const col = (idx * w) % cols
+            const row = Math.floor((idx * w) / cols) * h
+            return { i: String(q.id), x: col, y: row, w, h }
+        })
+        return { lg: base, md: base, sm: base, xs: base, xxs: base } as const
+    }
 
     return (
         <div className="app-container">
@@ -192,9 +218,14 @@ export default function Home() {
                         onDragStart={(...args: unknown[]) => {
                             // react-grid-layout passes several args; find an object with an 'i' id
                             const item = args.find((a) => {
-                                return typeof a === 'object' && a !== null && 'i' in (a as Record<string, unknown>)
+                                return (
+                                    typeof a === 'object' &&
+                                    a !== null &&
+                                    'i' in (a as Record<string, unknown>)
+                                )
                             }) as Record<string, unknown> | undefined
-                            if (item && typeof item.i === 'string') setDraggingId(String(item.i))
+                            if (item && typeof item.i === 'string')
+                                setDraggingId(String(item.i))
                             setIsDragging(true)
                         }}
                         rowHeight={60}
@@ -250,5 +281,4 @@ export default function Home() {
             />
         </div>
     )
-    
 }
