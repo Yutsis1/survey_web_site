@@ -8,7 +8,7 @@ A small personal project to learn building a survey application. The repo contai
 - npm (bundled with Node.js) or an alternative package manager
 - Python 3.9+ to run the backend locally
 - MongoDB 8
-- Docker (optional, for running the backend in a container)
+- Docker (optional, for running the backend in a container or the full stack with Docker Compose)
 
 
 ## Getting started (frontend)
@@ -40,6 +40,14 @@ npm start
 ```
 
 If a `dev` script is not present you can use `npm start` as the project was previously using that command.
+
+Running frontend with Docker:
+
+```powershell
+cd frontend
+docker build -t survey-frontend .
+docker run -p 3000:3000 --env NEXT_PUBLIC_API_URL=http://localhost:8000 survey-frontend
+```
 
 Environment variables (frontend):
 
@@ -76,6 +84,40 @@ docker run -p 8000:8000 --env MONGODB_URI="<your-uri>" --env MONGODB_DB="<db-nam
 
 Replace `<your-uri>` and `<db-name>` with your MongoDB connection string and database name.
 
+## Running with Docker Compose
+
+To run the full stack (frontend, backend, and MongoDB) using Docker Compose:
+
+1. Ensure Docker and Docker Compose are installed.
+2. From the project root, run:
+
+```powershell
+docker-compose up --build
+```
+
+This will:
+- Build and start the frontend (Next.js) on port 3000.
+- Build and start the backend (FastAPI) on port 8000.
+- Start MongoDB on port 27017 with data persisted in a Docker volume.
+
+The frontend will be accessible at `http://localhost:3000`, and it will communicate with the backend at `http://localhost:8000`.
+
+Environment variables are pre-configured in `docker-compose.yml`:
+- Frontend: `NEXT_PUBLIC_API_URL=http://localhost:8000`
+- Backend: `MONGODB_URI=mongodb://mongodb:27017`, `MONGODB_DB=surveydb`
+
+To stop the services:
+
+```powershell
+docker-compose down
+```
+
+To run in detached mode (background):
+
+```powershell
+docker-compose up -d --build
+```
+
 ## Development notes
 
 - Tests and linters: check `package.json` and the project root for available scripts (for example `npm test`, `npm run lint`).
@@ -85,5 +127,4 @@ Replace `<your-uri>` and `<db-name>` with your MongoDB connection string and dat
 ## Contributing
 
 Small, focused pull requests are welcome. If you add features that require new env vars or new build steps, update this README accordingly.
-
 
