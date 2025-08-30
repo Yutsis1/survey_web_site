@@ -3,6 +3,9 @@ import { PopupComponent } from './comon-components/pop-up';
 import { SidebarComponent } from './comon-components/sidebar';
 
 export class SurveyCreatorsPage {
+  newQuestionButton(newQuestionButton: any) {
+    throw new Error('Method not implemented.');
+  }
   readonly page: Page;
 
   // Sidebar buttons
