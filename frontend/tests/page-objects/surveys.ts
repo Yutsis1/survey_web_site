@@ -1,43 +1,26 @@
 import { Page, Locator } from '@playwright/test';
+import { PopupComponent } from './comon-components/pop-up';
+import { SidebarComponent } from './comon-components/sidebar';
 
-export class HomePage {
+export class SurveyCreatorsPage {
   readonly page: Page;
 
   // Sidebar buttons
-  readonly newQuestionButton: Locator;
-  readonly clearQuestionsButton: Locator;
-  readonly saveSurveyButton: Locator;
-  readonly loadSurveyButton: Locator;
+  readonly sidebar: SidebarComponent;
 
   // Main content
   readonly gridContainer: Locator;
 
   // Popup
-  readonly popup: Locator;
-  readonly popupTitle: Locator;
-  readonly popupApplyButton: Locator;
-  readonly popupCloseButton: Locator;
+  readonly popup: PopupComponent;
 
   // Delete dropzone
   readonly deleteDropzone: Locator;
 
   constructor(page: Page) {
     this.page = page;
-
-    // Sidebar
-    this.newQuestionButton = page.locator('[data-testid="button-1"]');
-    this.clearQuestionsButton = page.locator('[data-testid="button-2"]');
-    this.saveSurveyButton = page.locator('[data-testid="button-save"]');
-    this.loadSurveyButton = page.locator('[data-testid="button-load"]');
-
-    // Grid
-    this.gridContainer = page.locator('.grid-container');
-
-    // Popup
-    this.popup = page.locator('.popup'); // Assuming class name
-    this.popupTitle = page.locator('.popup-title'); // Assuming
-    this.popupApplyButton = page.locator('.popup-apply'); // Assuming
-    this.popupCloseButton = page.locator('.popup-close'); // Assuming
+    this.sidebar = new SidebarComponent(page);
+    this.popup = new PopupComponent(page);
 
     // Delete dropzone
     this.deleteDropzone = page.locator('.delete-dropzone-card');
@@ -48,19 +31,19 @@ export class HomePage {
   }
 
   async clickNewQuestion() {
-    await this.newQuestionButton.click();
+    await this.sidebar.newQuestionButton.click();
   }
 
   async clickClearQuestions() {
-    await this.clearQuestionsButton.click();
+    await this.sidebar.clearQuestionsButton.click();
   }
 
   async clickSaveSurvey() {
-    await this.saveSurveyButton.click();
+    await this.sidebar.saveSurveyButton.click();
   }
 
   async clickLoadSurvey() {
-    await this.loadSurveyButton.click();
+    await this.sidebar.loadSurveyButton.click();
   }
 
   async isPopupOpen(): Promise<boolean> {
@@ -68,11 +51,11 @@ export class HomePage {
   }
 
   async applyPopup() {
-    await this.popupApplyButton.click();
+    await this.popup.applyButton.click();
   }
 
   async closePopup() {
-    await this.popupCloseButton.click();
+    await this.popup.closeButton.click();
   }
 
   async getQuestionCount(): Promise<number> {

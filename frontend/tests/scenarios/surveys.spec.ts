@@ -1,50 +1,50 @@
 import { test, expect } from '@playwright/test';
-import { HomePage } from '../page-objects/surveys';
+import { SurveyCreatorsPage } from '../page-objects/surveys';
 
 test.describe('Home Page Integration Tests', () => {
-  let homePage: HomePage;
+  let surveyCreatingPage: SurveyCreatorsPage;
 
   test.beforeEach(async ({ page }) => {
-    homePage = new HomePage(page);
-    await homePage.goto();
+    surveyCreatingPage = new SurveyCreatorsPage(page);
+    await surveyCreatingPage.goto();
   });
 
   test('should load the home page', async () => {
-    await expect(homePage.page).toHaveTitle(/Survey Web Site/); // Adjust title if needed
-    await expect(homePage.newQuestionButton).toBeVisible();
-    await expect(homePage.gridContainer).toBeVisible();
+    await expect(surveyCreatingPage.page).toHaveTitle(/Survey Web Site/); // Adjust title if needed
+    await expect(surveyCreatingPage.newQuestionButton).toBeVisible();
+    await expect(surveyCreatingPage.gridContainer).toBeVisible();
   });
 
   test('should open popup when clicking new question', async () => {
-    await homePage.clickNewQuestion();
-    await expect(homePage.popup).toBeVisible();
+    await surveyCreatingPage.clickNewQuestion();
+    await expect(surveyCreatingPage.popup).toBeVisible();
   });
 
   test('should add a new question', async () => {
-    const initialCount = await homePage.getQuestionCount();
-    await homePage.clickNewQuestion();
+    const initialCount = await surveyCreatingPage.getQuestionCount();
+    await surveyCreatingPage.clickNewQuestion();
     // Assuming default selection or add selection logic
-    await homePage.applyPopup();
-    await expect(homePage.popup).not.toBeVisible();
-    const newCount = await homePage.getQuestionCount();
+    await surveyCreatingPage.applyPopup();
+    await expect(surveyCreatingPage.popup).not.toBeVisible();
+    const newCount = await surveyCreatingPage.getQuestionCount();
     expect(newCount).toBe(initialCount + 1);
   });
 
   test('should clear all questions', async () => {
     // Add a question first
-    await homePage.clickNewQuestion();
-    await homePage.applyPopup();
-    expect(await homePage.getQuestionCount()).toBeGreaterThan(0);
+    await surveyCreatingPage.clickNewQuestion();
+    await surveyCreatingPage.applyPopup();
+    expect(await surveyCreatingPage.getQuestionCount()).toBeGreaterThan(0);
 
-    await homePage.clickClearQuestions();
-    await expect(homePage.page.locator('.grid-item')).toHaveCount(0);
+    await surveyCreatingPage.clickClearQuestions();
+    await expect(surveyCreatingPage.page.locator('.grid-item')).toHaveCount(0);
   });
 
   test('should save and load survey', async ({ page }) => {
     // Add a question
-    await homePage.clickNewQuestion();
-    await homePage.applyPopup();
-    const countBeforeSave = await homePage.getQuestionCount();
+    await surveyCreatingPage.clickNewQuestion();
+    await surveyCreatingPage.applyPopup();
+    const countBeforeSave = await surveyCreatingPage.getQuestionCount();
 
     // Mock the save and load since it uses alert and prompt
     // In real test, might need to mock the API or handle dialogs
@@ -56,24 +56,24 @@ test.describe('Home Page Integration Tests', () => {
       }
     });
 
-    await homePage.clickSaveSurvey();
+    await surveyCreatingPage.clickSaveSurvey();
     // Wait for alert
 
-    await homePage.clickLoadSurvey();
+    await surveyCreatingPage.clickLoadSurvey();
     // Wait for alert
 
-    const countAfterLoad = await homePage.getQuestionCount();
+    const countAfterLoad = await surveyCreatingPage.getQuestionCount();
     expect(countAfterLoad).toBe(countBeforeSave);
   });
 
   test('should delete question by dragging to trash', async () => {
     // Add a question
-    await homePage.clickNewQuestion();
-    await homePage.applyPopup();
-    expect(await homePage.getQuestionCount()).toBe(1);
+    await surveyCreatingPage.clickNewQuestion();
+    await surveyCreatingPage.applyPopup();
+    expect(await surveyCreatingPage.getQuestionCount()).toBe(1);
 
-    await homePage.dragQuestionToTrash(0);
-    await expect(homePage.page.locator('.grid-item')).toHaveCount(0);
+    await surveyCreatingPage.dragQuestionToTrash(0);
+    await expect(surveyCreatingPage.page.locator('.grid-item')).toHaveCount(0);
   });
 
   // Add more tests as needed
