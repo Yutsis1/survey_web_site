@@ -9,6 +9,8 @@ export interface TextFieldProps {
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   type?: string;
   className?: string;
+  id?: string;
+  name?: string;
 }
 
 const TextInput: React.FC<TextFieldProps> = ({
@@ -19,16 +21,21 @@ const TextInput: React.FC<TextFieldProps> = ({
   onChange,
   type = "text",
   className = "",
+  id,
+  name,
 }) => {
   return (
     <div className={`text-input-container ${className}`} data-testid={test_id}>
-      {label && <label className="text-input-label">{label}</label>}
+      {label && id && <label htmlFor={id} className="text-input-label">{label}</label>}
+      {label && !id && <label className="text-input-label">{label}</label>}
       <input
         type={type}
         className="text-input"
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        id={id}
+        name={name}
       />
     </div>
   );

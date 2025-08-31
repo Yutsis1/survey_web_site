@@ -1,11 +1,9 @@
 import { Page, Locator } from '@playwright/test';
-import { PopupComponent } from './comon-components/pop-up';
+// import { PopupComponent } from './comon-components/pop-up';
 import { SidebarComponent } from './comon-components/sidebar';
+import { PopupNewQuestionComponent } from './comon-components/pop-up-newQuestions';
 
 export class SurveyCreatorsPage {
-  newQuestionButton(newQuestionButton: any) {
-    throw new Error('Method not implemented.');
-  }
   readonly page: Page;
 
   // Sidebar buttons
@@ -15,7 +13,7 @@ export class SurveyCreatorsPage {
   readonly gridContainer: Locator;
 
   // Popup
-  readonly popup: PopupComponent;
+  readonly popup: PopupNewQuestionComponent;
 
   // Delete dropzone
   readonly deleteDropzone: Locator;
@@ -23,7 +21,7 @@ export class SurveyCreatorsPage {
   constructor(page: Page) {
     this.page = page;
     this.sidebar = new SidebarComponent(page);
-    this.popup = new PopupComponent(page);
+    this.popup = new PopupNewQuestionComponent(page);
 
     // Delete dropzone
     this.deleteDropzone = page.locator('.delete-dropzone-card');

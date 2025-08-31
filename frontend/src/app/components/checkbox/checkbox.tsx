@@ -7,6 +7,8 @@ export interface ToggleSwitchProps {
   inactiveLabel?: string;
   checked?: boolean;
   onChange: (checked: boolean) => void;
+  id?: string;
+  name?: string;
 }
 
 const Checkbox: React.FC<ToggleSwitchProps> = ({
@@ -14,6 +16,8 @@ const Checkbox: React.FC<ToggleSwitchProps> = ({
   inactiveLabel = "Inactive",
   checked,
   onChange,
+  id,
+  name,
 }) => {
   const [isChecked, setIsChecked] = React.useState(checked ?? false);
 
@@ -33,9 +37,11 @@ const Checkbox: React.FC<ToggleSwitchProps> = ({
         type="checkbox"
         checked={isChecked}
         onChange={handleChange}
+        id={id}
+        name={name}
       />
       <span className="slider"></span>
-      <span className="label">{isChecked ? activeLabel : inactiveLabel}</span>
+      {isChecked ? activeLabel : inactiveLabel}
     </label>
   );
 };

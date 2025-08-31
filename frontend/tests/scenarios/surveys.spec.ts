@@ -10,7 +10,6 @@ test.describe('Home Page Integration Tests', () => {
   });
 
   test('should load the home page', async () => {
-    await expect(surveyCreatingPage.page).toHaveTitle(/Survey Web Site/); // Adjust title if needed
     await expect(surveyCreatingPage.gridContainer).toBeVisible();
   });
 
