@@ -10,10 +10,7 @@ export class SidebarComponent {
   }
 
   getButtonLocatorByTestID(buttonId: string): Locator {
-    return this.baseLocator.getByTestId(`"${buttonId}"`);
-
-    // if getByTestId doesn't work, use this
-    // return this.baseLocator.locator(`"[data-testid=${buttonId}]"`);
+    return this.baseLocator.getByTestId(buttonId);
   }
 
   get newQuestionButton(): Locator {

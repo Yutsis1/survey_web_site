@@ -22,6 +22,7 @@ export class SurveyCreatorsPage {
     this.page = page;
     this.sidebar = new SidebarComponent(page);
     this.popup = new PopupNewQuestionComponent(page);
+    this.gridContainer = page.locator('.grid-container');
 
     // Delete dropzone
     this.deleteDropzone = page.locator('.delete-dropzone-card');

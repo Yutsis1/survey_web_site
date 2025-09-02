@@ -42,8 +42,11 @@ export class PopupNewQuestionComponent extends PopupComponent {
     get groupName() {
         return this.popupContent.getByRole('textbox', { name: this.textFieldNames.groupName });
     }
-    get options() {
+    get toggleOptions() {
         return this.popupContent.getByRole('textbox', { name: this.textFieldNames.toggleOptions });
+    }
+    get checkbox() {
+        return this.popupContent.getByRole('checkbox', { name: 'defaultState' });
     }
 
     selectRadioButton(value: string) {
@@ -76,11 +79,10 @@ export class PopupNewQuestionComponent extends PopupComponent {
             await this.writeInTextField(config.inactiveLabel, this.textFieldNames.inactiveLabel);
         }
         if (config.defaultState !== undefined) {
-            const checkbox = this.popupContent.locator('#checkbox-default-state');
             if (config.defaultState) {
-                await checkbox.check();
+                await this.checkbox.check();
             } else {
-                await checkbox.uncheck();
+                await this.checkbox.uncheck();
             }
         }
     }
