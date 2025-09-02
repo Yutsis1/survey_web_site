@@ -26,17 +26,30 @@ const TextInput: React.FC<TextFieldProps> = ({
 }) => {
   return (
     <div className={`text-input-container ${className}`} data-testid={test_id}>
-      {label && id && <label htmlFor={id} className="text-input-label">{label}</label>}
-      {label && !id && <label className="text-input-label">{label}</label>}
-      <input
-        type={type}
-        className="text-input"
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        id={id}
-        name={name}
-      />
+      {label ? (
+        <label className="text-input-label">
+          {label}
+          <input
+            type={type}
+            className="text-input"
+            placeholder={placeholder}
+            value={value}
+            onChange={onChange}
+            id={id}
+            name={name}
+          />
+        </label>
+      ) : (
+        <input
+          type={type}
+          className="text-input"
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          id={id}
+          name={name}
+        />
+      )}
     </div>
   );
 };

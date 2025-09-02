@@ -75,48 +75,47 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
           typeSelector,
           questionTextField,
           <DynamicComponentRenderer
-            key="active-label"
-            component="TextInput"
-            option={{
-              optionProps: {
-                label: 'Active label',
-                placeholder: 'Enter active label...',
-                onChange: (e: React.ChangeEvent<HTMLInputElement>) => 
-                  b.checkbox.set(prev => ({ ...prev, activeLabel: e.target.value })),
-                name: 'activeLabel',
-              } as TextFieldProps,
-            }}
-            showQuestionText={false}
+        key="active-label"
+        component="TextInput"
+        option={{
+          optionProps: {
+            label: 'Active label',
+            placeholder: 'Enter active label...',
+            onChange: (e: React.ChangeEvent<HTMLInputElement>) => 
+          b.checkbox.set(prev => ({ ...prev, activeLabel: e.target.value })),
+            name: 'activeLabel',
+          } as TextFieldProps,
+        }}
+        showQuestionText={false}
           />,
           <DynamicComponentRenderer
-            key="inactive-label"
-            component="TextInput"
-            option={{
-              optionProps: {
-                label: 'Inactive label',
-                placeholder: 'Enter inactive label...',
-                onChange: (e: React.ChangeEvent<HTMLInputElement>) => 
-                  b.checkbox.set(prev => ({ ...prev, inactiveLabel: e.target.value })),
-                name: 'inactiveLabel',
-              } as TextFieldProps,
-            }}
-            showQuestionText={false}
+        key="inactive-label"
+        component="TextInput"
+        option={{
+          optionProps: {
+            label: 'Inactive label',
+            placeholder: 'Enter inactive label...',
+            onChange: (e: React.ChangeEvent<HTMLInputElement>) => 
+          b.checkbox.set(prev => ({ ...prev, inactiveLabel: e.target.value })),
+            name: 'inactiveLabel',
+          } as TextFieldProps,
+        }}
+        showQuestionText={false}
           />,
           <DynamicComponentRenderer
-            key="default-state"
-            component="Checkbox"
-            option={{
-              optionProps: {
-                activeLabel: 'Default ON',
-                inactiveLabel: 'Default OFF',
-                checked: b.checkbox.value?.checked ?? false,
-                onChange: (checked: boolean) => 
-                  b.checkbox.set(prev => ({ ...prev, checked })),
-                id: 'checkbox-default-state',
-                name: 'defaultState',
-              } as ToggleSwitchProps,
-            }}
-            questionText="Default state"
+        key="default-state"
+        component="Checkbox"
+        option={{
+          optionProps: {
+            activeLabel: 'Default ON',
+            inactiveLabel: 'Default OFF',
+            checked: b.checkbox.value?.checked ?? false,
+            onChange: (checked: boolean) => 
+          b.checkbox.set(prev => ({ ...prev, checked })),
+            name: 'defaultState',
+          } as ToggleSwitchProps,
+        }}
+        questionText="Default state"
           />,
         ],
         questionText: 'Configure Checkbox Question'
@@ -135,7 +134,6 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
                 placeholder: 'Enter field label...',
                 onChange: (e: React.ChangeEvent<HTMLInputElement>) => 
                   b.textInput.set(prev => ({ ...prev, label: e.target.value })),
-                id: 'textinput-field-label',
                 name: 'fieldLabel',
               } as TextFieldProps,
             }}
