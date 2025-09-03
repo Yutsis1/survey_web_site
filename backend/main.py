@@ -6,6 +6,8 @@ from fastapi.exceptions import RequestValidationError
 
 from .routers import surveys
 from .middleware.error_handling import cache_body_middleware, validation_exception_handler
+from .migrations import run_migrations
+from .db.seed_data import seed_example_survey
 
 
 app = FastAPI()
@@ -37,6 +39,12 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
 )
+
+
+@app.on_event("startup")
+async def startup_event():
+    await run_migrations()
+    await seed_example_survey()
 
 
 # debug

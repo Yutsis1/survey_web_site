@@ -1,7 +1,7 @@
 import { Page, Locator } from '@playwright/test';
-// import { PopupComponent } from './comon-components/pop-up';
-import { SidebarComponent } from './comon-components/sidebar';
-import { PopupNewQuestionComponent } from './comon-components/pop-up-newQuestions';
+// import { PopupComponent } from './common-components/pop-up';
+import { SidebarComponent } from './common-components/sidebar';
+import { PopupNewQuestionComponent } from './common-components/pop-up-newQuestions';
 
 export class SurveyCreatorsPage {
   readonly page: Page;
@@ -33,7 +33,7 @@ export class SurveyCreatorsPage {
   }
 
   async clickNewQuestion() {
-    await this.sidebar.newQuestionButton.click();
+    await this.sidebar.clickNewQuestionButton();
   }
 
   async clickClearQuestions() {

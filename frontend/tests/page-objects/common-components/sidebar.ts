@@ -17,6 +17,10 @@ export class SidebarComponent {
     return this.getButtonLocatorByTestID('button-1');
   }
 
+  async clickNewQuestionButton() {
+    await this.newQuestionButton.click();
+  }
+
   get clearQuestionsButton(): Locator {
     return this.getButtonLocatorByTestID('button-2');
   }
