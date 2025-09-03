@@ -1,0 +1,25 @@
+name: Playwright Tests with Mocked Backend
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+          npx playwright install --with-deps
+      - name: Run Playwright tests
+        run: |
+          cd frontend
+          npx playwright test

@@ -1,10 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { SurveyCreatorsPage } from '../page-objects/surveys';
+import { setupBackendMocks } from '../mocks/backend';
 
 test.describe('Home Page Integration Tests', () => {
   let surveyCreatingPage: SurveyCreatorsPage;
 
   test.beforeEach(async ({ page }) => {
+    await setupBackendMocks(page);
     surveyCreatingPage = new SurveyCreatorsPage(page);
     await surveyCreatingPage.goto();
     await surveyCreatingPage.page.waitForLoadState('domcontentloaded');
