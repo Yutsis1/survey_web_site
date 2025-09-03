@@ -12,52 +12,46 @@ export class PopupNewQuestionComponent extends PopupComponent {
     };
 
     readonly textFieldNames = {
-        question: 'Type the question…',
-        activeLabel: 'Enter active label...',
-        inactiveLabel: 'Enter inactive label...',
-        fieldLabel: 'Enter field label...',
-        placeholder: 'Enter placeholder text...',
-        groupName: 'Enter group name...',
-        toggleOptions: 'Example: Red,Green,Blue'
+        question: 'questionText',
+        activeLabel: 'activeLabel',
+        inactiveLabel: 'inactiveLabel',
+        fieldLabel: 'fieldLabel',
+        placeholder: 'placeholderText',
+        groupName: 'groupName',
+        toggleOptions: 'optionsList'
     };
 
     constructor(page: Page, baseLocator?: Locator) {
         super(page, baseLocator);
         this.questionSelector = this.popupContent.getByTestId('radio-bar-question-type');
-        this.questionText = this.popupContent.getByRole(
-            'textbox',
-            { name: this.textFieldNames.question }
-        );
+        this.questionText = this.popupContent.locator('input[name="questionText"]');
     }
 
     get activeLabel() {
-        return this.popupContent.getByRole('textbox', { name: this.textFieldNames.activeLabel });
+        return this.popupContent.locator(`'input[name="${this.textFieldNames.activeLabel}"]'`);
     }
     get inactiveLabel() {
-        return this.popupContent.getByRole('textbox', { name: this.textFieldNames.inactiveLabel });
+        return this.popupContent.locator(`'input[name="${this.textFieldNames.inactiveLabel}"]'`);
     }
     get fieldLabel() {
-        return this.popupContent.getByRole('textbox', { name: this.textFieldNames.fieldLabel });
+        return this.popupContent.locator(`'input[name="${this.textFieldNames.fieldLabel}"]'`);
     }
     get groupName() {
-        return this.popupContent.getByRole('textbox', { name: this.textFieldNames.groupName });
+        return this.popupContent.locator(`'input[name="${this.textFieldNames.groupName}"]'`);
     }
     get toggleOptions() {
-        return this.popupContent.getByRole('textbox', { name: this.textFieldNames.toggleOptions });
+        return this.popupContent.locator(`'input[name="${this.textFieldNames.toggleOptions}"]'`);
     }
     get checkbox() {
-        return this.popupContent.getByRole('checkbox', { name: 'defaultState' });
+        return this.popupContent.locator('label:has(input[name="defaultState"])');
     }
 
-    selectRadioButton(value: string) {
-        return this.questionSelector.getByRole('radio', { name: value }).check();
+    async selectRadioButton(value: string) {
+        return await this.questionSelector.getByRole('radio', { name: value }).check();
     }
 
-    writeInTextField(value: string, textFieldName: string) {
-        return this.popupContent.getByRole(
-            'textbox',
-            { name: textFieldName }
-        ).fill(value);
+    async writeInTextField(value: string, textFieldName: string) {
+        return await this.popupContent.locator(`input[name="${textFieldName}"]`).fill(value);
     }
 
     // Checkbox configuration methods
@@ -79,10 +73,14 @@ export class PopupNewQuestionComponent extends PopupComponent {
             await this.writeInTextField(config.inactiveLabel, this.textFieldNames.inactiveLabel);
         }
         if (config.defaultState !== undefined) {
-            if (config.defaultState) {
-                await this.checkbox.check();
-            } else {
-                await this.checkbox.uncheck();
+            // Get current state by checking if the input is checked
+            // the this.checkbox isn't working for that particular purpose. 
+            const inputLocator = this.popupContent.locator('input[name="defaultState"]');
+            const currentState = await inputLocator.isChecked();
+            
+            // Only click if we need to change the state
+            if (config.defaultState !== currentState) {
+                await this.checkbox.click();
             }
         }
     }
