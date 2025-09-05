@@ -35,8 +35,16 @@ export default function Home() {
             questions.length
         )
 
-        // Append a default RGL item for this new question
-        layoutsApi.append({ i: String(item.id), x: 0, y: Infinity, w: 3, h: 2 })
+        // Calculate the next position for the new question
+        const cols = 12
+        const w = 3
+        const h = 2
+        const idx = questions.length
+        const col = (idx * w) % cols
+        const row = Math.floor((idx * w) / cols) * h
+
+        // Append a properly positioned RGL item for this new question
+        layoutsApi.append({ i: String(item.id), x: col, y: row, w, h })
 
         setQuestions((prev) => [...prev, item])
         setIsPopUpOpen(false)
@@ -164,6 +172,7 @@ export default function Home() {
         h = 2
     ) {
         const base: RGLItem[] = questions.map((q, idx) => {
+            // calculate col and row based on index
             const col = (idx * w) % cols
             const row = Math.floor((idx * w) / cols) * h
             return { i: String(q.id), x: col, y: row, w, h }

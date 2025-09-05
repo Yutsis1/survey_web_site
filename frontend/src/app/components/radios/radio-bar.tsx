@@ -45,7 +45,7 @@ const RadioBar: React.FC<RadioBarProps> = ({
                         checked={currentSelectedValue === button.value}
                         onChange={() => handleChange(button.value)}
                     />
-                    <span className="radio-label">{button.label}</span>
+                    {button.label}
                 </label>
             ))}
         </div>

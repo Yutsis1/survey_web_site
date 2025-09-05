@@ -9,6 +9,9 @@
     font-size: 14px;
     font-weight: 500;
     color: var(--foreground);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
   
 .text-input {

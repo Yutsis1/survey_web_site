@@ -74,8 +74,3 @@
     color: var(--foreground);
     cursor: pointer;
 }
-
-.radio-wrapper span {
-    font-size: 16px;
-    color: var(--foreground);
-}
