@@ -1,25 +1,26 @@
 name: Playwright Tests with Backend via Docker
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+    types:
+      - labeled
+      - unlabeled
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'run-integration')
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Start services
         run: |
           docker-compose up -d
       - name: Wait for frontend
         run: |
-          timeout 60 bash -c 'until curl -sSf http://localhost:3000 >/dev/null; do sleep 2; done'
+          timeout 10 bash -c 'until curl -sSf http://localhost:3000 >/dev/null; do sleep 2; done'
       - name: Install dependencies
         run: |
           cd frontend
