@@ -4,7 +4,7 @@ Router to manage user authentication: registration, login, token refresh.
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request, Cookie, Header
 from sqlalchemy import func
 from backend.db.sql.sql_driver import get_db
-from backend.models.api.auth import AccessOut, LoginIn, RegisterIn
+from backend.models.api.auth import AccessOut, RegisterIn
 from backend.models.db.sql.auth import RefreshToken, User
 import uuid
 
