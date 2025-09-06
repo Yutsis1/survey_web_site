@@ -4,3 +4,6 @@ motor
 pytest
 pytest-asyncio
 httpx
+sqlalchemy
+jose
+passlib

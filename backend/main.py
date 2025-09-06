@@ -4,11 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from fastapi.exceptions import RequestValidationError
 
-from .routers import surveys
-from .middleware.error_handling import cache_body_middleware, validation_exception_handler
-from .migrations import run_migrations
-from .db.seed_data import seed_example_survey
-
+from backend.routers import surveys
+from backend.middleware.error_handling import cache_body_middleware, validation_exception_handler
+from backend.migrations import run_migrations
+from backend.db.mongo.seed_data import seed_example_survey
+from contextlib import asynccontextmanager
 
 app = FastAPI()
 # add CORS resolves
@@ -41,10 +41,13 @@ app.add_middleware(
 )
 
 
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     await run_migrations()
     await seed_example_survey()
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 
 # debug
