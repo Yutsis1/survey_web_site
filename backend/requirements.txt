@@ -8,3 +8,5 @@ sqlalchemy
 jose
 passlib
 python-jose
+asyncpg
+psycopg-binary

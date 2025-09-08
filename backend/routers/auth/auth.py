@@ -35,6 +35,21 @@ def clear_refresh_cookie(resp: Response):
 
 @router.post("/auth/register", response_model=AccessOut)
 def register(payload: RegisterIn, resp: Response, db=Depends(get_db)):
+    """
+    Register a new user with the provided email and password.
+    This function handles user registration by validating the email, hashing the password,
+    creating a new user in the database, generating refresh and access tokens, and setting
+    the refresh token as a cookie in the response.
+    Args:
+        payload (RegisterIn): The input payload containing the user's email and password.
+        resp (Response): The HTTP response object to set the refresh token cookie.
+        db (Session): The database session dependency for querying and committing data.
+    Returns:
+        dict: A dictionary containing the access token with key "access_token".
+    Raises:
+        HTTPException: If the email is already registered, raises a 400 status code with
+                       detail "Email already registered".
+    """
     email = payload.email.lower().strip()
     if db.query(User).filter(func.lower(User.email) == email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
