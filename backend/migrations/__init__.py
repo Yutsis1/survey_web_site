@@ -1,4 +1,4 @@
-from backend.db.mongo import surveys_collection
+from backend.db.mongo.mongoDB import surveys_collection
 
 async def run_migrations() -> None:
     # Example migration: ensure index on survey title

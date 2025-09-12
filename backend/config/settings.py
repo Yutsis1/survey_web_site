@@ -2,6 +2,10 @@
 Application settings and configuration.
 """
 import os
+from dotenv import load_dotenv
+
+path_to_env = os.path.join(os.path.dirname(__file__), "../../.env")
+load_dotenv(path_to_env)
 
 # JWT Configuration
 JWT_SECRET: str = os.getenv("JWT_SECRET", "your-secret-key-here-change-in-production")
