@@ -17,7 +17,7 @@ REFRESH_EXPIRE_DAYS: int = int(os.getenv("REFRESH_EXPIRE_DAYS", "7"))  # 7 days
 COOKIE_NAME: str = os.getenv("COOKIE_NAME", "refresh_token")
 
 # Database Configuration
-DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/survey_auth")
+DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/survey_auth")
 
 # MongoDB Configuration
 MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
