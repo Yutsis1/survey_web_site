@@ -25,6 +25,10 @@ jobs:
         run: pip install -r ${{ env.WORKDIR }}/requirements.txt
 
       - name: Run tests
+        env:
+          PYTHONPATH: ${{ github.workspace }} 
         run: |
           pwd                   # should print .../survey_web_site
+          ls -la                # should show backend/ directory
+          python -c "import sys; print('PYTHONPATH OK?', any(p.endswith('survey_web_site') for p in sys.path), '\nTOP PATHS:', sys.path[:3])"
           python -m pytest ${{ env.WORKDIR }}/tests 
