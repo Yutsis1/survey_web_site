@@ -76,6 +76,20 @@ async def register(payload: RegisterIn, resp: Response, db: AsyncSession = Depen
 
 @router.post("/login", response_model=AccessOut)
 async def login(payload: LoginIn, resp: Response, db: AsyncSession = Depends(get_async_db)):
+    """
+    Asynchronous function to authenticate a user and generate access and refresh tokens.
+    This function validates the user's email and password, creates a refresh token stored in the database,
+    sets a refresh cookie in the response, and returns an access token.
+    Args:
+        payload (LoginIn): The login payload containing email and password.
+        resp (Response): The HTTP response object to set the refresh cookie.
+        db (AsyncSession, optional): The asynchronous database session. Defaults to Depends(get_async_db).
+    Returns:
+        dict: A dictionary containing the access token, e.g., {"access_token": "jwt_token"}.
+    Raises:
+        HTTPException: If the credentials are invalid, with status code 401 and detail "Invalid credentials".
+    """
+
     email = payload.email.lower().strip()
     user = await db.execute(select(User).where(func.lower(User.email) == email))
     user = user.scalar_one_or_none()
@@ -93,6 +107,25 @@ async def login(payload: LoginIn, resp: Response, db: AsyncSession = Depends(get
 
 @router.post("/refresh", response_model=AccessOut)
 async def refresh(request: Request, resp: Response, db: AsyncSession = Depends(get_async_db), refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE)):
+    """
+    Refresh authentication tokens by validating the provided refresh token from cookies.
+    This function decodes the refresh token, verifies its validity, checks if it has been revoked,
+    and ensures the associated user is active. If all checks pass, it proceeds with token refresh logic
+    (not shown in the provided code snippet).
+    Parameters:
+        request (Request): The incoming HTTP request object.
+        resp (Response): The HTTP response object to be modified.
+        db (AsyncSession): Asynchronous database session, injected via dependency.
+        refresh_token (str | None): The refresh token extracted from cookies, aliased as REFRESH_COOKIE.
+    Raises:
+        HTTPException: 
+            - 401 if refresh_token is missing ("Missing refresh cookie").
+            - 401 if token decoding fails ("Invalid refresh").
+            - 401 if the refresh token is revoked or not found ("Refresh revoked or not found").
+            - 401 if the user is inactive or not found ("User inactive").
+    Note:
+        This function is asynchronous and relies on JWT decoding and database queries for validation.
+    """
     if not refresh_token:
         raise HTTPException(status_code=401, detail="Missing refresh cookie")
     try:
