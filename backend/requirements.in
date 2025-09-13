@@ -10,7 +10,7 @@ passlib
 python-jose
 asyncpg
 dotenv
-pydantic
+pydantic[email]
 bcrypt
 
 # For PostgreSQL two different packages due to problem with python versions
