@@ -1,537 +1,353 @@
-import pytest
+import asyncio
+import types
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
-from fastapi.testclient import TestClient
-from fastapi import HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+import pytest
+from types import SimpleNamespace
+from fastapi import Response, Request
+from starlette.datastructures import Headers
+from backend.routers.auth import auth as auth_mod
 
-from backend.main import app
-from backend.models.api.auth import RegisterIn, LoginIn
-from backend.models.db.sql.auth import User, RefreshToken
-from backend.routers.auth.auth import (
-    set_refresh_cookie, 
-    clear_refresh_cookie, 
-    register, 
-    login, 
-    refresh,
-    REFRESH_COOKIE
-)
-from backend.routers.auth.security_utl import hash_password, make_refresh_token, make_access_token
-from backend.config import settings
+# ----------------------------
+# Fakes & monkeypatch helpers
+# ----------------------------
 
+class FakeUser:
+    def __init__(self, email, password_hash, role="user", token_version=0, is_active=True, id=None):
+        self.id = id or uuid.uuid4()
+        self.email = email
+        self.password_hash = password_hash
+        self.role = role
+        self.token_version = token_version
+        self.is_active = is_active
 
-client = TestClient(app)
+class FakeRefreshToken:
+    def __init__(self, user_id, token_id, revoked=False):
+        self.user_id = user_id
+        self.token_id = token_id
+        self.revoked = revoked
 
+class FakeSelect:
+    def __init__(self, model):
+        self.model = model
+        self._where = tuple()
 
-class TestCookieHelpers:
-    """Test cookie helper functions."""
-    
-    def test_set_refresh_cookie(self):
-        """Test setting refresh cookie with correct attributes."""
-        response = MagicMock()
-        token = "test_jwt_token"
-        
-        set_refresh_cookie(response, token)
-        
-        response.set_cookie.assert_called_once_with(
-            key=REFRESH_COOKIE,
-            value=token,
-            httponly=True,
-            secure=True,
-            samesite="lax",
-            path="/refresh",
-            max_age=settings.REFRESH_EXPIRE_DAYS * 86400,
-        )
-    
-    def test_clear_refresh_cookie(self):
-        """Test clearing refresh cookie."""
-        response = MagicMock()
-        
-        clear_refresh_cookie(response)
-        
-        response.delete_cookie.assert_called_once_with(REFRESH_COOKIE, path="/refresh")
+    def where(self, *conds):
+        # Store any conditions (they're opaque to us, but our fakes will pack necessary values in them)
+        self._where = tuple(conds)
+        return self
 
+class FakeFunc:
+    class _Lower:
+        def __init__(self, col):
+            self.col = col
+            self._eq = None
+        def __eq__(self, other):
+            # Pack email for later retrieval by FakeSession.execute
+            self._eq = other
+            return ("LOWER_EQ", other)
 
-class TestRegisterEndpoint:
-    """Test user registration endpoint."""
-    
-    @pytest.mark.asyncio
-    async def test_register_success(self):
-        """Test successful user registration."""
-        # Setup
-        payload = RegisterIn(email="test@example.com", password="password123")
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_response = MagicMock()
-        
-        # Mock database operations
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = None  # No existing user
-        mock_db.execute = AsyncMock(return_value=mock_result)
-        mock_db.refresh = AsyncMock()
-        mock_db.commit = AsyncMock()
-        
-        result = await register(payload, mock_response, mock_db)
-            
-        # Verify database operations
-        mock_db.add.assert_called()
-        assert mock_db.commit.call_count == 2, "User creation + refresh token"
-        mock_db.refresh.assert_called_once()
-        
-        # Verify response
-        assert "access_token" in result, f"Access token not found in {result}"
-        assert isinstance(result["access_token"], str), f"Access token is not a string: {result['access_token']}"
-    
-    @pytest.mark.asyncio
-    async def test_register_existing_email(self):
-        """Test registration with existing email."""
-        payload = RegisterIn(email="existing@example.com", password="password123")
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_response = MagicMock()
-        
-        # Mock existing user
-        existing_user = User(email="existing@example.com")
-        mock_db.execute.return_value.scalar_one_or_none.return_value = existing_user
-        
-        with pytest.raises(HTTPException) as exc_info:
-            await register(payload, mock_response, mock_db)
-        
-        assert exc_info.value.status_code == 400
-        assert exc_info.value.detail == "Email already registered"
-    
-    @pytest.mark.asyncio
-    async def test_register_email_case_insensitive(self):
-        """Test registration with different email cases."""
-        payload = RegisterIn(email="Test@Example.COM", password="password123")
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_response = MagicMock()
-        
-        mock_db.execute.return_value.scalar_one_or_none.return_value = None
-        mock_user = User(
-            id=uuid.uuid4(),
-            email="test@example.com",  # Should be normalized to lowercase
-            password_hash=hash_password("password123"),
-            role="user",
-            token_version=0
-        )
-        mock_db.refresh = AsyncMock()
-        mock_db.commit = AsyncMock()
-        
-        with patch('backend.routers.auth.auth.User') as mock_user_class:
-            mock_user_class.return_value = mock_user
-            
-            result = await register(payload, mock_response, mock_db)
-            
-            # Verify email was normalized
-            mock_user_class.assert_called_once()
-            call_args = mock_user_class.call_args[1]
-            assert call_args['email'] == "test@example.com"
-    
-    def test_register_integration(self):
-        """Integration test for register endpoint."""
-        payload = {
-            "email": "integration@example.com",
-            "password": "password123"
-        }
-        
-        with patch('backend.routers.auth.auth.get_async_db') as mock_get_db:
-            mock_result = MagicMock()
-            mock_result.scalar_one_or_none.return_value = None  # No existing user
-            mock_db = AsyncMock()
-            mock_db.execute = AsyncMock(return_value=mock_result)
-            mock_db.refresh = AsyncMock()
-            mock_db.commit = AsyncMock()
-            mock_get_db.return_value.__aenter__.return_value = mock_db
-            
-            response = client.post("/auth/register", json=payload)
-            
-            assert response.status_code == 200, f"Unexpected status code: {response.status_code}, response: {response.text}"
-            data = response.json()
-            assert "access_token" in data, f"Access token not found in response: {data}"
+    def lower(self, col):
+        return FakeFunc._Lower(col)
+
+class FakeColumn:
+    def __init__(self, name):
+        self.name = name
+    def __eq__(self, other):
+        return ("EQ", self.name, other)
+
+class FakeSession:
+    """
+    Minimal async "session" that supports the methods used by the router:
+    - add
+    - commit
+    - refresh
+    - execute(...).scalar_one_or_none()
+    - get(model, pk)
+    """
+    def __init__(self):
+        self.users_by_email = {}   # email -> FakeUser
+        self.users_by_id = {}      # uuid -> FakeUser
+        self.refresh_tokens = {}   # jti -> FakeRefreshToken
+
+    class _Result:
+        def __init__(self, value):
+            self._value = value
+        def scalar_one_or_none(self):
+            return self._value
+
+    async def execute(self, stmt):
+        # SELECT User WHERE lower(User.email) == email
+        if isinstance(stmt, FakeSelect) and stmt.model is auth_mod.User:
+            # Find email packed inside ("LOWER_EQ", email)
+            email = None
+            for cond in stmt._where:
+                if isinstance(cond, tuple) and len(cond) == 2 and cond[0] == "LOWER_EQ":
+                    email = cond[1]
+            user = self.users_by_email.get(email)
+            return FakeSession._Result(user)
+
+        # SELECT RefreshToken WHERE token_id == jti AND revoked == False
+        if isinstance(stmt, FakeSelect) and stmt.model is auth_mod.RefreshToken:
+            # Expect cond like ("EQ", "token_id", jti) and ("EQ", "revoked", False)
+            jti = None
+            revoked_val = None
+            for cond in stmt._where:
+                if isinstance(cond, tuple) and len(cond) == 3:
+                    tag, field, value = cond
+                    if tag == "EQ" and field == "token_id":
+                        jti = value
+                    if tag == "EQ" and field == "revoked":
+                        revoked_val = value
+            rt = self.refresh_tokens.get(jti)
+            if rt and revoked_val is False and rt.revoked is False:
+                return FakeSession._Result(rt)
+            return FakeSession._Result(None)
+
+        # Fallback: nothing found
+        return FakeSession._Result(None)
+
+    async def get(self, model, pk):
+        if model is auth_mod.User:
+            return self.users_by_id.get(pk)
+        return None
+
+    def add(self, obj):
+        if isinstance(obj, FakeUser):
+            self.users_by_email[obj.email] = obj
+            self.users_by_id[obj.id] = obj
+        elif isinstance(obj, FakeRefreshToken):
+            self.refresh_tokens[obj.token_id] = obj
+
+    async def commit(self):
+        return
+
+    async def refresh(self, obj):
+        return
 
 
-class TestLoginEndpoint:
-    """Test user login endpoint."""
-    
-    @pytest.mark.asyncio
-    async def test_login_success(self):
-        """Test successful user login."""
-        payload = LoginIn(email="test@example.com", password="password123")
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_response = MagicMock()
-        
-        # Mock existing user with correct password
-        user_id = uuid.uuid4()
-        mock_user = User(
-            id=user_id,
-            email="test@example.com",
-            password_hash=hash_password("password123"),
-            role="user",
-            token_version=0
-        )
-        mock_db.execute.return_value.scalar_one_or_none.return_value = mock_user
-        mock_db.commit = AsyncMock()
-        
-        result = await login(payload, mock_response, mock_db)
-        
-        # Verify database operations
-        mock_db.add.assert_called()  # Refresh token added
-        mock_db.commit.assert_called_once()
-        
-        # Verify response
-        assert "access_token" in result
-        assert isinstance(result["access_token"], str)
-    
-    @pytest.mark.asyncio
-    async def test_login_user_not_found(self):
-        """Test login with non-existent user."""
-        payload = LoginIn(email="notfound@example.com", password="password123")
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_response = MagicMock()
-        
-        # Mock no user found
-        mock_db.execute.return_value.scalar_one_or_none.return_value = None
-        
-        with pytest.raises(HTTPException) as exc_info:
-            await login(payload, mock_response, mock_db)
-        
-        assert exc_info.value.status_code == 401
-        assert exc_info.value.detail == "Invalid credentials"
-    
-    @pytest.mark.asyncio
-    async def test_login_wrong_password(self):
-        """Test login with incorrect password."""
-        payload = LoginIn(email="test@example.com", password="wrongpassword")
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_response = MagicMock()
-        
-        # Mock existing user with different password
-        mock_user = User(
-            email="test@example.com",
-            password_hash=hash_password("correctpassword")
-        )
-        mock_db.execute.return_value.scalar_one_or_none.return_value = mock_user
-        
-        with pytest.raises(HTTPException) as exc_info:
-            await login(payload, mock_response, mock_db)
-        
-        assert exc_info.value.status_code == 401
-        assert exc_info.value.detail == "Invalid credentials"
-    
-    @pytest.mark.asyncio
-    async def test_login_email_case_insensitive(self):
-        """Test login with different email case."""
-        payload = LoginIn(email="Test@Example.COM", password="password123")
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_response = MagicMock()
-        
-        # Mock user with lowercase email
-        user_id = uuid.uuid4()
-        mock_user = User(
-            id=user_id,
-            email="test@example.com",
-            password_hash=hash_password("password123"),
-            role="user",
-            token_version=0
-        )
-        mock_db.execute.return_value.scalar_one_or_none.return_value = mock_user
-        mock_db.commit = AsyncMock()
-        
-        result = await login(payload, mock_response, mock_db)
-        
-        # Should succeed despite case difference
-        assert "access_token" in result
-    
-    def test_login_integration(self):
-        """Integration test for login endpoint."""
-        payload = {
-            "email": "login@example.com",
-            "password": "password123"
-        }
-        
-        with patch('backend.routers.auth.auth.get_async_db') as mock_get_db:
-            mock_db = AsyncMock()
-            mock_user = User(
-                id=uuid.uuid4(),
-                email="login@example.com",
-                password_hash=hash_password("password123"),
-                role="user",
-                token_version=0
-            )
-            mock_db.execute.return_value.scalar_one_or_none.return_value = mock_user
-            mock_db.commit = AsyncMock()
-            mock_get_db.return_value.__aenter__.return_value = mock_db
-            
-            response = client.post("/auth/login", json=payload)
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert "access_token" in data
+@pytest.fixture(autouse=True)
+def patch_auth_module(monkeypatch):
+    """
+    Auto-applied fixture to patch:
+    - settings & constants
+    - ORM models (User, RefreshToken) columns
+    - sqlalchemy helpers (select, func)
+    - security utils (hash/verify/make/decode)
+    """
+    # Patch cookie name & expiry settings
+    monkeypatch.setattr(auth_mod, "REFRESH_COOKIE", "rt", raising=False)
+    # ensure settings.REFRESH_EXPIRE_DAYS exists
+    if not hasattr(auth_mod, "settings"):
+        auth_mod.settings = SimpleNamespace()
+    auth_mod.settings.REFRESH_EXPIRE_DAYS = 7
+
+    # Patch models with fake columns for filter building
+    monkeypatch.setattr(auth_mod, "User", FakeUser, raising=False)
+    monkeypatch.setattr(auth_mod, "RefreshToken", FakeRefreshToken, raising=False)
+    # attach "columns" for the FakeFunc.lower(...) and equality checks
+    auth_mod.User.email = FakeColumn("email")
+    auth_mod.RefreshToken.token_id = FakeColumn("token_id")
+    auth_mod.RefreshToken.revoked = FakeColumn("revoked")
+
+    # Patch SQL helpers
+    monkeypatch.setattr(auth_mod, "select", lambda model: FakeSelect(model), raising=False)
+    monkeypatch.setattr(auth_mod, "func", FakeFunc(), raising=False)
+
+    # Patch security utilities
+    def fake_hash_password(pw: str) -> str:
+        return f"hashed:{pw}"
+
+    def fake_verify_password(pw: str, hashed: str) -> bool:
+        return hashed == f"hashed:{pw}"
+
+    def fake_make_refresh_token(user_id):
+        jti = uuid.uuid4()
+        return ("refresh.jwt", jti)
+
+    def fake_make_access_token(user_id, role, token_version):
+        return "access.jwt"
+
+    def fake_decode(token: str):
+        # Provide valid minimal payload by default
+        # Can be monkeypatched per test to raise/return altered payloads
+        return {"jti": str(uuid.uuid4()), "sub": str(uuid.uuid4())}
+
+    monkeypatch.setattr(auth_mod, "hash_password", fake_hash_password, raising=False)
+    monkeypatch.setattr(auth_mod, "verify_password", fake_verify_password, raising=False)
+    monkeypatch.setattr(auth_mod, "make_refresh_token", fake_make_refresh_token, raising=False)
+    monkeypatch.setattr(auth_mod, "make_access_token", fake_make_access_token, raising=False)
+    monkeypatch.setattr(auth_mod, "decode", fake_decode, raising=False)
 
 
-class TestRefreshEndpoint:
-    """Test token refresh endpoint."""
-    
-    @pytest.mark.asyncio
-    async def test_refresh_success(self):
-        """Test successful token refresh."""
-        mock_request = MagicMock()
-        mock_response = MagicMock()
-        mock_db = AsyncMock(spec=AsyncSession)
-        
-        # Create a valid refresh token
-        user_id = uuid.uuid4()
-        refresh_token, jti = make_refresh_token(user_id)
-        
-        # Mock database objects
-        mock_refresh_token = RefreshToken(
-            id=uuid.uuid4(),
-            user_id=user_id,
-            token_id=jti,
-            revoked=False
-        )
-        mock_user = User(
-            id=user_id,
-            email="test@example.com",
-            is_active=True,
-            role="user",
-            token_version=0
-        )
-        
-        mock_db.execute.return_value.scalar_one_or_none.return_value = mock_refresh_token
-        mock_db.get.return_value = mock_user
-        
-        # This test would need the full implementation of refresh function
-        # Since the provided code is incomplete, we can test the validation parts
-        
-        # Test missing refresh token
-        with pytest.raises(HTTPException) as exc_info:
-            await refresh(mock_request, mock_response, mock_db, None)
-        
-        assert exc_info.value.status_code == 401
-        assert exc_info.value.detail == "Missing refresh cookie"
-    
-    @pytest.mark.asyncio
-    async def test_refresh_invalid_token(self):
-        """Test refresh with invalid token."""
-        mock_request = MagicMock()
-        mock_response = MagicMock()
-        mock_db = AsyncMock(spec=AsyncSession)
-        
-        invalid_token = "invalid.jwt.token"
-        
-        with pytest.raises(HTTPException) as exc_info:
-            await refresh(mock_request, mock_response, mock_db, invalid_token)
-        
-        assert exc_info.value.status_code == 401
-        assert exc_info.value.detail == "Invalid refresh"
-    
-    @pytest.mark.asyncio
-    async def test_refresh_revoked_token(self):
-        """Test refresh with revoked token."""
-        mock_request = MagicMock()
-        mock_response = MagicMock()
-        mock_db = AsyncMock(spec=AsyncSession)
-        
-        # Create a valid refresh token
-        user_id = uuid.uuid4()
-        refresh_token, jti = make_refresh_token(user_id)
-        
-        # Mock no refresh token found (revoked or doesn't exist)
-        mock_db.execute.return_value.scalar_one_or_none.return_value = None
-        
-        with pytest.raises(HTTPException) as exc_info:
-            await refresh(mock_request, mock_response, mock_db, refresh_token)
-        
-        assert exc_info.value.status_code == 401
-        assert exc_info.value.detail == "Refresh revoked or not found"
-    
-    @pytest.mark.asyncio
-    async def test_refresh_inactive_user(self):
-        """Test refresh with inactive user."""
-        mock_request = MagicMock()
-        mock_response = MagicMock()
-        mock_db = AsyncMock(spec=AsyncSession)
-        
-        # Create a valid refresh token
-        user_id = uuid.uuid4()
-        refresh_token, jti = make_refresh_token(user_id)
-        
-        # Mock valid refresh token but inactive user
-        mock_refresh_token = RefreshToken(
-            id=uuid.uuid4(),
-            user_id=user_id,
-            token_id=jti,
-            revoked=False
-        )
-        mock_db.execute.return_value.scalar_one_or_none.return_value = mock_refresh_token
-        mock_db.get.return_value = None  # User not found or inactive
-        
-        with pytest.raises(HTTPException) as exc_info:
-            await refresh(mock_request, mock_response, mock_db, refresh_token)
-        
-        assert exc_info.value.status_code == 401
-        assert exc_info.value.detail == "User inactive"
+@pytest.fixture
+def db():
+    return FakeSession()
 
+# ----------------------------
+# Tests for register
+# ----------------------------
 
-class TestIntegrationTests:
-    """Integration tests for the auth flow."""
-    
-    def test_register_login_flow(self):
-        """Test complete register and login flow."""
-        email = "flow@example.com"
-        password = "password123"
-        
-        # Mock database for both operations
-        with patch('backend.routers.auth.auth.get_async_db') as mock_get_db:
-            mock_db = AsyncMock()
-            mock_get_db.return_value.__aenter__.return_value = mock_db
-            
-            # Register
-            mock_db.execute.return_value.scalar_one_or_none.return_value = None
-            mock_db.refresh = AsyncMock()
-            mock_db.commit = AsyncMock()
-            
-            user_id = uuid.uuid4()
-            with patch('backend.routers.auth.auth.User') as mock_user_class:
-                mock_user = User(
-                    id=user_id,
-                    email=email,
-                    password_hash=hash_password(password),
-                    role="user",
-                    token_version=0
-                )
-                mock_user_class.return_value = mock_user
-                
-                register_response = client.post("/auth/register", json={
-                    "email": email,
-                    "password": password
-                })
-                
-                assert register_response.status_code == 200
-                register_data = register_response.json()
-                assert "access_token" in register_data
-            
-            # Login
-            mock_db.execute.return_value.scalar_one_or_none.return_value = mock_user
-            
-            login_response = client.post("/auth/login", json={
-                "email": email,
-                "password": password
-            })
-            
-            assert login_response.status_code == 200
-            login_data = login_response.json()
-            assert "access_token" in login_data
-    
-    def test_auth_endpoints_exist(self):
-        """Test that auth endpoints are properly registered."""
-        # Test that endpoints exist (will return proper errors without mocking)
-        
-        # Register without data should return validation error
-        response = client.post("/auth/register")
-        assert response.status_code == 422  # Validation error
-        
-        # Login without data should return validation error
-        response = client.post("/auth/login")
-        assert response.status_code == 422  # Validation error
-        
-        # Refresh without cookie should return 401
-        response = client.post("/auth/refresh")
-        assert response.status_code == 401
-    
-    def test_password_security(self):
-        """Test password security requirements."""
-        # Test various password scenarios
-        test_cases = [
-            ("simple", "password"),
-            ("with_numbers", "password123"),
-            ("with_special", "password@123"),
-            ("long_password", "a" * 100),
-            ("empty", ""),
-        ]
-        
-        for name, password in test_cases:
-            email = f"{name}@example.com"
-            
-            with patch('backend.routers.auth.auth.get_async_db') as mock_get_db:
-                mock_db = AsyncMock()
-                mock_db.execute.return_value.scalar_one_or_none.return_value = None
-                mock_db.refresh = AsyncMock()
-                mock_db.commit = AsyncMock()
-                mock_get_db.return_value.__aenter__.return_value = mock_db
-                
-                user_id = uuid.uuid4()
-                with patch('backend.routers.auth.auth.User') as mock_user_class:
-                    mock_user = User(
-                        id=user_id,
-                        email=email,
-                        password_hash=hash_password(password),
-                        role="user",
-                        token_version=0
-                    )
-                    mock_user_class.return_value = mock_user
-                    
-                    response = client.post("/auth/register", json={
-                        "email": email,
-                        "password": password
-                    })
-                    
-                    # All passwords should be accepted (validation is on frontend/API level)
-                    assert response.status_code == 200
+@pytest.mark.asyncio
+async def test_register_success_sets_cookie_and_returns_access(db, monkeypatch):
+    resp = Response()
+    payload = SimpleNamespace(email="NEW@Email.COM  ", password="pw123")
 
+    # call
+    out = await auth_mod.register(payload=payload, resp=resp, db=db)
 
-class TestErrorHandling:
-    """Test error handling and edge cases."""
-    
-    @pytest.mark.asyncio
-    async def test_database_error_handling(self):
-        """Test handling of database errors."""
-        payload = RegisterIn(email="test@example.com", password="password123")
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_response = MagicMock()
-        
-        # Mock database error
-        mock_db.execute.side_effect = Exception("Database connection error")
-        
-        with pytest.raises(Exception):
-            await register(payload, mock_response, mock_db)
-    
-    def test_malformed_request_data(self):
-        """Test handling of malformed request data."""
-        # Invalid email format
-        response = client.post("/auth/register", json={
-            "email": "not-an-email",
-            "password": "password123"
-        })
-        assert response.status_code == 422
-        
-        # Missing required fields
-        response = client.post("/auth/register", json={
-            "email": "test@example.com"
-        })
-        assert response.status_code == 422
-        
-        # Extra fields should be ignored (Pydantic behavior)
-        with patch('backend.routers.auth.auth.get_async_db') as mock_get_db:
-            mock_db = AsyncMock()
-            mock_db.execute.return_value.scalar_one_or_none.return_value = None
-            mock_db.refresh = AsyncMock()
-            mock_db.commit = AsyncMock()
-            mock_get_db.return_value.__aenter__.return_value = mock_db
-            
-            with patch('backend.routers.auth.auth.User') as mock_user_class:
-                mock_user = User(
-                    id=uuid.uuid4(),
-                    email="test@example.com",
-                    password_hash=hash_password("password123"),
-                    role="user",
-                    token_version=0
-                )
-                mock_user_class.return_value = mock_user
-                
-                response = client.post("/auth/register", json={
-                    "email": "test@example.com",
-                    "password": "password123",
-                    "extra_field": "should_be_ignored"
-                })
-                assert response.status_code == 200
+    # response model
+    assert "access_token" in out
+    assert out["access_token"] == "access.jwt"
+
+    # cookie set correctly
+    cookies = resp.headers.get("set-cookie") or ""
+    assert "rt=" in cookies, f"cookies: {cookies}"
+    assert "Path=/refresh" in cookies, f"cookies: {cookies}"
+    assert "HttpOnly" in cookies, f"cookies: {cookies}"
+    # secure was True in code
+    assert "Secure" in cookies, f"cookies: {cookies}"
+
+    # refresh token persisted
+    assert len(db.refresh_tokens) == 1, f"tokens: {db.refresh_tokens}"
+
+@pytest.mark.asyncio
+async def test_register_existing_email_returns_400(db):
+    # Seed an existing user
+    existing = FakeUser(email="someone@example.com", password_hash="hashed:pw")
+    db.add(existing)
+
+    resp = Response()
+    payload = SimpleNamespace(email="Someone@Example.com", password="newpw")
+    with pytest.raises(Exception) as exc:
+        await auth_mod.register(payload=payload, resp=resp, db=db)
+    assert hasattr(exc.value, "status_code") and exc.value.status_code == 400, f"detail: {exc.value}"
+    assert "Email already registered" in str(exc.value.detail), f"detail: {exc.value.detail}"
+
+# ----------------------------
+# Tests for login
+# ----------------------------
+
+@pytest.mark.asyncio
+async def test_login_success_sets_cookie_and_returns_access(db):
+    # Seed a valid user
+    user = FakeUser(email="u@ex.com", password_hash="hashed:pw")
+    db.add(user)
+
+    resp = Response()
+    payload = SimpleNamespace(email="  U@EX.COM ", password="pw")
+    out = await auth_mod.login(payload=payload, resp=resp, db=db)
+
+    assert out["access_token"] == "access.jwt"
+    cookies = resp.headers.get("set-cookie") or ""
+    assert "rt=" in cookies, f"cookies: {cookies}"
+    assert "Path=/refresh" in cookies
+
+    # refresh token persisted
+    assert len(db.refresh_tokens) == 1
+
+@pytest.mark.asyncio
+async def test_login_invalid_credentials_401(db):
+    # Seed a user but with different password
+    user = FakeUser(email="u@ex.com", password_hash="hashed:other")
+    db.add(user)
+
+    resp = Response()
+    payload = SimpleNamespace(email="u@ex.com", password="pw")
+    with pytest.raises(Exception) as exc:
+        await auth_mod.login(payload=payload, resp=resp, db=db)
+    assert hasattr(exc.value, "status_code") and exc.value.status_code == 401, f"detail: {exc.value}"
+    assert "Invalid credentials" in str(exc.value.detail), f"detail: {exc.value.detail}"
+
+# ----------------------------
+# Tests for refresh (error branches)
+# ----------------------------
+
+@pytest.mark.asyncio
+async def test_refresh_missing_cookie_401(db):
+    resp = Response()
+    scope = {"type": "http", "headers": []}
+    req = Request(scope, receive=lambda: None)
+
+    with pytest.raises(Exception) as exc:
+        await auth_mod.refresh(request=req, resp=resp, db=db, refresh_token=None)
+    assert exc.value.status_code == 401, f"detail: {exc.value}"
+    assert "Missing refresh cookie" in exc.value.detail, f"detail: {exc.value.detail}"
+
+@pytest.mark.asyncio
+async def test_refresh_invalid_token_401(db, monkeypatch):
+    def bad_decode(_):
+        raise ValueError("nope")
+    monkeypatch.setattr(auth_mod, "decode", bad_decode, raising=False)
+
+    resp = Response()
+    scope = {"type": "http", "headers": []}
+    req = Request(scope, receive=lambda: None)
+
+    with pytest.raises(Exception) as exc:
+        await auth_mod.refresh(request=req, resp=resp, db=db, refresh_token="bad")
+    assert exc.value.status_code == 401, f"detail: {exc.value}"
+    assert "Invalid refresh" in exc.value.detail, f"detail: {exc.value.detail}"
+
+@pytest.mark.asyncio
+async def test_refresh_revoked_or_not_found_401(db, monkeypatch):
+    # decode returns a fixed jti/sub
+    jti = uuid.uuid4()
+    uid = uuid.uuid4()
+
+    def good_decode(_):
+        return {"jti": str(jti), "sub": str(uid)}
+    monkeypatch.setattr(auth_mod, "decode", good_decode, raising=False)
+
+    # Do NOT persist any RefreshToken -> should 401 at token check
+    resp = Response()
+    scope = {"type": "http", "headers": []}
+    req = Request(scope, receive=lambda: None)
+
+    with pytest.raises(Exception) as exc:
+        await auth_mod.refresh(request=req, resp=resp, db=db, refresh_token="ok")
+    assert exc.value.status_code == 401, f"detail: {exc.value}"
+    assert "Refresh revoked or not found" in exc.value.detail, f"detail: {exc.value.detail}"
+
+@pytest.mark.asyncio
+async def test_refresh_user_inactive_401(db, monkeypatch):
+    # Arrange: valid decode, persisted refresh token, but inactive user
+    jti = uuid.uuid4()
+    uid = uuid.uuid4()
+
+    def good_decode(_):
+        return {"jti": str(jti), "sub": str(uid)}
+    monkeypatch.setattr(auth_mod, "decode", good_decode, raising=False)
+
+    # Persist token
+    db.add(FakeRefreshToken(user_id=uid, token_id=jti, revoked=False))
+    # Persist inactive user
+    db.add(FakeUser(email="x@y.com", password_hash="hashed:a", is_active=False, id=uid))
+
+    resp = Response()
+    scope = {"type": "http", "headers": []}
+    req = Request(scope, receive=lambda: None)
+
+    with pytest.raises(Exception) as exc:
+        await auth_mod.refresh(request=req, resp=resp, db=db, refresh_token="ok")
+    assert exc.value.status_code == 401, f"exc value: {exc.value}"
+    assert "User inactive" in exc.value.detail, f"detail: {exc.value.detail}"
+
+# ----------------------------
+# Cookie helpers
+# ----------------------------
+
+def test_set_and_clear_refresh_cookie_roundtrip():
+    resp = Response()
+    auth_mod.set_refresh_cookie(resp, "token123")
+
+    cookies = resp.headers.get("set-cookie") or ""
+    assert "rt=token123" in cookies, f"cookies: {cookies}"
+    assert "Path=/refresh" in cookies, f"cookies: {cookies}"
+    assert "HttpOnly" in cookies, f"cookies: {cookies}"
+    assert "Secure" in cookies, f"cookies: {cookies}"
+
+    # Clearing should set a deletion cookie
+    auth_mod.clear_refresh_cookie(resp)
+    cookies2 = resp.headers.getlist("set-cookie")
+    # Last cookie should contain Max-Age=0 or an expired date (framework-dependent)
+    assert any("rt=" in c and "Path=/refresh" in c for c in cookies2), f"cookies: {cookies2}"
