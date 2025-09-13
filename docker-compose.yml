@@ -23,6 +23,8 @@ services:
       - MONGODB_URI=mongodb://mongodb:27017
       - MONGODB_DB=surveydb
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres_db:5432/survey_auth
+      # Set to 'update' to update documents with unique titles, 'delete' to remove them, or 'safe' to skip migration
+      - MIGRATION_STRATEGY=update
 
   mongodb:
     image: mongo:latest

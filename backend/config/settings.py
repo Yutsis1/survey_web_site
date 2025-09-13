@@ -19,6 +19,11 @@ COOKIE_NAME: str = os.getenv("COOKIE_NAME", "refresh_token")
 # Database Configuration
 DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/survey_auth")
 
+# MongoDB Configuration
+MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+MONGODB_DB_NAME: str = os.getenv("MONGODB_DB_NAME", "surveys_db")
+MIGRATION_STRATEGY: str = os.getenv("MIGRATION_STRATEGY", "delete")  # Options: 'update', 'delete', or 'safe'
+
 # Security Configuration
 SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
 
@@ -28,6 +33,7 @@ ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
 
 # CORS Configuration
 ALLOWED_ORIGINS: list[str] = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+
 
 # def validate_settings():
 #     """Validate critical settings on startup."""

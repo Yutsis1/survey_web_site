@@ -34,4 +34,5 @@ def create_tables_sync():
     print("Database tables created successfully")
 
 if __name__ == "__main__":
-    create_tables_sync()
+    import asyncio
+    asyncio.run(init_database())
