@@ -6,7 +6,7 @@ on:
       - 'backend/**'
 
 env:
-  WORKDIR: '/backend'
+  WORKDIR: 'backend'
 
 jobs:
   unit-tests:
