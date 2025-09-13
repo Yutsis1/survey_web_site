@@ -10,5 +10,9 @@ passlib
 python-jose
 asyncpg
 dotenv
+pydantic
+bcrypt
+
+# For PostgreSQL two different packages due to problem with python versions
 psycopg2-binary
 psycopg-binary

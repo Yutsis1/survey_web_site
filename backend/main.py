@@ -4,6 +4,7 @@ import uvicorn
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 
+from backend.routers.auth import auth
 from backend.routers import surveys
 from backend.middleware.error_handling import cache_body_middleware, validation_exception_handler
 from backend.migrations import run_migrations
@@ -35,6 +36,7 @@ app.add_middleware(
 )
 
 app.include_router(surveys.router)
+app.include_router(auth.router)
 
 # Add middleware
 app.middleware("http")(cache_body_middleware)
