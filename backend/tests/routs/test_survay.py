@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from types import SimpleNamespace
 from bson import ObjectId
 from backend.main import app
-from backend.db.mongoDB import surveys_collection
+from backend.db.mongo.mongoDB import surveys_collection
 
 
 # Relative import of the app and surveys_collection to test (package-aware)

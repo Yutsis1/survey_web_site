@@ -1,4 +1,3 @@
-
 services:
   frontend:
     build:
@@ -19,9 +18,13 @@ services:
       - "8000:8000"
     depends_on:
       - mongodb
+      - postgres_db
     environment:
       - MONGODB_URI=mongodb://mongodb:27017
       - MONGODB_DB=surveydb
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres_db:5432/survey_auth
+      # Set to 'update' to update documents with unique titles, 'delete' to remove them, or 'safe' to skip migration
+      - MIGRATION_STRATEGY=update
 
   mongodb:
     image: mongo:latest
@@ -30,5 +33,22 @@ services:
     volumes:
       - mongodb_data:/data/db
 
+  postgres_db:
+    image: postgres:17-trixie
+    environment:
+      POSTGRES_DB: survey_auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d survey_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   mongodb_data:
+  pgdata:

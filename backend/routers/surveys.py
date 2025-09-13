@@ -6,8 +6,8 @@ from bson import ObjectId
 from fastapi import APIRouter, HTTPException
 from fastapi.exceptions import RequestValidationError
 
-from ..models.surveys import *
-from ..db.mongoDB import surveys_collection
+from ..models.api.surveys import *
+from ..db.mongo.mongoDB import surveys_collection
 
 router = APIRouter(
     prefix="/surveys",

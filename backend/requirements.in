@@ -1,0 +1,18 @@
+fastapi
+uvicorn
+motor
+pytest
+pytest-asyncio
+httpx
+sqlalchemy
+jose
+passlib
+python-jose
+asyncpg
+dotenv
+pydantic[email]
+bcrypt
+
+# For PostgreSQL two different packages due to problem with python versions
+psycopg2-binary
+psycopg-binary
