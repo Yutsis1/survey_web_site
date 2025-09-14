@@ -19,7 +19,8 @@
     "previewjs": "^1.0.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-grid-layout": "^1.5.0"
+    "react-grid-layout": "^1.5.0",
+    "zod": "^4.1.8"
   },
   "devDependencies": {
     "@babel/plugin-transform-class-properties": "^7.27.1",
