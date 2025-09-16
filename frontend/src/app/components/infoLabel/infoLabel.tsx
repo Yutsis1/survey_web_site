@@ -1,21 +1,16 @@
 import React from 'react';
 import '../../styles.css'; 
+import './infoLabel.css';
 
-interface InfoLabelProps {
+export interface InfoLabelProps {
     text: string;
+    type?: 'info' | 'warning' | 'error';
 }
 
-const InfoLabel: React.FC<InfoLabelProps> = ({ text }) => {
+const InfoLabel: React.FC<InfoLabelProps> = ({ text, type = 'info' }) => {
     return (
         <label
-            style={{
-                color: 'var(--foreground)',
-                backgroundColor: 'var(--background)',
-                padding: '10px',
-                borderRadius: '4px',
-                fontSize: '18px',
-                transition: 'all 0.2s ease',
-            }}
+            className={`label-${type}`}
         >
             {text}
         </label>
