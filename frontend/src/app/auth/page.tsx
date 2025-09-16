@@ -34,7 +34,7 @@ export default function AuthPage() {
     }
 
     return (
-        <div className="app-container">
+        <div className="auth-container">
             <main className="auth-box">
                 <div className="auth-email">
                     {/* Email Input */}
@@ -54,12 +54,17 @@ export default function AuthPage() {
                     />
                 </div>
                 {email && !emailSchema.safeParse(email).success && (
-                  <DynamicComponentRenderer
-                    component="InfoLabel"
-                    option={{ optionProps: { text: 'Invalid email address', type: 'error' } }}
-                    questionText=""
-                    showQuestionText={false}
-                  />
+                    <DynamicComponentRenderer
+                        component="InfoLabel"
+                        option={{
+                            optionProps: {
+                                text: 'Invalid email address',
+                                type: 'error',
+                            },
+                        }}
+                        questionText=""
+                        showQuestionText={false}
+                    />
                 )}
                 {/* Password Input */}
                 <div className="auth-password">
@@ -110,14 +115,25 @@ export default function AuthPage() {
                         optionProps: {
                             onClick: handleSubmit,
                             label: mode === 'login' ? 'Login' : 'Register',
+                            test_id: 'auth-submit',
                         },
                     }}
                     questionText=""
                     showQuestionText={false}
                 />
-                 <a onClick={() => setMode(mode === 'login' ? 'register' : 'login')} style={{cursor: 'pointer'}}>
-                  {mode === 'login' ? 'Register' : 'Login'}
-                 </a>
+                <p>
+                    {mode === 'login'
+                        ? "Don't have an account? "
+                        : 'Already have an account? '}
+                    <a
+                      onClick={() =>
+                        setMode(mode === 'login' ? 'register' : 'login')
+                      }
+                      style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      {mode === 'login' ? 'Register' : 'Login'}
+                    </a>
+                </p>
             </main>
         </div>
     )
