@@ -7,7 +7,7 @@ export interface InfoLabelProps {
     type?: 'info' | 'warning' | 'error';
 }
 
-const InfoLabel: React.FC<InfoLabelProps> = ({ text, type = 'info' }) => {
+export const InfoLabel: React.FC<InfoLabelProps> = ({ text, type = 'info' }) => {
     return (
         <label
             className={`label-${type}`}
@@ -16,5 +16,3 @@ const InfoLabel: React.FC<InfoLabelProps> = ({ text, type = 'info' }) => {
         </label>
     );
 };
-
-export default InfoLabel;
