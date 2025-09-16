@@ -1,80 +1,124 @@
 'use client'
 
 import { useState } from 'react'
-// import { login, register } from '../services/auth'
+import { login, register } from '../services/auth'
 import { DynamicComponentRenderer } from '../components/dynamic-component-renderer'
-import { componentMapping } from '../components/interfaceMapping'
 import { z } from 'zod'
-
+import './auth.css'
 
 export default function AuthPage() {
-  const emailSchema = z.email({ message: "Invalid email address" });
-  const [mode, setMode] = useState<'login' | 'register'>('login')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [repeat, setRepeat] = useState('')
-  const [error, setError] = useState<string | null>(null)
+    const emailSchema = z.email({ message: 'Invalid email address' })
+    const [mode, setMode] = useState<'login' | 'register'>('login')
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [repeat, setRepeat] = useState('')
+    const [error, setError] = useState<string | null>(null)
 
-
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    try {
-      if (mode === 'register') {
-        if (password !== repeat) {
-          setError('Passwords do not match')
-          return
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setError(null)
+        try {
+            if (mode === 'register') {
+                if (password !== repeat) {
+                    setError('Passwords do not match')
+                    return
+                }
+                await register({ email, password })
+            } else {
+                await login({ email, password })
+            }
+            alert('Success')
+        } catch {
+            setError('Authentication failed')
         }
-        await register({ email, password })
-      } else {
-        await login({ email, password })
-      }
-      alert('Success')
-    } catch {
-      setError('Authentication failed')
     }
-  }
 
-  return (
-    <div className="app-container">
-      <main className="auth-box">
-        <div className='auth-email'>
-          <DynamicComponentRenderer 
-          component="TextInput" 
-          option={{ optionProps: { label: "Email", value: email, onChange: (e) => setEmail(e.target.value), type: "email", placeholder: "Enter your email" } }} 
-          questionText="Email" 
-          showQuestionText={false}
-          />
+    return (
+        <div className="app-container">
+            <main className="auth-box">
+                <div className="auth-email">
+                    {/* Email Input */}
+                    <DynamicComponentRenderer
+                        component="TextInput"
+                        option={{
+                            optionProps: {
+                                label: 'Email',
+                                // value: email,
+                                onChange: (e) => setEmail(e.target.value),
+                                type: 'email',
+                                placeholder: 'Enter your email',
+                            },
+                        }}
+                        questionText="Email"
+                        showQuestionText={false}
+                    />
+                </div>
+                {email && !emailSchema.safeParse(email).success && (
+                  <DynamicComponentRenderer
+                    component="InfoLabel"
+                    option={{ optionProps: { text: 'Invalid email address', type: 'error' } }}
+                    questionText=""
+                    showQuestionText={false}
+                  />
+                )}
+                {/* Password Input */}
+                <div className="auth-password">
+                    <DynamicComponentRenderer
+                        component="TextInput"
+                        option={{
+                            optionProps: {
+                                label: 'Password',
+                                value: password,
+                                onChange: (e) => setPassword(e.target.value),
+                                type: 'password',
+                                placeholder: 'Enter your password',
+                            },
+                        }}
+                        questionText="Password"
+                        showQuestionText={false}
+                    />
+                </div>
+                {mode === 'register' && (
+                    <div className="auth-repeat">
+                        <DynamicComponentRenderer
+                            component="TextInput"
+                            option={{
+                                optionProps: {
+                                    label: 'Repeat Password',
+                                    value: repeat,
+                                    onChange: (e) => setRepeat(e.target.value),
+                                    type: 'password',
+                                    placeholder: 'Repeat your password',
+                                },
+                            }}
+                            questionText="Repeat Password"
+                            showQuestionText={false}
+                        />
+                    </div>
+                )}
+                {error && (
+                    <DynamicComponentRenderer
+                        component="InfoLabel"
+                        option={{ optionProps: { text: error, type: 'error' } }}
+                        questionText=""
+                        showQuestionText={false}
+                    />
+                )}
+                <DynamicComponentRenderer
+                    component="Button"
+                    option={{
+                        optionProps: {
+                            onClick: handleSubmit,
+                            label: mode === 'login' ? 'Login' : 'Register',
+                        },
+                    }}
+                    questionText=""
+                    showQuestionText={false}
+                />
+                 <a onClick={() => setMode(mode === 'login' ? 'register' : 'login')} style={{cursor: 'pointer'}}>
+                  {mode === 'login' ? 'Register' : 'Login'}
+                 </a>
+            </main>
         </div>
-        <div className='auth-password'>
-          <DynamicComponentRenderer 
-          component="TextInput" 
-          option={{ optionProps: { label: "Password", value: password, onChange: (e) => setPassword(e.target.value), type: "password", placeholder: "Enter your password" } }} 
-          questionText="Password" 
-          showQuestionText={false}
-          />
-        </div>
-        {mode === 'register' && (
-          <div className='auth-repeat'>
-            <DynamicComponentRenderer 
-            component="TextInput" 
-            option={{ optionProps: { label: "Repeat Password", value: repeat, onChange: (e) => setRepeat(e.target.value), type: "password", placeholder: "Repeat your password" } }} 
-            questionText="Repeat Password" 
-            showQuestionText={false}
-            />
-          </div>
-        )}
-        <p style={{ color: 'var(--color-primary)' }}>{error}</p>
-        <DynamicComponentRenderer 
-          component="Button" 
-          option={{ optionProps: { onClick: handleSubmit, label: mode === 'login' ? 'Login' : 'Register' } }} 
-          questionText="" 
-          showQuestionText={false}
-        />
-      </main>
-    </div>
-  )
-
+    )
 }
-
