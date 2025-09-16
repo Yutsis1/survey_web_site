@@ -47,6 +47,7 @@ export default function AuthPage() {
                                 onChange: (e) => setEmail(e.target.value),
                                 type: 'email',
                                 placeholder: 'Enter your email',
+                                test_id: 'input-email',
                             },
                         }}
                         questionText="Email"
@@ -60,6 +61,7 @@ export default function AuthPage() {
                             optionProps: {
                                 text: 'Invalid email address',
                                 type: 'error',
+                                test_id: 'info-error',
                             },
                         }}
                         questionText=""
@@ -77,6 +79,7 @@ export default function AuthPage() {
                                 onChange: (e) => setPassword(e.target.value),
                                 type: 'password',
                                 placeholder: 'Enter your password',
+                                test_id: 'input-password',
                             },
                         }}
                         questionText="Password"
@@ -94,6 +97,7 @@ export default function AuthPage() {
                                     onChange: (e) => setRepeat(e.target.value),
                                     type: 'password',
                                     placeholder: 'Repeat your password',
+                                    test_id: 'input-repeat-password',
                                 },
                             }}
                             questionText="Repeat Password"
@@ -104,7 +108,7 @@ export default function AuthPage() {
                 {error && (
                     <DynamicComponentRenderer
                         component="InfoLabel"
-                        option={{ optionProps: { text: error, type: 'error' } }}
+                        option={{ optionProps: { text: error, type: 'error', test_id: 'info-error' } }}
                         questionText=""
                         showQuestionText={false}
                     />
@@ -125,7 +129,8 @@ export default function AuthPage() {
                     {mode === 'login'
                         ? "Don't have an account? "
                         : 'Already have an account? '}
-                    <a
+                    <a 
+                    data-testid="toggle-mode"
                       onClick={() =>
                         setMode(mode === 'login' ? 'register' : 'login')
                       }
