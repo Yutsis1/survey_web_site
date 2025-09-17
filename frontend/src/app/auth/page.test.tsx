@@ -46,8 +46,6 @@ vi.mock('../../components/dynamic-component-renderer', () => ({
 
 import AuthPage from './page'
 import { login, register } from '../services/auth'
-import { get } from 'http'
-import { fi } from 'zod/v4/locales'
 
 class AuthPageTestSuite {
     static run() {

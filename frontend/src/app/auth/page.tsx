@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { login, register } from '../services/auth'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '../contexts/auth-context'
 import { DynamicComponentRenderer } from '../components/dynamic-component-renderer'
 import { z } from 'zod'
 import './auth.css'
@@ -13,24 +14,61 @@ export default function AuthPage() {
     const [password, setPassword] = useState('')
     const [repeat, setRepeat] = useState('')
     const [error, setError] = useState<string | null>(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    const { login, register, isAuthenticated, isLoading } = useAuth()
+    const router = useRouter()
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (!isLoading && isAuthenticated) {
+            router.push('/')
+        }
+    }, [isAuthenticated, isLoading, router])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError(null)
+        setIsSubmitting(true)
+
         try {
             if (mode === 'register') {
                 if (password !== repeat) {
                     setError('Passwords do not match')
                     return
                 }
-                await register({ email, password })
+                await register(email, password)
             } else {
-                await login({ email, password })
+                await login(email, password)
             }
-            alert('Success')
-        } catch {
+            router.push('/')
+        } catch (error) {
+            console.error('Auth error:', error)
             setError('Authentication failed')
+        } finally {
+            setIsSubmitting(false)
         }
+    }
+
+    // Show loading while checking authentication status
+    if (isLoading) {
+        return (
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '100vh',
+                }}
+            >
+                Loading...
+            </div>
+        )
+    }
+
+    // Don't render if already authenticated (will redirect)
+    if (isAuthenticated) {
+        return null
     }
 
     return (
@@ -43,7 +81,7 @@ export default function AuthPage() {
                         option={{
                             optionProps: {
                                 label: 'Email',
-                                // value: email,
+                                value: email,
                                 onChange: (e) => setEmail(e.target.value),
                                 type: 'email',
                                 placeholder: 'Enter your email',
@@ -108,7 +146,13 @@ export default function AuthPage() {
                 {error && (
                     <DynamicComponentRenderer
                         component="InfoLabel"
-                        option={{ optionProps: { text: error, type: 'error', test_id: 'info-error' } }}
+                        option={{
+                            optionProps: {
+                                text: error,
+                                type: 'error',
+                                test_id: 'info-error',
+                            },
+                        }}
                         questionText=""
                         showQuestionText={false}
                     />
@@ -118,8 +162,15 @@ export default function AuthPage() {
                     option={{
                         optionProps: {
                             onClick: handleSubmit,
-                            label: mode === 'login' ? 'Login' : 'Register',
+                            label: isSubmitting
+                                ? mode === 'login'
+                                    ? 'Logging in...'
+                                    : 'Registering...'
+                                : mode === 'login'
+                                  ? 'Login'
+                                  : 'Register',
                             test_id: 'auth-submit',
+                            disabled: isSubmitting,
                         },
                     }}
                     questionText=""
@@ -129,14 +180,17 @@ export default function AuthPage() {
                     {mode === 'login'
                         ? "Don't have an account? "
                         : 'Already have an account? '}
-                    <a 
-                    data-testid="toggle-mode"
-                      onClick={() =>
-                        setMode(mode === 'login' ? 'register' : 'login')
-                      }
-                      style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                    <a
+                        data-testid="toggle-mode"
+                        onClick={() =>
+                            setMode(mode === 'login' ? 'register' : 'login')
+                        }
+                        style={{
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                        }}
                     >
-                      {mode === 'login' ? 'Register' : 'Login'}
+                        {mode === 'login' ? 'Register' : 'Login'}
                     </a>
                 </p>
             </main>
