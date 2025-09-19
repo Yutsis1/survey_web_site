@@ -144,3 +144,7 @@ async def refresh(request: Request, resp: Response, db: AsyncSession = Depends(g
     user = await db.get(User, user_id)
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="User inactive")
+
+    # Generate new access token
+    access = make_access_token(user.id, user.role, user.token_version)
+    return {"access_token": access}
