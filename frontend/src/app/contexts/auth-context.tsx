@@ -22,6 +22,7 @@ export function useAuth() {
     return context
 }
 
+// moved out of AuthProvider to being able to mock requests in tests
 export async function login(email: string, password: string): Promise<Response>{
     const res = await fetch(`${config.apiUrl}/auth/login`, {
         method: 'POST',
@@ -59,6 +60,18 @@ export async function refresh(): Promise<Response> {
     return res
 }
 
+export async function logout(): Promise<Response> {
+    const res = await fetch(`${config.apiUrl}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+    })
+    if (!res.ok) {
+        throw new Error(`Failed to logout: ${res.statusText}, status code: ${res.status}`)
+    }
+    return res
+}
+
+
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -86,18 +99,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const res = await register(email, password)  // calls the imported register function
         setIsAuthenticated(true)
     }
-
-    const logout = async () => {
-        try {
-            await fetch(`${config.apiUrl}/auth/logout`, {
-                method: 'POST',
-                credentials: 'include',
-            })
-        } catch (error) {
-            console.error('Logout failed:', error)
-        } finally {
-            setIsAuthenticated(false)
-        }
+    const handleLogout = async () => {
+       const res = await logout()
+       setIsAuthenticated(false)
     }
 
     useEffect(() => {
@@ -111,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 isLoading,
                 login: handleLogin,        // Use the renamed function
                 register: handleRegister,  // Use the renamed function
-                logout,
+                logout: handleLogout,       // Use the renamed function
                 checkAuth,
             }}
         >

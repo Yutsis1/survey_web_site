@@ -2,7 +2,8 @@
 Router to manage user authentication: registration, login, token refresh.
 """
 from fastapi import APIRouter, Depends, HTTPException, Response, Request, Cookie
-from sqlalchemy import func, select
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.db.sql.sql_driver import get_async_db
 from backend.models.api.auth import AccessOut, LoginIn, RegisterIn
@@ -20,6 +21,8 @@ router = APIRouter(
 
 REFRESH_COOKIE = settings.COOKIE_NAME
 
+# OAuth2 scheme for token extraction
+security = HTTPBearer(auto_error=False)
 
 def set_refresh_cookie(resp: Response, token: str):
     resp.set_cookie(
@@ -35,6 +38,67 @@ def set_refresh_cookie(resp: Response, token: str):
 
 def clear_refresh_cookie(resp: Response):
     resp.delete_cookie(REFRESH_COOKIE, path="/refresh")
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: AsyncSession = Depends(get_async_db)
+) -> User:
+    """
+    OAuth2 dependency to get the current authenticated user from JWT token.
+    
+    Args:
+        credentials: HTTP Authorization credentials containing the JWT token
+        db: Database session
+        
+    Returns:
+        User: The authenticated user object
+        
+    Raises:
+        HTTPException: If token is missing, invalid, or user is inactive
+    """
+    if not credentials:
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization token required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    try:
+        payload = decode(credentials.credentials)
+        user_id = uuid.UUID(payload.get("sub"))
+        token_version = payload.get("tv")
+        
+        if not user_id or token_version is None:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid token payload",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    user = await db.get(User, user_id)
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=401,
+            detail="User not found or inactive",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Verify token version to support token invalidation
+    if user.token_version != token_version:
+        raise HTTPException(
+            status_code=401,
+            detail="Token has been invalidated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    return user
 
 
 @router.post("/register", response_model=AccessOut)
@@ -148,3 +212,64 @@ async def refresh(request: Request, resp: Response, db: AsyncSession = Depends(g
     # Generate new access token
     access = make_access_token(user.id, user.role, user.token_version)
     return {"access_token": access}
+
+
+@router.post("/logout")
+async def logout(
+    resp: Response,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    # needed only if we want to revoke just current token
+    # refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE)
+):
+    """
+    Logout the current user by revoking their refresh tokens and clearing cookies.
+    
+    This function performs a complete logout by:
+    1. Revoking all refresh tokens for the user (optional: can revoke just the current one)
+    2. Incrementing the user's token version to invalidate all access tokens
+    3. Clearing the refresh token cookie
+    
+    Args:
+        resp (Response): The HTTP response object to clear cookies
+        current_user (User): The authenticated user from the access token
+        db (AsyncSession): Database session
+        refresh_token (str | None): The refresh token from cookies (optional)
+        
+    Returns:
+        dict: Success message
+    """
+    
+    # Option 1: Revoke all refresh tokens for the user (more secure)
+    await db.execute(
+        update(RefreshToken)
+        .where(RefreshToken.user_id == current_user.id)
+        .values(revoked=True)
+    )
+    
+    # Option 2: Only revoke the current refresh token (less secure)
+    # if refresh_token:
+    #     try:
+    #         data = decode(refresh_token)
+    #         jti = uuid.UUID(data["jti"])
+    #         await db.execute(
+    #             update(RefreshToken)
+    #             .where(RefreshToken.token_id == jti)
+    #             .values(revoked=True)
+    #         )
+    #     except Exception:
+    #         pass  # Token might be invalid, but we still want to logout
+    
+    # Increment token version to invalidate all access tokens
+    await db.execute(
+        update(User)
+        .where(User.id == current_user.id)
+        .values(token_version=User.token_version + 1)
+    )
+    
+    await db.commit()
+    
+    # Clear refresh cookie
+    clear_refresh_cookie(resp)
+    
+    return {"message": "Successfully logged out"}

@@ -3,6 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, test, expect, vi, afterEach, beforeEach, Mock } from 'vitest'
 
+// supper clear that vitest not sutable for component tests. Better have server mock library and render page in browser
+
 // ---- Mock DynamicComponentRenderer (simple stub inputs/buttons/labels)
 vi.mock('../components/dynamic-component-renderer', () => ({
   DynamicComponentRenderer: ({ component, option }: any) => {
