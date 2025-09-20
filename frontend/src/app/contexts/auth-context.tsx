@@ -23,7 +23,10 @@ export function useAuth() {
 }
 
 // moved out of AuthProvider to being able to mock requests in tests
-export async function login(email: string, password: string): Promise<Response>{
+export async function login(
+    email: string,
+    password: string
+): Promise<Response> {
     const res = await fetch(`${config.apiUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -31,12 +34,17 @@ export async function login(email: string, password: string): Promise<Response>{
         body: JSON.stringify({ email, password }),
     })
     if (!res.ok) {
-        throw new Error(`Failed to login: ${res.statusText}, status code: ${res.status}`)
+        throw new Error(
+            `Failed to login: ${res.statusText}, status code: ${res.status}`
+        )
     }
     return res
 }
 
-export async function register(email: string, password: string): Promise<Response>{
+export async function register(
+    email: string,
+    password: string
+): Promise<Response> {
     const res = await fetch(`${config.apiUrl}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,7 +52,9 @@ export async function register(email: string, password: string): Promise<Respons
         body: JSON.stringify({ email, password }),
     })
     if (!res.ok) {
-        throw new Error(`Failed to register: ${res.statusText}, status code: ${res.status}`)
+        throw new Error(
+            `Failed to register: ${res.statusText}, status code: ${res.status}`
+        )
     }
     return res
 }
@@ -55,7 +65,9 @@ export async function refresh(): Promise<Response> {
         credentials: 'include',
     })
     if (!res.ok) {
-        throw new Error(`Failed to refresh token: ${res.statusText}, status code: ${res.status}`)
+        throw new Error(
+            `Failed to refresh token: ${res.statusText}, status code: ${res.status}`
+        )
     }
     return res
 }
@@ -66,12 +78,12 @@ export async function logout(): Promise<Response> {
         credentials: 'include',
     })
     if (!res.ok) {
-        throw new Error(`Failed to logout: ${res.statusText}, status code: ${res.status}`)
+        throw new Error(
+            `Failed to logout: ${res.statusText}, status code: ${res.status}`
+        )
     }
     return res
 }
-
-
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -91,17 +103,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Rename these functions to avoid naming conflicts
     const handleLogin = async (email: string, password: string) => {
-        const res = await login(email, password)  // calls the imported login function
-        setIsAuthenticated(true)
+        const res = await login(email, password) // calls the imported login function
+        if (res.ok) {
+            setIsAuthenticated(true)
+        }
     }
 
     const handleRegister = async (email: string, password: string) => {
-        const res = await register(email, password)  // calls the imported register function
-        setIsAuthenticated(true)
+        const res = await register(email, password) // calls the imported register function
+        if (res.ok) {
+            setIsAuthenticated(true)
+        }
     }
     const handleLogout = async () => {
-       const res = await logout()
-       setIsAuthenticated(false)
+        const res = await logout()
+        if (res.ok) {
+            setIsAuthenticated(false)
+        }
     }
 
     useEffect(() => {
@@ -113,9 +131,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             value={{
                 isAuthenticated,
                 isLoading,
-                login: handleLogin,        // Use the renamed function
-                register: handleRegister,  // Use the renamed function
-                logout: handleLogout,       // Use the renamed function
+                login: handleLogin, // Use the renamed function
+                register: handleRegister, // Use the renamed function
+                logout: handleLogout, // Use the renamed function
                 checkAuth,
             }}
         >
