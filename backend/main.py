@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from backend.routers.auth import auth
 from backend.routers import surveys
 from backend.middleware.error_handling import cache_body_middleware, validation_exception_handler
-from backend.migrations import run_migrations
+from backend.db.mongo.migrations import run_migrations
 from backend.db.mongo.seed_data import seed_example_survey
 from backend.db.sql.init_db import init_database
 
@@ -16,7 +16,6 @@ from backend.db.sql.init_db import init_database
 async def lifespan(app: FastAPI):
     # Initialize PostgreSQL database
     await init_database()
-    
     # Run MongoDB migrations
     await run_migrations()
     await seed_example_survey()

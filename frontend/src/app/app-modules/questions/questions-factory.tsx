@@ -57,5 +57,7 @@ export function createNewQuestion(
         },
         layout,
       }
+    default:
+      throw new Error(`Unsupported question type: ${questionType}`)
   }
 }

@@ -61,3 +61,49 @@ def make_refresh_token(user_id: uuid.UUID) -> tuple[str, uuid.UUID]:
 
 def decode(token: str) -> dict:
     return jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALG])
+
+# OAuth2 dependency functions
+async def get_current_user_id(token: str) -> uuid.UUID:
+    """
+    Extract and validate user ID from JWT access token.
+    
+    Args:
+        token (str): The JWT access token
+        
+    Returns:
+        uuid.UUID: The user ID from the token
+        
+    Raises:
+        HTTPException: If token is invalid or expired
+    """
+    from fastapi import HTTPException
+    
+    try:
+        payload = decode(token)
+        user_id = uuid.UUID(payload.get("sub"))
+        return user_id
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
+
+async def verify_token_version(user_id: uuid.UUID, token_version: int, db) -> bool:
+    """
+    Verify that the token version matches the user's current token version.
+    
+    Args:
+        user_id (uuid.UUID): The user ID
+        token_version (int): The token version from the JWT
+        db: Database session
+        
+    Returns:
+        bool: True if token version is valid
+    """
+    from backend.models.db.sql.auth import User
+    
+    user = await db.get(User, user_id)
+    if not user or not user.is_active:
+        return False
+    
+    return user.token_version == token_version

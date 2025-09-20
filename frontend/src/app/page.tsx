@@ -11,6 +11,8 @@ import { useQuestionBuilder } from './app-modules/questions/question-builder'
 import { getPopupComponentsAndOptions } from './app-modules/pop-up/pop-up-questions-config'
 import { createNewQuestion } from './app-modules/questions/questions-factory'
 import { DeleteDropzone } from './components/deleteDropzone/deleteDropzone'
+import { ProtectedRoute } from './components/protected-route'
+import { useAuth } from './contexts/auth-context'
 import './styles.css'
 import { saveSurvey, fetchSurvey } from './services/surveys'
 
@@ -26,6 +28,7 @@ export default function Home() {
 
     const layoutsApi = useLayouts()
     const builder = useQuestionBuilder()
+    const { logout } = useAuth()
 
     const handleApply = () => {
         if (!builder.selectedType) return setIsPopUpOpen(false)
@@ -86,6 +89,14 @@ export default function Home() {
             alert('Failed to load survey')
         } finally {
             setLoadingSurvey(false)
+        }
+    }
+
+    const handleLogout = async () => {
+        try {
+            await logout()
+        } catch (e) {
+            console.error('Logout failed:', e)
         }
     }
 
@@ -181,113 +192,121 @@ export default function Home() {
     }
 
     return (
-        <div className="app-container">
-            <aside className="sidebar">
-                <Sidebar
-                    buttons={[
-                        {
-                            label: 'New Question',
-                            onClick: () => setIsPopUpOpen(true),
-                            className: 'button-base',
-                            test_id: 'button-1',
-                        },
-                        {
-                            label: 'Clear Questions',
-                            onClick: () => {
-                                setQuestions([])
-                                layoutsApi.reset()
+        <ProtectedRoute>
+            <div className="app-container">
+                <aside className="sidebar">
+                    <Sidebar
+                        buttons={[
+                            {
+                                label: 'New Question',
+                                onClick: () => setIsPopUpOpen(true),
+                                className: 'button-base',
+                                test_id: 'button-1',
                             },
-                            className: 'button-base',
-                            test_id: 'button-2',
-                        },
-                        {
-                            label: saving ? 'Saving...' : 'Save Survey',
-                            onClick: handleSaveSurvey,
-                            className: 'button-base',
-                            test_id: 'button-save',
-                            disabled: saving,
-                        },
-                        {
-                            label: loadingSurvey ? 'Loading...' : 'Load Survey',
-                            onClick: handleLoadSurvey,
-                            className: 'button-base',
-                            test_id: 'button-load',
-                            disabled: loadingSurvey,
-                        },
-                    ]}
-                />
-            </aside>
+                            {
+                                label: 'Clear Questions',
+                                onClick: () => {
+                                    setQuestions([])
+                                    layoutsApi.reset()
+                                },
+                                className: 'button-base',
+                                test_id: 'button-2',
+                            },
+                            {
+                                label: saving ? 'Saving...' : 'Save Survey',
+                                onClick: handleSaveSurvey,
+                                className: 'button-base',
+                                test_id: 'button-save',
+                                disabled: saving,
+                            },
+                            {
+                                label: loadingSurvey ? 'Loading...' : 'Load Survey',
+                                onClick: handleLoadSurvey,
+                                className: 'button-base',
+                                test_id: 'button-load',
+                                disabled: loadingSurvey,
+                            },
+                            {
+                                label: 'Logout',
+                                onClick: handleLogout,
+                                className: 'button-base',
+                                test_id: 'button-logout',
+                            },
+                        ]}
+                    />
+                </aside>
 
-            <main className="content">
-                <div className="grid-container">
-                    <ResponsiveGridLayout
-                        className="layout"
-                        layouts={layoutsApi.layouts}
-                        onLayoutChange={(_, l) => layoutsApi.setLayouts(l)}
-                        onDragStart={(...args: unknown[]) => {
-                            // react-grid-layout passes several args; find an object with an 'i' id
-                            const item = args.find((a) => {
-                                return (
-                                    typeof a === 'object' &&
-                                    a !== null &&
-                                    'i' in (a as Record<string, unknown>)
-                                )
-                            }) as Record<string, unknown> | undefined
-                            if (item && typeof item.i === 'string')
-                                setDraggingId(String(item.i))
-                            setIsDragging(true)
-                        }}
-                        rowHeight={60}
-                        isDraggable
-                        isResizable
-                        compactType={null}
-                        preventCollision={false}
-                        onDragStop={(layout, layouts) => {
-                            // If pointer was over dropzone on stop, remove the dragged item
-                            if (isOverTrash && draggingId) {
-                                removeQuestions(draggingId)
-                            }
-                            setIsDragging(false)
-                            setDraggingId(null)
-                            setIsOverTrash(false)
-                            layoutsApi.setLayouts(layouts)
-                        }}
-                        onResizeStop={(_, l) => layoutsApi.setLayouts(l)}
-                    >
-                        {questions.map((q) => (
-                            <div key={q.id} className="grid-item">
-                                <div className="drag-handle">⋮⋮</div>
-                                <div className="no-drag">
-                                    <DynamicComponentRenderer
-                                        component={q.component}
-                                        option={q.option}
-                                        questionText={q.questionText}
-                                    />
+                <main className="content">
+                    <div className="grid-container">
+                        <ResponsiveGridLayout
+                            className="layout"
+                            layouts={layoutsApi.layouts}
+                            onLayoutChange={(_, l) => layoutsApi.setLayouts(l)}
+                            onDragStart={(...args: unknown[]) => {
+                                // react-grid-layout passes several args; find an object with an 'i' id
+                                const item = args.find((a) => {
+                                    return (
+                                        typeof a === 'object' &&
+                                        a !== null &&
+                                        'i' in (a as Record<string, unknown>)
+                                    )
+                                }) as Record<string, unknown> | undefined
+                                if (item && typeof item.i === 'string')
+                                    setDraggingId(String(item.i))
+                                setIsDragging(true)
+                            }}
+                            rowHeight={60}
+                            isDraggable
+                            isResizable
+                            compactType={null}
+                            preventCollision={false}
+                            onDragStop={(layout, layouts) => {
+                                // If pointer was over dropzone on stop, remove the dragged item
+                                if (isOverTrash && draggingId) {
+                                    removeQuestions(draggingId)
+                                }
+                                setIsDragging(false)
+                                setDraggingId(null)
+                                setIsOverTrash(false)
+                                layoutsApi.setLayouts(layouts)
+                            }}
+                            onResizeStop={(_, l) => layoutsApi.setLayouts(l)}
+                        >
+                            {questions.map((q) => (
+                                <div key={q.id} className="grid-item">
+                                    <div className="drag-handle">⋮⋮</div>
+                                    <div className="no-drag">
+                                        <DynamicComponentRenderer
+                                            component={q.component}
+                                            option={q.option}
+                                            questionText={q.questionText}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </ResponsiveGridLayout>
-                </div>
-            </main>
+                            ))}
+                        </ResponsiveGridLayout>
+                    </div>
+                </main>
 
-            <PopUp
-                isOpen={isPopUpOpen}
-                onClose={handleClose}
-                onApply={handleApply}
-                popUpTitle={popup.questionText}
-                popUpDescription="Choose a type and configure its options."
-            >
-                {popup.components}
-            </PopUp>
-            {/* Toast-like Delete Dropzone (now a class component) */}
-            <DeleteDropzone
-                isDragging={isDragging}
-                isOverTrash={isOverTrash}
-                onDragOver={onTrashDragOver}
-                onDragEnter={onTrashDragEnter}
-                onDragLeave={onTrashDragLeave}
-                onDrop={onTrashDrop}
-            />
-        </div>
+                <PopUp
+                    isOpen={isPopUpOpen}
+                    onClose={handleClose}
+                    onApply={handleApply}
+                    popUpTitle={popup.questionText}
+                    popUpDescription="Choose a type and configure its options."
+                >
+                    {popup.components}
+                </PopUp>
+                {/* Toast-like Delete Dropzone (now a class component) */}
+                <DeleteDropzone
+                    isDragging={isDragging}
+                    isOverTrash={isOverTrash}
+                    onDragOver={onTrashDragOver}
+                    onDragEnter={onTrashDragEnter}
+                    onDragLeave={onTrashDragLeave}
+                    onDrop={onTrashDrop}
+                />
+            </div>
+        </ProtectedRoute>
     )
 }

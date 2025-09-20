@@ -4,7 +4,7 @@ import "./button.css"
 
 export interface ButtonProps {
     label: string;
-    onClick?: () => void;
+    onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
     className?: string;
     test_id?: string;
     disabled?: boolean;
