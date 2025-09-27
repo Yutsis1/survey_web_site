@@ -29,6 +29,8 @@ test.describe('Auth Page', async () => {
       await expect(authPage.page.getByTestId(logoutSelector)).toBeVisible();
       await authPage.page.getByTestId(logoutSelector).click();
       await expect(authPage.emailInput).toBeVisible();
+      await authPage.page.reload();
+      await expect(authPage.emailInput).toBeVisible();
     });
   });
   test('should register a new user successfully', async () => {
@@ -36,6 +38,8 @@ test.describe('Auth Page', async () => {
       await authPage.fillRegisterAuthForm(`newuser_${Date.now()}@example.com`, 'password123', 'password123');
       await expect(authPage.page.getByTestId(logoutSelector)).toBeVisible();
       await authPage.page.getByTestId(logoutSelector).click();
+      await expect(authPage.emailInput).toBeVisible();
+      await authPage.page.reload();
       await expect(authPage.emailInput).toBeVisible();
     });
   });
