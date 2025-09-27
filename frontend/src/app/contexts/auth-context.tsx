@@ -63,6 +63,7 @@ export async function refresh(): Promise<Response> {
     const res = await fetch(`${config.apiUrl}/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
+        cache: 'no-store',
     })
     if (!res.ok) {
         throw new Error(
@@ -76,6 +77,7 @@ export async function logout(): Promise<Response> {
     const res = await fetch(`${config.apiUrl}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
+        cache: 'no-store',
     })
     if (!res.ok) {
         throw new Error(

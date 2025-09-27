@@ -25,13 +25,19 @@ REFRESH_COOKIE = settings.COOKIE_NAME
 security = HTTPBearer(auto_error=False)
 
 def set_refresh_cookie(resp: Response, token: str):
+    cookie_path = "/"
+
+    # if frontend and API are on different origins, you need SameSite=None + Secure
+    cross_site = True  # set from settings/env if you prefer
+    same_site = "none" if cross_site else "lax"
+
     resp.set_cookie(
         key=REFRESH_COOKIE,
         value=token,
         httponly=True,
         secure=True,      # False only for local http
-        samesite="lax",
-        path="/refresh",
+        samesite=same_site,
+        path=cookie_path,
         max_age=settings.REFRESH_EXPIRE_DAYS * 86400,
     )
 

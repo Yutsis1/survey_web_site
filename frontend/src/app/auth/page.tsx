@@ -86,6 +86,7 @@ export default function AuthPage() {
                                 type: 'email',
                                 placeholder: 'Enter your email',
                                 test_id: 'input-email',
+                                name: 'email',
                             },
                         }}
                         questionText="Email"
@@ -118,6 +119,7 @@ export default function AuthPage() {
                                 type: 'password',
                                 placeholder: 'Enter your password',
                                 test_id: 'input-password',
+                                name: 'password',
                             },
                         }}
                         questionText="Password"
@@ -136,6 +138,7 @@ export default function AuthPage() {
                                     type: 'password',
                                     placeholder: 'Repeat your password',
                                     test_id: 'input-repeat-password',
+                                    name: 'repeat-password',
                                 },
                             }}
                             questionText="Repeat Password"
