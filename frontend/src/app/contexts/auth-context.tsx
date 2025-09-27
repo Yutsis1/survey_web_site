@@ -73,9 +73,10 @@ export async function refresh(): Promise<Response> {
     return res
 }
 
-export async function logout(): Promise<Response> {
+export async function logout(accessToken: string): Promise<Response> {
     const res = await fetch(`${config.apiUrl}/auth/logout`, {
         method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
         credentials: 'include',
         cache: 'no-store',
     })
@@ -90,6 +91,7 @@ export async function logout(): Promise<Response> {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
+    const [accessToken, setAccessToken] = useState<string | null>(null)
 
     const checkAuth = async () => {
         try {
@@ -107,6 +109,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const handleLogin = async (email: string, password: string) => {
         const res = await login(email, password) // calls the imported login function
         if (res.ok) {
+            const data = await res.json()
+            setAccessToken(data.access_token)
             setIsAuthenticated(true)
         }
     }
@@ -114,13 +118,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const handleRegister = async (email: string, password: string) => {
         const res = await register(email, password) // calls the imported register function
         if (res.ok) {
+            const data = await res.json()
+            setAccessToken(data.access_token)
             setIsAuthenticated(true)
         }
     }
     const handleLogout = async () => {
-        const res = await logout()
-        if (res.ok) {
-            setIsAuthenticated(false)
+        if (accessToken) {
+            const res = await logout(accessToken)
+            if (res.ok) {
+                setAccessToken(null)
+                setIsAuthenticated(false)
+            }
         }
     }
 

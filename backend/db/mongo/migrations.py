@@ -65,6 +65,31 @@ async def run_migrations() -> None:
                 await surveys_collection.delete_many({"title": None})
                 await surveys_collection.delete_many({"title": {"$exists": False}})
 
+                # Handle duplicate titles
+                pipeline = [
+                    {"$match": {"title": {"$type": "string", "$gt": ""}}},
+                    {"$group": {"_id": "$title", "count": {"$sum": 1}, "docs": {"$push": "$_id"}}},
+                    {"$match": {"count": {"$gt": 1}}}
+                ]
+                duplicates = await surveys_collection.aggregate(pipeline).to_list(length=None)
+                if duplicates:
+                    print(f"Found duplicates in {len(duplicates)} titles.")
+                    for dup in duplicates:
+                        title = dup["_id"]
+                        docs = dup["docs"]
+                        # Sort by _id to keep the oldest (assuming ObjectId order)
+                        docs_sorted = sorted(docs)
+                        to_keep = docs_sorted[0]
+                        to_delete = docs_sorted[1:]
+                        if MIGRATION_STRATEGY == "delete":
+                            await surveys_collection.delete_many({"_id": {"$in": to_delete}})
+                            print(f"Deleted {len(to_delete)} duplicates for title '{title}'")
+                        elif MIGRATION_STRATEGY == "update":
+                            for i, doc_id in enumerate(to_delete, start=1):
+                                new_title = f"{title} (Duplicate {i})"
+                                await surveys_collection.update_one({"_id": doc_id}, {"$set": {"title": new_title}})
+                            print(f"Renamed {len(to_delete)} duplicates for title '{title}'")
+
     # If an old auto-named index exists (e.g., "title_1") or a mismatched version of our name, drop it first.
     to_drop = []
     if INDEX_NAME in existing and not _spec_matches(existing[INDEX_NAME]):
