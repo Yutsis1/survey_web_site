@@ -13,7 +13,7 @@ anyio==4.10.0
 asyncpg==0.30.0
     # via -r backend/requirements.in
 bcrypt==4.3.0
-    # via -r backend/requirements.in
+    # via passlib
 certifi==2025.8.3
     # via
     #   httpcore
@@ -59,7 +59,7 @@ motor==3.7.1
     # via -r backend/requirements.in
 packaging==25.0
     # via pytest
-passlib==1.7.4
+passlib[bcrypt]==1.7.4
     # via -r backend/requirements.in
 pluggy==1.6.0
     # via pytest

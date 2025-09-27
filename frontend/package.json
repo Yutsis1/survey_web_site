@@ -15,11 +15,12 @@
     "@tailwindcss/postcss": "^4.1.10",
     "babel": "^6.23.0",
     "dotenv": "^17.2.2",
-    "next": "^15.4.6",
+    "next": "^15.6.0-canary.32",
     "previewjs": "^1.0.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-grid-layout": "^1.5.0"
+    "react-grid-layout": "^1.5.0",
+    "zod": "^4.1.8"
   },
   "devDependencies": {
     "@babel/plugin-transform-class-properties": "^7.27.1",
@@ -28,6 +29,7 @@
     "@playwright/test": "^1.55.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20.19.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
