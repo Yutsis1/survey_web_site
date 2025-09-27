@@ -1,3 +1,5 @@
+from backend.routers.auth.auth import get_current_user
+import uuid
 import pytest
 from fastapi.testclient import TestClient
 from types import SimpleNamespace
@@ -9,6 +11,16 @@ from backend.db.mongo.mongoDB import surveys_collection
 # Relative import of the app and surveys_collection to test (package-aware)
 
 client = TestClient(app)
+
+# Mock the current user for authentication
+fake_user = SimpleNamespace(id=uuid.uuid4(
+), email="test@example.com", role="user", token_version=1, is_active=True)
+
+
+async def fake_get_current_user():
+    return fake_user
+# Override the FastAPI dependency
+app.dependency_overrides[get_current_user] = fake_get_current_user
 
 
 @pytest.mark.asyncio
@@ -28,7 +40,7 @@ async def test_create_survey_success(monkeypatch):
     fake_id = ObjectId()
 
     # async fake insert_one returning an object with inserted_id
-    async def fake_insert_one(doc):
+    async def fake_insert_one(document):
         return SimpleNamespace(inserted_id=fake_id)
 
     # Patch the collection's insert_one

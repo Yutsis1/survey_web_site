@@ -202,7 +202,7 @@ async def test_register_success_sets_cookie_and_returns_access(db, monkeypatch):
     # cookie set correctly
     cookies = resp.headers.get("set-cookie") or ""
     assert "rt=" in cookies, f"cookies: {cookies}"
-    assert "Path=/refresh" in cookies, f"cookies: {cookies}"
+    assert "Path=/" in cookies, f"cookies: {cookies}"
     assert "HttpOnly" in cookies, f"cookies: {cookies}"
     # secure was True in code
     assert "Secure" in cookies, f"cookies: {cookies}"
@@ -240,7 +240,7 @@ async def test_login_success_sets_cookie_and_returns_access(db):
     assert out["access_token"] == "access.jwt"
     cookies = resp.headers.get("set-cookie") or ""
     assert "rt=" in cookies, f"cookies: {cookies}"
-    assert "Path=/refresh" in cookies
+    assert "Path=/" in cookies
 
     # refresh token persisted
     assert len(db.refresh_tokens) == 1
@@ -342,7 +342,7 @@ def test_set_and_clear_refresh_cookie_roundtrip():
 
     cookies = resp.headers.get("set-cookie") or ""
     assert "rt=token123" in cookies, f"cookies: {cookies}"
-    assert "Path=/refresh" in cookies, f"cookies: {cookies}"
+    assert "Path=/" in cookies, f"cookies: {cookies}"
     assert "HttpOnly" in cookies, f"cookies: {cookies}"
     assert "Secure" in cookies, f"cookies: {cookies}"
 
