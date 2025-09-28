@@ -10,17 +10,16 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: 
-      name: ${{ github.ref == 'refs/heads/master' && 'production' || 'staging' }}
+    environment:
+      name: ${{ github.ref == 'refs/heads/master' && 'production' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
+      # Deploy to the Railway "frontend" service
+      - name: Deploy to Railway (frontend)
+        uses: railwayapp/actions-deploy@v1
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          working-directory: ./frontend
-          vercel-args: ${{ github.ref == 'refs/heads/master' && '--prod' || '' }}
+          railway-token: ${{ secrets.RAILWAY_TOKEN }}
+          project-id: ${{ secrets.RAILWAY_PROJECT_ID }}
+          service-id: ${{ github.ref == 'refs/heads/master' && secrets.RAILWAY_SERVICE_ID_FRONTEND_PROD }}
