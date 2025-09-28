@@ -1,0 +1,37 @@
+[build]
+builder = "docker-compose"
+dockerfilePath = "Dockerfile"  # Optional, as Railway detects from docker-compose.yml
+
+[[services]]
+name = "frontend"
+source = "./frontend"
+build = { context = "./frontend", dockerfile = "Dockerfile" }
+ports = [3000]
+healthcheckPath = "/"  # Optional: Path for health checks
+startCommand = "npm run start"  # If not using Docker
+
+[[services]]
+name = "backend"
+source = "./backend"
+build = { context = "./backend", dockerfile = "Dockerfile" }
+ports = [8000]
+healthcheckPath = "/health"  # Add a health endpoint in your FastAPI app if needed
+startCommand = "uvicorn main:app --host 0.0.0.0 --port 8000"
+
+[[services]]
+name = "mongodb"
+source = "mongo:latest"  # Railway will use its managed MongoDB add-on
+ports = [27017]
+
+[[services]]
+name = "postgres_db"
+source = "postgres:17-trixie"
+ports = [5432]
+environment = { POSTGRES_DB = "survey_auth", POSTGRES_USER = "postgres", POSTGRES_PASSWORD = "postgres" }
+
+[environments]
+staging = { branch = "staging" }  # Map to your staging branch/service
+production = { branch = "master" }  # Map to master/production
+
+[deploy]
+restartPolicy = "always"
