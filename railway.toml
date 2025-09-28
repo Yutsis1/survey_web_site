@@ -1,13 +1,17 @@
+
 # [build]
 # builder = "DOCKERFILE"
 # dockerfilePath = "Dockerfile"  # Optional, as Railway detects from docker-compose.yml
+
 
 [[services]]
 name = "frontend"
 source = "./frontend"
 build = { context = "./frontend", dockerfile = "Dockerfile" }
 ports = [3000]
+
 # healthcheckPath = "/"  # Optional: Path for health checks
+
 startCommand = "npm run start"  # If not using Docker
 
 [[services]]
@@ -16,6 +20,7 @@ source = "./backend"
 build = { context = "./backend", dockerfile = "Dockerfile" }
 ports = [8000]
 # healthcheckPath = "/health"  # Add a health endpoint in your FastAPI app if needed
+
 startCommand = "uvicorn main:app --host 0.0.0.0 --port 8000"
 
 [[services]]
