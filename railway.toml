@@ -7,7 +7,7 @@
 [[services]]
 name = "frontend"
 source = "./frontend"
-build = { context = "./frontend", dockerfile = "Dockerfile" }
+build = { context = "./frontend", dockerfile = "Dockerfile", args = { NEXT_PUBLIC_API_URL = "${{ env.NEXT_PUBLIC_API_URL }}" } }
 ports = [3000]
 
 # healthcheckPath = "/"  # Optional: Path for health checks
