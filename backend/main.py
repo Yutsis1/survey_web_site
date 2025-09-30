@@ -4,6 +4,7 @@ import uvicorn
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 
+from backend.config import settings
 from backend.routers.auth import auth
 from backend.routers import surveys
 from backend.middleware.error_handling import cache_body_middleware, validation_exception_handler
@@ -24,7 +25,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # CORS configuration
-origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+origins = settings.ALLOWED_ORIGINS
 
 app.add_middleware(
     CORSMiddleware,
