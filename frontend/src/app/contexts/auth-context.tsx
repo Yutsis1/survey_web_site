@@ -1,7 +1,6 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { config } from '@/config'
 
 interface AuthContextType {
     isAuthenticated: boolean
@@ -27,7 +26,7 @@ export async function login(
     email: string,
     password: string
 ): Promise<Response> {
-    const res = await fetch(`${config.apiUrl}/auth/login`, {
+    const res = await fetch('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -45,7 +44,7 @@ export async function register(
     email: string,
     password: string
 ): Promise<Response> {
-    const res = await fetch(`${config.apiUrl}/auth/register`, {
+    const res = await fetch('/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -60,7 +59,7 @@ export async function register(
 }
 
 export async function refresh(): Promise<Response> {
-    const res = await fetch(`${config.apiUrl}/auth/refresh`, {
+    const res = await fetch('/auth/refresh', {
         method: 'POST',
         credentials: 'include',
         cache: 'no-store',
@@ -74,7 +73,7 @@ export async function refresh(): Promise<Response> {
 }
 
 export async function logout(accessToken: string): Promise<Response> {
-    const res = await fetch(`${config.apiUrl}/auth/logout`, {
+    const res = await fetch('/auth/logout', {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
         credentials: 'include',

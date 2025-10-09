@@ -1,7 +1,5 @@
 import { QuestionItem } from '@/app/app-modules/questions/question-types'
-import { config } from "@/config"
 
-const API_URL = config.apiUrl
 
 export interface SurveyPayload {
   title?: string
@@ -24,7 +22,7 @@ async function authenticatedFetch(url: string, options: RequestInit = {}) {
 
   // If unauthorized, try to refresh token
   if (response.status === 401) {
-    const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
+    const refreshResponse = await fetch('/auth/refresh', {
       method: 'POST',
       credentials: 'include',
     })
@@ -50,7 +48,7 @@ async function authenticatedFetch(url: string, options: RequestInit = {}) {
 }
 
 export async function saveSurvey(payload: SurveyPayload): Promise<{ id: string }> {
-  const res = await authenticatedFetch(`${API_URL}/surveys`, {
+  const res = await authenticatedFetch('/surveys', {
     method: 'POST',
     body: JSON.stringify(payload),
   })
@@ -62,7 +60,7 @@ export async function saveSurvey(payload: SurveyPayload): Promise<{ id: string }
 }
 
 export async function fetchSurvey(id: string): Promise<SurveyResponse> {
-  const res = await authenticatedFetch(`${API_URL}/surveys/${id}`)
+  const res = await authenticatedFetch(`/surveys/${id}`)
 
   if (!res.ok) {
     throw new Error('Failed to load survey')

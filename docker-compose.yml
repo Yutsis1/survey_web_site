@@ -10,7 +10,9 @@ services:
     depends_on:
       - backend
     environment:
-      - NEXT_PUBLIC_API_URL=http://127.0.0.11:8000
+      - BACKEND_URL=http://127.0.0.1:8000
+      - NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+      - NODE_ENV=development
 
   backend:
     build:
