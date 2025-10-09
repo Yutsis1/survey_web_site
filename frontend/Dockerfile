@@ -1,4 +1,4 @@
-FROM node:22-trixie-slim AS deps
+FROM node:22-bookworm-slim AS deps
 
 # layer for packages
 WORKDIR /app
@@ -7,7 +7,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 # --- builder ---
-FROM node:22-trixie-slim AS build
+FROM node:22-bookworm-slim AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 # Add this line to accept build arg
@@ -21,7 +21,7 @@ COPY . .
 RUN npm run build
 
 # --- runner ---
-FROM node:22-trixie-slim AS runner
+FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 # Install only production deps for runtime
@@ -34,4 +34,5 @@ COPY --from=build /app/.next ./.next
 # COPY --from=build /app/package.json ./     
 # Expose and run
 EXPOSE 3000
+# "-H", "0.0.0.0" to bind to all interfaces
 CMD ["node", "node_modules/next/dist/bin/next", "start", "-p", "3000"]
