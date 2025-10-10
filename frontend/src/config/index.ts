@@ -1,6 +1,3 @@
-// src/lib/config/index.ts
-// import { z } from "zod";
-
 // Map of service → env var name. Add new services here.
 // register the services urls
 // export const Url = z.url();
