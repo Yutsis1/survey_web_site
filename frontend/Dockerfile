@@ -12,6 +12,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # guarantee public/ exists even if empty (prevents COPY failures later)
 RUN mkdir -p /app/public
+RUN npm run build
 # Build your app
 # e.g. RUN npm run build
 
