@@ -30,8 +30,9 @@ def create_tables_sync():
     """Synchronous version for direct execution."""
     # For sync operations, we can still use the same URL with asyncpg
     engine = create_engine(settings.DATABASE_URL)
+    logger.debug("Starting synchronous database table creation")
     Base.metadata.create_all(bind=engine)
-    print("Database tables created successfully")
+    logger.info("Database tables created successfully")
 
 if __name__ == "__main__":
     import asyncio
