@@ -53,13 +53,13 @@ async def init_database(max_retries: int = 10, retry_delay: int = 3):
 def create_tables_sync():
     """Synchronous version for direct execution."""
     try:
+        logger.info("Creating database tables synchronously...")
         engine = create_engine(settings.DATABASE_URL)
         Base.metadata.create_all(bind=engine)
-        print("Database tables created successfully")
-        engine.dispose()
     except Exception as e:
-        print(f"Failed to create tables: {e}")
+        logger.error(f"Failed to create tables: {e}")
         raise
+
 
 if __name__ == "__main__":
     import asyncio
