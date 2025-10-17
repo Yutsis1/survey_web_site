@@ -11,6 +11,8 @@ from backend.middleware.error_handling import cache_body_middleware, validation_
 from backend.db.mongo.migrations import run_migrations
 from backend.db.mongo.seed_data import seed_example_survey
 from backend.db.sql.init_db import init_database
+import logging
+from starlette.middleware.base import BaseHTTPMiddleware
 
 
 @asynccontextmanager
@@ -26,8 +28,18 @@ app = FastAPI(lifespan=lifespan)
 
 # CORS configuration
 origins = settings.ALLOWED_ORIGINS
+logger = logging.getLogger(__name__)
+
+class LogDisallowedOriginsMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        origin = request.headers.get("origin")
+        if origin and origin not in origins:
+            logger.warning(f"Request from disallowed origin: {origin}")
+        response = await call_next(request)
+        return response
 
 app.add_middleware(
+    LogDisallowedOriginsMiddleware,  # check disallowed origins
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
