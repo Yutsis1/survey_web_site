@@ -37,9 +37,9 @@ class LogDisallowedOriginsMiddleware(BaseHTTPMiddleware):
             logger.warning(f"Request from disallowed origin: {origin}")
         response = await call_next(request)
         return response
-
+# for logging disallowed origins
+app.add_middleware(LogDisallowedOriginsMiddleware)
 app.add_middleware(
-    LogDisallowedOriginsMiddleware,  # check disallowed origins
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
