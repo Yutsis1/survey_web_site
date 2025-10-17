@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import path from 'path'
 
 const API_URL = process.env.API_URL || 'http://127.0.0.1:8000'
 
@@ -120,7 +121,8 @@ async function proxyRequest(
       return NextResponse.json(
         { 
           error: 'Service Unavailable',
-          message: `Unable to connect to the backend service. Please check if the service is running. Target URL: ${API_URL}`,
+          message: `Unable to connect to the backend service. Please check if the service is running. Target URL: ${API_URL}
+          Target path: ${pathSegments.join('/')}`,
           code: 'SERVICE_UNAVAILABLE',
           timestamp: new Date().toISOString()
         },
