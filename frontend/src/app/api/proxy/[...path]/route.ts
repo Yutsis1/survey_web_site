@@ -113,8 +113,50 @@ async function proxyRequest(
     })
   } catch (error) {
     console.error('Proxy error:', error)
+    
+    // Categorize the error for better client handling
+    if (error instanceof TypeError && error.message.includes('fetch failed')) {
+      // Network error - service is down or unreachable
+      return NextResponse.json(
+        { 
+          error: 'Service Unavailable',
+          message: `Unable to connect to the backend service. Please check if the service is running. Target URL: ${API_URL}
+          Target path: ${pathSegments.join('/')}`,
+          code: 'SERVICE_UNAVAILABLE',
+          timestamp: new Date().toISOString()
+        },
+        { 
+          status: 503,
+          statusText: 'Service Unavailable'
+        }
+      )
+    }
+    
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      // Timeout error
+      return NextResponse.json(
+        { 
+          error: 'Gateway Timeout',
+          message: 'The backend service took too long to respond.',
+          code: 'GATEWAY_TIMEOUT',
+          timestamp: new Date().toISOString()
+        },
+        { 
+          status: 504,
+          statusText: 'Gateway Timeout'
+        }
+      )
+    }
+    
+    // Generic error
     return NextResponse.json(
-      { error: 'Proxy request failed' },
+      { 
+        error: 'Proxy Error',
+        message: 'An unexpected error occurred while processing your request.',
+        code: 'INTERNAL_ERROR',
+        details: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     )
   }
