@@ -1,6 +1,10 @@
+import logging
+
 from backend.db.mongo.mongoDB import surveys_collection
 from backend.config.settings import MIGRATION_STRATEGY
 from pymongo.errors import OperationFailure
+
+logger = logging.getLogger(__name__)
 
 INDEX_NAME = "uniq_title"
 INDEX_KEYS = [("title", 1)]
@@ -36,19 +40,25 @@ async def run_migrations() -> None:
 
     # If our desired index already exists with the exact spec, we’re done.
     if INDEX_NAME in existing and _spec_matches(existing[INDEX_NAME]):
-        print("Title index already correct; skipping creation.")
+        logger.info("Title index already correct; skipping creation.")
         return
 
     # Optional: legacy cleanup only if requested and there are many problematic docs.
     # (Partial index makes this unnecessary for correctness, but you kept this feature.)
+    logger.info("Using migration strategy '%s'.", MIGRATION_STRATEGY)
+
     if MIGRATION_STRATEGY in {"update", "delete"}:
+        logger.info("Applying '%s' strategy for null/missing titles.", MIGRATION_STRATEGY)
         null_title_docs = await surveys_collection.find({"title": None}).to_list(length=None)
         missing_title_docs = await surveys_collection.find({"title": {"$exists": False}}).to_list(length=None)
         total_problematic_docs = len(null_title_docs) + len(missing_title_docs)
 
         if total_problematic_docs > 1:
             if MIGRATION_STRATEGY == "update":
-                print(f"Found {total_problematic_docs} documents with null/missing titles. Updating with unique titles...")
+                logger.info(
+                    "Found %s documents with null/missing titles. Updating with unique titles…",
+                    total_problematic_docs,
+                )
                 # Update null titles
                 for i, doc in enumerate(null_title_docs, start=1):
                     await surveys_collection.update_one(
@@ -61,7 +71,10 @@ async def run_migrations() -> None:
                         {"_id": doc["_id"]}, {"$set": {"title": f"Untitled Survey {offset + i}"}}
                     )
             elif MIGRATION_STRATEGY == "delete":
-                print(f"Found {total_problematic_docs} documents with null/missing titles. Deleting to avoid conflicts...")
+                logger.info(
+                    "Found %s documents with null/missing titles. Deleting to avoid conflicts…",
+                    total_problematic_docs,
+                )
                 await surveys_collection.delete_many({"title": None})
                 await surveys_collection.delete_many({"title": {"$exists": False}})
 
@@ -73,7 +86,7 @@ async def run_migrations() -> None:
                 ]
                 duplicates = await surveys_collection.aggregate(pipeline).to_list(length=None)
                 if duplicates:
-                    print(f"Found duplicates in {len(duplicates)} titles.")
+                    logger.info("Found duplicates in %s titles.", len(duplicates))
                     for dup in duplicates:
                         title = dup["_id"]
                         docs = dup["docs"]
@@ -83,12 +96,27 @@ async def run_migrations() -> None:
                         to_delete = docs_sorted[1:]
                         if MIGRATION_STRATEGY == "delete":
                             await surveys_collection.delete_many({"_id": {"$in": to_delete}})
-                            print(f"Deleted {len(to_delete)} duplicates for title '{title}'")
+                            logger.debug(
+                                "Deleted %s duplicates for title '%s' while keeping document %s",
+                                len(to_delete),
+                                title,
+                                to_keep,
+                            )
                         elif MIGRATION_STRATEGY == "update":
                             for i, doc_id in enumerate(to_delete, start=1):
                                 new_title = f"{title} (Duplicate {i})"
                                 await surveys_collection.update_one({"_id": doc_id}, {"$set": {"title": new_title}})
-                            print(f"Renamed {len(to_delete)} duplicates for title '{title}'")
+                            logger.debug(
+                                "Renamed %s duplicates for title '%s' while keeping document %s",
+                                len(to_delete),
+                                title,
+                                to_keep,
+                            )
+    else:
+        logger.info(
+            "No legacy cleanup executed; migration strategy '%s' skips null/missing title handling.",
+            MIGRATION_STRATEGY,
+        )
 
     # If an old auto-named index exists (e.g., "title_1") or a mismatched version of our name, drop it first.
     to_drop = []
@@ -98,21 +126,21 @@ async def run_migrations() -> None:
         to_drop.append("title_1")
 
     for name in to_drop:
-        print(f"Dropping legacy index {name} …")
+        logger.info("Dropping legacy index %s …", name)
         try:
             await surveys_collection.drop_index(name)
         except OperationFailure as e:
-            print(f"Warning: drop_index({name}) failed: {e}. Continuing…")
+            logger.warning("drop_index(%s) failed: %s. Continuing…", name, e)
 
     # Create the correct index (idempotent now that names/specs are handled)
-    print("Creating unique partial index on title field …")
+    logger.info("Creating unique partial index on title field …")
     try:
         await surveys_collection.create_index(INDEX_KEYS, **INDEX_OPTIONS)
     except OperationFailure as e:
         # If a race created the same index between list & create, ignore the conflict.
         if getattr(e, "code", None) == 86:
-            print("Index already exists with a compatible name; continuing.")
+            logger.info("Index already exists with a compatible name; continuing.")
         else:
             raise
 
-    print("Migration completed successfully!")
+    logger.info("Migration completed successfully!")
