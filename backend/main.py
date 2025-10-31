@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
+from fastapi.responses import RedirectResponse
 
 from backend.config import settings
 from backend.routers.auth import auth
@@ -24,7 +25,28 @@ async def lifespan(app: FastAPI):
     await seed_example_survey()
     yield
 
-app = FastAPI(lifespan=lifespan)
+
+tags_metadata = [
+    {
+        "name": "auth",
+        "description": "Authentication endpoints for managing user registration and login.",
+    },
+    {
+        "name": "surveys",
+        "description": "Operations for creating and managing surveys.",
+    },
+]
+
+app = FastAPI(
+    title="Survey API",
+    description="API for managing surveys and authentication.",
+    version="1.0.0",
+    docs_url="/swagger",
+    openapi_url="/swagger.json",
+    redoc_url=None,
+    openapi_tags=tags_metadata,
+    lifespan=lifespan,
+)
 
 # CORS configuration
 origins = settings.ALLOWED_ORIGINS
@@ -49,6 +71,11 @@ app.add_middleware(
 
 app.include_router(surveys.router)
 app.include_router(auth.router)
+
+
+@app.get("/", include_in_schema=False)
+async def redirect_to_docs():
+    return RedirectResponse("/swagger")
 
 # Add middleware
 app.middleware("http")(cache_body_middleware)
