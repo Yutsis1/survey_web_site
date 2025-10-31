@@ -30,8 +30,9 @@ async def create_survey(survey: Survey, current_user: User = Depends(get_current
     try:
         survey_dict = survey.model_dump(exclude_none=True)
         # Add user information to the survey
-        survey_dict["created_by"] = str(current_user.id)
+        survey_dict["created_by_id"] = str(current_user.id)
         survey_dict["created_by_email"] = current_user.email
+        survey_dict["is_public"] = survey.is_public if survey.is_public is not None else False
         
         result = await surveys_collection.insert_one(survey_dict)
         return {"id": str(result.inserted_id)}
@@ -48,18 +49,20 @@ async def get_survey(id: str, current_user: User = Depends(get_current_user)):
     :type id: str
     :param current_user: The authenticated user requesting the survey.
     :type current_user: User
-    :raises HTTPException: If the survey is not found.
+    :raises HTTPException: If the survey is not found or access is denied.
     :return: The requested survey.
     :rtype: Survey
     """
-    survey = await surveys_collection.find_one({"_id": ObjectId(id)})
-    if not survey:
-        raise HTTPException(status_code=404, detail="Survey not found")
+    try:
+        survey = await surveys_collection.find_one({
+            "_id": ObjectId(id),
+            "created_by_id": str(current_user.id)  # Only get surveys owned by current user
+        })
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid survey ID format")
     
-    # Optional: Add access control - users can only see their own surveys
-    # not implemented yet
-    # if survey.get("created_by") != str(current_user.id):
-    #     raise HTTPException(status_code=403, detail="Access denied")
+    if not survey:
+        raise HTTPException(status_code=404, detail="Survey not found or access denied")
     
     survey["id"] = str(survey["_id"])
     survey.pop("_id", None)
@@ -77,7 +80,7 @@ async def list_surveys(current_user: User = Depends(get_current_user)):
     :rtype: list
     """
     # Get surveys created by the current user
-    cursor = surveys_collection.find({"created_by": str(current_user.id)})
+    cursor = surveys_collection.find({"created_by_id": str(current_user.id)})
     surveys = []
     
     async for survey in cursor:
@@ -87,32 +90,28 @@ async def list_surveys(current_user: User = Depends(get_current_user)):
     
     return {"surveys": surveys}
 
-# Not implemented yet
-# @router.delete("/{id}")
-# async def delete_survey(id: str, current_user: User = Depends(get_current_user)):
-#     """
-#     Delete a survey by its ID.
+@router.delete("/{id}")
+async def delete_survey(id: str, current_user: User = Depends(get_current_user)):
+    """
+    Delete a survey by its ID.
 
-#     :param id: The ID of the survey to delete.
-#     :type id: str
-#     :param current_user: The authenticated user requesting the deletion.
-#     :type current_user: User
-#     :raises HTTPException: If the survey is not found or access is denied.
-#     :return: Success message.
-#     :rtype: dict
-#     """
-#     # First check if survey exists and belongs to the user
-#     survey = await surveys_collection.find_one({"_id": ObjectId(id)})
-#     if not survey:
-#         raise HTTPException(status_code=404, detail="Survey not found")
+    :param id: The ID of the survey to delete.
+    :type id: str
+    :param current_user: The authenticated user requesting the deletion.
+    :type current_user: User
+    :raises HTTPException: If the survey is not found or access is denied.
+    :return: Success message.
+    :rtype: dict
+    """
+    try:
+        result = await surveys_collection.delete_one({
+            "_id": ObjectId(id),
+            "created_by": str(current_user.id)  # Only delete if owned by current user
+        })
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid survey ID format")
     
-#     # Check if user owns the survey
-#     if survey.get("created_by") != str(current_user.id):
-#         raise HTTPException(status_code=403, detail="Access denied")
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Survey not found or access denied")
     
-#     # Delete the survey
-#     result = await surveys_collection.delete_one({"_id": ObjectId(id)})
-#     if result.deleted_count == 0:
-#         raise HTTPException(status_code=404, detail="Survey not found")
-    
-#     return {"message": "Survey deleted successfully"}
+    return {"message": "Survey deleted successfully"}
