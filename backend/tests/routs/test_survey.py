@@ -149,3 +149,73 @@ async def test_get_survey_with_all_fields(monkeypatch):
     assert data["title"] == "Detailed Survey"
     assert len(data["questions"]) == 2
     assert data["is_public"] is True
+
+@pytest.mark.asyncio
+async def test_delete_survey_success(monkeypatch):
+    """Test successfully deleting a survey owned by the current user."""
+    object_id = ObjectId()
+    
+    class FakeDeleteResult:
+        deleted_count = 1
+    
+    async def fake_delete_one(query):
+        if query.get("_id") == object_id and query.get("created_by") == str(fake_user.id):
+            return FakeDeleteResult()
+        return FakeDeleteResult()
+    
+    monkeypatch.setattr(surveys_collection, "delete_one", fake_delete_one)
+    
+    resp = client.delete(f"/surveys/{str(object_id)}")
+    assert resp.status_code == 200
+    assert resp.json().get("message") == "Survey deleted successfully"
+
+
+@pytest.mark.asyncio
+async def test_delete_survey_not_found(monkeypatch):
+    """Test deleting a non-existent survey."""
+    class FakeDeleteResult:
+        deleted_count = 0
+    
+    async def fake_delete_one(query):
+        return FakeDeleteResult()
+    
+    monkeypatch.setattr(surveys_collection, "delete_one", fake_delete_one)
+    
+    some_id = str(ObjectId())
+    resp = client.delete(f"/surveys/{some_id}")
+    assert resp.status_code == 404
+    assert resp.json().get("detail") == "Survey not found or access denied"
+
+
+@pytest.mark.asyncio
+async def test_delete_survey_unauthorized_access(monkeypatch):
+    """Test deleting a survey owned by another user."""
+    object_id = ObjectId()
+    
+    class FakeDeleteResult:
+        deleted_count = 0
+    
+    async def fake_delete_one(query):
+        # Survey exists but created_by doesn't match
+        if query.get("_id") == object_id and query.get("created_by") == str(fake_user.id):
+            return FakeDeleteResult()
+        return FakeDeleteResult()
+    
+    monkeypatch.setattr(surveys_collection, "delete_one", fake_delete_one)
+    
+    resp = client.delete(f"/surveys/{str(object_id)}")
+    assert resp.status_code == 404
+    assert resp.json().get("detail") == "Survey not found or access denied"
+
+
+@pytest.mark.asyncio
+async def test_delete_survey_invalid_id_format(monkeypatch):
+    """Test deleting a survey with an invalid ObjectId format."""
+    async def fake_delete_one_raises(query):
+        raise Exception("Invalid ObjectId")
+    
+    monkeypatch.setattr(surveys_collection, "delete_one", fake_delete_one_raises)
+    
+    resp = client.delete("/surveys/invalid-id-format")
+    assert resp.status_code == 400
+    assert resp.json().get("detail") == "Invalid survey ID format"
