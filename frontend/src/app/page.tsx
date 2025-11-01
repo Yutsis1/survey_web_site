@@ -20,10 +20,8 @@ export default function Home() {
 
   // Always show loading during initial check or redirect
   return (
-    <ProtectedRoute>
       <main className="flex min-h-screen items-center justify-center">
         <div>Loading...</div>
       </main>
-    </ProtectedRoute>
   );
 }
