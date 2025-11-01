@@ -98,10 +98,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const checkAuth = async () => {
         try {
             const res = await refresh()
-            setIsAuthenticated(res.ok)
+            if (res.ok) {
+                const data = await res.json()
+                setAccessToken(data.access_token)
+                setTokenExpiry(Date.now() + (data.expires_in || 900) * 1000) // default 15min
+                setIsAuthenticated(true)
+            } else {
+                setIsAuthenticated(false)
+                setAccessToken(null)
+                setTokenExpiry(null)
+            }
         } catch (error) {
             console.error('Auth check failed:', error)
             setIsAuthenticated(false)
+            setAccessToken(null)
+            setTokenExpiry(null)
         } finally {
             setIsLoading(false)
         }

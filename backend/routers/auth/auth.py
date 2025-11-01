@@ -176,25 +176,27 @@ async def login(payload: LoginIn, resp: Response, db: AsyncSession = Depends(get
 
 
 @router.post("/refresh", response_model=AccessOut)
-async def refresh(request: Request, resp: Response, db: AsyncSession = Depends(get_async_db), refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE)):
+async def refresh(
+    request: Request,
+    resp: Response, 
+    db: AsyncSession = Depends(get_async_db),
+    refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE) 
+):
     """
-    Refresh authentication tokens by validating the provided refresh token from cookies.
-    This function decodes the refresh token, verifies its validity, checks if it has been revoked,
-    and ensures the associated user is active. If all checks pass, it proceeds with token refresh logic
-    (not shown in the provided code snippet).
-    Parameters:
-        request (Request): The incoming HTTP request object.
-        resp (Response): The HTTP response object to be modified.
-        db (AsyncSession): Asynchronous database session, injected via dependency.
-        refresh_token (str | None): The refresh token extracted from cookies, aliased as REFRESH_COOKIE.
+    Refreshes an access token using a provided refresh token.
+    This endpoint validates the refresh token by decoding it, checking its revocation status in the database,
+    verifying the associated user's active status, and generating a new access token if all checks pass.
+    Args:
+        refresh_token (str | None): The refresh token provided in the request. Must be present and valid.
+        db (AsyncSession): The asynchronous database session, injected via dependency.
     Raises:
         HTTPException: 
-            - 401 if refresh_token is missing ("Missing refresh cookie").
-            - 401 if token decoding fails ("Invalid refresh").
-            - 401 if the refresh token is revoked or not found ("Refresh revoked or not found").
-            - 401 if the user is inactive or not found ("User inactive").
-    Note:
-        This function is asynchronous and relies on JWT decoding and database queries for validation.
+            - 401 if refresh_token is missing.
+            - 401 if the token is invalid (decoding fails).
+            - 401 if the refresh token is revoked or not found.
+            - 401 if the user is inactive or not found.
+    Returns:
+        dict: A dictionary containing the new access token, e.g., {"access_token": "new_token"}.
     """
     if not refresh_token:
         raise HTTPException(status_code=401, detail="Missing refresh cookie")

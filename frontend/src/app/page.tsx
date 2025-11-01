@@ -2,7 +2,6 @@
 import { useAuth } from './contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { ProtectedRoute } from './components/protected-route';
 
 export default function Home() {
   const { isAuthenticated, isLoading } = useAuth();
