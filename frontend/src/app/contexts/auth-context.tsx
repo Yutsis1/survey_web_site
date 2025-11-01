@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { config } from '@/config'
+import { apiClient } from '../services/api-client'
 
 interface AuthContextType {
     isAuthenticated: boolean
@@ -92,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [accessToken, setAccessToken] = useState<string | null>(null)
+    const [tokenExpiry, setTokenExpiry] = useState<number | null>(null)
 
     const checkAuth = async () => {
         try {
@@ -111,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (res.ok) {
             const data = await res.json()
             setAccessToken(data.access_token)
+            setTokenExpiry(Date.now() + data.expires_in * 1000)
             setIsAuthenticated(true)
         }
     }
@@ -120,6 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (res.ok) {
             const data = await res.json()
             setAccessToken(data.access_token)
+            setTokenExpiry(Date.now() + data.expires_in * 1000)
             setIsAuthenticated(true)
         }
     }
@@ -128,14 +132,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const res = await logout(accessToken)
             if (res.ok) {
                 setAccessToken(null)
+                setTokenExpiry(null)
                 setIsAuthenticated(false)
             }
         }
     }
 
+    // Add automatic token refresh before expiry
+    useEffect(() => {
+        if (!tokenExpiry || !accessToken) return
+
+        const timeUntilExpiry = tokenExpiry - Date.now()
+        const refreshTime = Math.max(timeUntilExpiry - 60000, 0) // Refresh 1min before expiry
+
+        const timer = setTimeout(() => {
+            refresh()
+                .then((res) => {
+                    if (res.ok) {
+                        res.json().then((data) => {
+                            setAccessToken(data.access_token)
+                            setTokenExpiry(Date.now() + data.expires_in * 1000)
+                        })
+                    }
+                })
+                .catch(() => setIsAuthenticated(false))
+        }, refreshTime)
+
+        return () => clearTimeout(timer)
+    }, [accessToken, tokenExpiry])
+
     useEffect(() => {
         checkAuth()
     }, [])
+
+    useEffect(() => {
+        apiClient.initialize(
+            () => accessToken,
+            () => {
+                setIsAuthenticated(false)
+                setAccessToken(null)
+            }
+        )
+    }, [accessToken])
 
     return (
         <AuthContext.Provider

@@ -2,6 +2,7 @@
 import { useAuth } from './contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { ProtectedRoute } from './components/protected-route';
 
 export default function Home() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -19,8 +20,10 @@ export default function Home() {
 
   // Always show loading during initial check or redirect
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <div>Loading...</div>
-    </main>
+    <ProtectedRoute>
+      <main className="flex min-h-screen items-center justify-center">
+        <div>Loading...</div>
+      </main>
+    </ProtectedRoute>
   );
 }
