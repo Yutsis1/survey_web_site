@@ -69,7 +69,7 @@ async def get_survey(id: str, current_user: User = Depends(get_current_user)):
     return Survey(**survey)
 
 
-@router.get("/")
+@router.get("/", response_model=List[Survey])
 async def list_surveys(current_user: User = Depends(get_current_user)):
     """
     List all surveys for the authenticated user.
@@ -77,7 +77,7 @@ async def list_surveys(current_user: User = Depends(get_current_user)):
     :param current_user: The authenticated user.
     :type current_user: User
     :return: List of surveys created by the user.
-    :rtype: list
+    :rtype: list[Survey]
     """
     # Get surveys created by the current user
     cursor = surveys_collection.find({"created_by_id": str(current_user.id)})
@@ -89,6 +89,27 @@ async def list_surveys(current_user: User = Depends(get_current_user)):
         surveys.append(survey)
     
     return {"surveys": surveys}
+
+@router.get("/options", response_model=List[SurveyOption])
+async def get_survey_options(current_user: User = Depends(get_current_user)):
+    """
+    Get a list of survey options (ID and title) for the authenticated user.
+
+    :param current_user: The authenticated user.
+    :type current_user: User
+    :return: List of survey options.
+    :rtype: list[SurveyOption]
+    """
+    cursor = surveys_collection.find({"created_by_id": str(current_user.id)})
+    options = []
+
+    async for survey in cursor:
+        options.append({
+            "id": str(survey["_id"]),
+            "title": survey.get("title", f"Untitled Survey {survey['_id']}")
+        })
+
+    return options
 
 @router.delete("/{id}")
 async def delete_survey(id: str, current_user: User = Depends(get_current_user)):
