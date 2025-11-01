@@ -19,7 +19,7 @@ export function DropDown({
 }: DropDownProps) {
 return (
     <div className="dropdown-container">
-        {label && <label htmlFor={id} className="dropdown-label">{label}</label>}
+        {label && <label htmlFor={name} className="dropdown-label">{label}</label>}
         <select
             id={id}
             name={name}
