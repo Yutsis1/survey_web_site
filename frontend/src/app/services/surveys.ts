@@ -1,8 +1,6 @@
 import { QuestionItem } from '@/app/app-modules/questions/question-types'
-import { config } from "@/config"
 import { apiClient } from './api-client'
 
-const API_URL = config.apiUrl
 
 export interface SurveyPayload {
   title?: string

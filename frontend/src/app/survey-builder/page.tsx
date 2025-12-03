@@ -46,6 +46,29 @@ export default function Home() {
         }
     }, [isAuthenticated, isLoading, router])
 
+    // While react-grid-layout drag is active, track mouse position and set isOverTrash
+    useEffect(() => {
+        if (!isDragging) return
+        const onMove = (ev: MouseEvent) => {
+            const dropEl = document.querySelector(
+                '.delete-dropzone-card'
+            ) as HTMLElement | null
+            if (!dropEl) return
+            const rect = dropEl.getBoundingClientRect()
+            const over =
+                ev.clientX >= rect.left &&
+                ev.clientX <= rect.right &&
+                ev.clientY >= rect.top &&
+                ev.clientY <= rect.bottom
+            setIsOverTrash(over)
+        }
+        window.addEventListener('mousemove', onMove)
+        return () => {
+            window.removeEventListener('mousemove', onMove)
+            setIsOverTrash(false)
+        }
+    }, [isDragging])
+
     // Show loading while checking auth
     if (isLoading) {
         return (
@@ -68,7 +91,6 @@ export default function Home() {
             questions.length
         )
 
-        // Calculate the next position for the new question
         const cols = 12
         const w = 3
         const h = 2
@@ -76,7 +98,6 @@ export default function Home() {
         const col = (idx * w) % cols
         const row = Math.floor((idx * w) / cols) * h
 
-        // Append a properly positioned RGL item for this new question
         layoutsApi.append({ i: String(item.id), x: col, y: row, w, h })
 
         setQuestions((prev) => [...prev, item])
@@ -109,9 +130,7 @@ export default function Home() {
         try {
             const survey = await fetchSurvey(id)
             setQuestions(survey.questions)
-            // Build responsive layouts from array order
             const layouts = generateLayouts(survey.questions)
-
             layoutsApi.setLayouts(layouts)
             alert('Survey loaded')
         } catch (e) {
@@ -140,9 +159,7 @@ export default function Home() {
         radioBar: builder.radioBar,
     })
 
-    // Trash (toast) handlers
     const onTrashDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        // Allow dropping
         e.preventDefault()
         e.dataTransfer.dropEffect = 'move'
     }
@@ -154,7 +171,6 @@ export default function Home() {
     const removeQuestions = (id: string) => {
         setQuestions((prev) => {
             const next = prev.filter((it) => it.id !== id)
-            // Repack so there are no holes (optional)
             const layouts = generateLayouts(next)
             layoutsApi.setLayouts(layouts)
             return next
@@ -175,36 +191,6 @@ export default function Home() {
         setIsOverTrash(false)
     }
 
-    // While react-grid-layout drag is active, track mouse position and set isOverTrash
-    // drop idea to use events such as onTrashDrop, onTrashDragLeave etc.
-    // had to move dragable logic in css
-    useEffect(() => {
-        // check is dragging or not
-        if (!isDragging) return
-        const onMove = (ev: MouseEvent) => {
-            // select drop element and if we hover on it
-            const dropEl = document.querySelector(
-                '.delete-dropzone-card'
-            ) as HTMLElement | null
-            if (!dropEl) return
-            // getting coordinates of dropDelete component
-            const rect = dropEl.getBoundingClientRect()
-            // calculate is over rectangle of drop component
-            const over =
-                ev.clientX >= rect.left &&
-                ev.clientX <= rect.right &&
-                ev.clientY >= rect.top &&
-                ev.clientY <= rect.bottom
-            setIsOverTrash(over)
-        }
-        window.addEventListener('mousemove', onMove)
-        return () => {
-            // cleanup event listener
-            window.removeEventListener('mousemove', onMove)
-            setIsOverTrash(false)
-        }
-    }, [isDragging])
-
     type RGLItem = { i: string; x: number; y: number; w: number; h: number }
 
     function generateLayouts(
@@ -214,7 +200,6 @@ export default function Home() {
         h = 2
     ) {
         const base: RGLItem[] = questions.map((q, idx) => {
-            // calculate col and row based on index
             const col = (idx * w) % cols
             const row = Math.floor((idx * w) / cols) * h
             return { i: String(q.id), x: col, y: row, w, h }
@@ -273,7 +258,6 @@ export default function Home() {
                         layouts={layoutsApi.layouts}
                         onLayoutChange={(_, l) => layoutsApi.setLayouts(l)}
                         onDragStart={(...args: unknown[]) => {
-                            // react-grid-layout passes several args; find an object with an 'i' id
                             const item = args.find((a) => {
                                 return (
                                     typeof a === 'object' &&
@@ -291,7 +275,6 @@ export default function Home() {
                         compactType={null}
                         preventCollision={false}
                         onDragStop={(layout, layouts) => {
-                            // If pointer was over dropzone on stop, remove the dragged item
                             if (isOverTrash && draggingId) {
                                 removeQuestions(draggingId)
                             }
@@ -333,11 +316,10 @@ export default function Home() {
                 onApply={() => void 0}
                 popUpTitle="Loading Survey"
             >
-                <div><DropDown options={[]} selectedOption={''} onSelect={function (option: string): void {
+                <div><DropDown options={[]} selectedOption={''} onSelect={() => {
                     throw new Error('Function not implemented.')
-                } } /></div>
+                }} /></div>
             </PopUp>
-            {/* Toast-like Delete Dropzone (now a class component) */}
             <DeleteDropzone
                 isDragging={isDragging}
                 isOverTrash={isOverTrash}
