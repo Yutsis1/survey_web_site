@@ -47,4 +47,10 @@ class QuestionItem(BaseModel):
 class Survey(BaseModel):
     id: Optional[str] = None
     title: Optional[str] = None
+    is_public: Optional[bool] = False
+    created_by_id: str = None
     questions: List[QuestionItem]
+
+class SurveyOption(BaseModel):
+    id: str
+    title: str
