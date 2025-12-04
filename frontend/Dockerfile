@@ -1,11 +1,11 @@
 # --- deps ---
-FROM node:22-bookworm-slim AS deps
+FROM node:24-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
 # --- builder ---
-FROM node:22-bookworm-slim AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
@@ -17,7 +17,7 @@ RUN npm run build
 # e.g. RUN npm run build
 
 # --- runner ---
-FROM node:22-bookworm-slim AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 # install only prod deps
