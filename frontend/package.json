@@ -10,12 +10,12 @@
     "test": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.10",
     "dotenv": "^17.2.2",
-    "next": "^15.6.0-canary.32",
+    "next": "^16.0.7",
     "previewjs": "^1.0.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
