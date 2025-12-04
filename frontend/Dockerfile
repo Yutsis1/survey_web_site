@@ -1,11 +1,19 @@
 # --- deps ---
-FROM node:22-bookworm-slim AS deps
+FROM node:22-alpine AS deps
+
+# apply OS security updates to fix known vulnerabilities
+RUN apk update && apk upgrade
+
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
 # --- builder ---
-FROM node:22-bookworm-slim AS builder
+FROM node:22-alpine AS builder
+
+# apply OS security updates to fix known vulnerabilities
+RUN apk update && apk upgrade
+
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
@@ -17,10 +25,15 @@ RUN npm run build
 # e.g. RUN npm run build
 
 # --- runner ---
-FROM node:22-bookworm-slim AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+
+# apply OS security updates to fix known vulnerabilities
+RUN apk update && apk upgrade
+
 # install only prod deps
+ENV HUSKY=0
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 

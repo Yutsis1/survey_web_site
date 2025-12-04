@@ -32,7 +32,6 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    ".next/types/**/*.ts",
     "src",
     "**/*.mts"
   ],
