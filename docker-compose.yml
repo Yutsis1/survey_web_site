@@ -4,13 +4,14 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://127.0.0.11:8000
+        NEXT_PUBLIC_API_URL: http://backend:8000
     ports:
       - "3000:3000"
     depends_on:
       - backend
     environment:
-      - NEXT_PUBLIC_API_URL=http://127.0.0.11:8000
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - API_URL=http://backend:8000
 
   backend:
     build:

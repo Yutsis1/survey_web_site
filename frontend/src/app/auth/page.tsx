@@ -22,7 +22,7 @@ export default function AuthPage() {
     // Redirect if already authenticated
     useEffect(() => {
         if (!isLoading && isAuthenticated) {
-            router.push('/')
+            router.push('/survey-builder')
         }
     }, [isAuthenticated, isLoading, router])
 
@@ -41,7 +41,7 @@ export default function AuthPage() {
             } else {
                 await login(email, password)
             }
-            router.push('/')
+            router.push('/survey-builder')
         } catch (error) {
             console.error('Auth error:', error)
             setError('Authentication failed')

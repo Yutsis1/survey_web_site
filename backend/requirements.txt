@@ -12,8 +12,10 @@ anyio==4.10.0
     #   starlette
 asyncpg==0.30.0
     # via -r backend/requirements.in
-bcrypt==4.3.0
-    # via passlib
+bcrypt==3.2.2
+    # via
+    #   -r backend/requirements.in
+    #   passlib
 certifi==2025.8.3
     # via
     #   httpcore

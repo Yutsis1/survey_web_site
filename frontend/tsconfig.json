@@ -34,7 +34,8 @@
   "include": [
     ".next/types/**/*.ts",
     "src",
-    "**/*.mts"
+    "**/*.mts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
