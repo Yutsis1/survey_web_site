@@ -2,45 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const API_URL = process.env.API_URL || 'http://127.0.0.1:8000'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
-  const { path } = await params
-  return proxyRequest(request, path, 'GET')
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+type HandlerParams = { params: Promise<{ path: string[] }> }
+type RouteHandler = (request: NextRequest, args: HandlerParams) => Promise<NextResponse>
+
+function createMethodHandler(method: HttpMethod): RouteHandler {
+  return async (request, { params }) => {
+    const { path } = await params
+    return proxyRequest(request, path, method)
+  }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
-  const { path } = await params
-  return proxyRequest(request, path, 'POST')
-}
-
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
-  const { path } = await params
-  return proxyRequest(request, path, 'PUT')
-}
-
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
-  const { path } = await params
-  return proxyRequest(request, path, 'DELETE')
-}
-
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
-  const { path } = await params
-  return proxyRequest(request, path, 'PATCH')
-}
+export const GET = createMethodHandler('GET')
+export const POST = createMethodHandler('POST')
+export const PUT = createMethodHandler('PUT')
+export const DELETE = createMethodHandler('DELETE')
+export const PATCH = createMethodHandler('PATCH')
 
 async function proxyRequest(
   request: NextRequest,

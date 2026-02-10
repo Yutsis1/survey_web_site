@@ -61,17 +61,23 @@ export async function register(
 }
 
 export async function refresh(): Promise<Response> {
-    const res = await fetch(`${config.apiUrl}/auth/refresh`, {
-        method: 'POST',
-        credentials: 'include',
-        cache: 'no-store',
-    })
-    if (!res.ok) {
-        throw new Error(
-            `Failed to refresh token: ${res.statusText}, status code: ${res.status}`
-        )
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+    
+    try {
+        const res = await fetch(`${config.apiUrl}/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+            cache: 'no-store',
+            signal: controller.signal,
+        })
+        
+        // Always return the response, don't throw on non-ok status
+        // Let the caller handle non-ok responses
+        return res
+    } finally {
+        clearTimeout(timeout)
     }
-    return res
 }
 
 export async function logout(accessToken: string): Promise<Response> {
@@ -99,7 +105,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const res = await refresh()
             if (res.ok) {
-                const data = await res.json()
+                const text = await res.text()
+                const data = JSON.parse(text)
                 setAccessToken(data.access_token)
                 setTokenExpiry(Date.now() + (data.expires_in || 900) * 1000) // default 15min
                 setIsAuthenticated(true)
