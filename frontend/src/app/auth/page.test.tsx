@@ -184,7 +184,7 @@ describe('AuthPage component', () => {
                 'test@example.com',
                 'password123'
             )
-            expect(push).toHaveBeenCalledWith('/')
+            expect(push).toHaveBeenCalledWith('/survey-builder')
         })
     })
 
@@ -200,7 +200,7 @@ describe('AuthPage component', () => {
                 'test@example.com',
                 'password123'
             )
-            expect(push).toHaveBeenCalledWith('/')
+            expect(push).toHaveBeenCalledWith('/survey-builder')
         })
     })
 
