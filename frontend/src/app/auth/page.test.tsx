@@ -161,11 +161,42 @@ describe('AuthPage component', () => {
         })
     })
 
+    test('shows password rule errors in register mode for invalid password', async () => {
+        render(<AuthPage />)
+        toggleMode()
+        await fillPassword('abc')
+        await waitFor(() => {
+            const errorLabel = screen.getByTestId('info-error')
+            expect(errorLabel).toHaveTextContent(
+                'Password must be at least 8 characters long'
+            )
+            expect(errorLabel).toHaveTextContent(
+                'Password must contain at least one uppercase letter'
+            )
+        })
+    })
+
+    test('hides password rule errors when password becomes valid', async () => {
+        render(<AuthPage />)
+        toggleMode()
+        await fillPassword('abc')
+        await waitFor(() => {
+            expect(screen.getByTestId('info-error')).toBeInTheDocument()
+        })
+
+        await userEvent.clear(getPasswordInput())
+        await fillPassword('Password123!')
+
+        await waitFor(() => {
+            expect(screen.queryByTestId('info-error')).not.toBeInTheDocument()
+        })
+    })
+
     test('displays password mismatch error in register mode', async () => {
         render(<AuthPage />)
         toggleMode()
-        await fillPassword('password123')
-        await fillRepeat('password124')
+        await fillPassword('Password123!')
+        await fillRepeat('Password123@')
         submit()
         await waitFor(() => {
             expect(screen.getByTestId('info-error')).toHaveTextContent(
@@ -222,8 +253,8 @@ describe('AuthPage component', () => {
         render(<AuthPage />)
         toggleMode()
         await fillEmail('test@example.com')
-        await fillPassword('password123')
-        await fillRepeat('password123')
+        await fillPassword('Password123!')
+        await fillRepeat('Password123!')
         submit()
         await waitFor(() => {
             expect(screen.getByTestId('info-error')).toHaveTextContent(
