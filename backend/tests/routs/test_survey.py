@@ -27,6 +27,18 @@ async def fake_get_current_user():
     return fake_user
 
 
+class FakeAsyncCursor:
+    def __init__(self, docs):
+        self.docs = docs
+
+    def __aiter__(self):
+        async def generator():
+            for doc in self.docs:
+                yield doc
+
+        return generator()
+
+
 # Override the FastAPI dependency
 app.dependency_overrides[get_current_user] = fake_get_current_user
 
@@ -150,6 +162,90 @@ async def test_get_survey_with_all_fields(monkeypatch):
     assert len(data["questions"]) == 2
     assert data["is_public"] is True
 
+
+@pytest.mark.asyncio
+async def test_list_surveys_success(monkeypatch):
+    """Test listing surveys owned by the current user."""
+    object_id_1 = ObjectId()
+    object_id_2 = ObjectId()
+    fake_docs = [
+        {
+            "_id": object_id_1,
+            "title": "Survey One",
+            "questions": [],
+            "created_by_id": str(fake_user.id),
+            "created_by_email": fake_user.email,
+            "is_public": False,
+        },
+        {
+            "_id": object_id_2,
+            "title": "Survey Two",
+            "questions": [],
+            "created_by_id": str(fake_user.id),
+            "created_by_email": fake_user.email,
+            "is_public": True,
+        },
+    ]
+
+    def fake_find(query):
+        assert query.get("created_by_id") == str(fake_user.id)
+        return FakeAsyncCursor(fake_docs)
+
+    monkeypatch.setattr(surveys_collection, "find", fake_find)
+
+    resp = client.get("/surveys/")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "surveys" in data
+    assert len(data["surveys"]) == 2
+    assert data["surveys"][0]["id"] == str(object_id_1)
+    assert data["surveys"][1]["id"] == str(object_id_2)
+
+
+@pytest.mark.asyncio
+async def test_get_survey_options_success(monkeypatch):
+    """Test listing survey options for the current user."""
+    object_id = ObjectId()
+    fake_docs = [
+        {
+            "_id": object_id,
+            "title": "Preferred Survey",
+            "created_by_id": str(fake_user.id),
+        },
+        {
+            "_id": ObjectId(),
+            "created_by_id": str(fake_user.id),
+        },
+    ]
+
+    def fake_find(query):
+        assert query.get("created_by_id") == str(fake_user.id)
+        return FakeAsyncCursor(fake_docs)
+
+    monkeypatch.setattr(surveys_collection, "find", fake_find)
+
+    resp = client.get("/surveys/options")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 2
+    assert data[0]["id"] == str(object_id)
+    assert data[0]["title"] == "Preferred Survey"
+    assert data[1]["title"].startswith("Untitled Survey")
+
+
+@pytest.mark.asyncio
+async def test_get_survey_options_route_is_not_shadowed(monkeypatch):
+    """Ensure /surveys/options resolves to the options route, not /surveys/{id}."""
+    def fake_find(query):
+        return FakeAsyncCursor([])
+
+    monkeypatch.setattr(surveys_collection, "find", fake_find)
+
+    resp = client.get("/surveys/options")
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
 @pytest.mark.asyncio
 async def test_delete_survey_success(monkeypatch):
     """Test successfully deleting a survey owned by the current user."""
@@ -159,7 +255,7 @@ async def test_delete_survey_success(monkeypatch):
         deleted_count = 1
     
     async def fake_delete_one(query):
-        if query.get("_id") == object_id and query.get("created_by") == str(fake_user.id):
+        if query.get("_id") == object_id and query.get("created_by_id") == str(fake_user.id):
             return FakeDeleteResult()
         return FakeDeleteResult()
     
@@ -196,8 +292,8 @@ async def test_delete_survey_unauthorized_access(monkeypatch):
         deleted_count = 0
     
     async def fake_delete_one(query):
-        # Survey exists but created_by doesn't match
-        if query.get("_id") == object_id and query.get("created_by") == str(fake_user.id):
+        # Survey exists but created_by_id doesn't match
+        if query.get("_id") == object_id and query.get("created_by_id") == str(fake_user.id):
             return FakeDeleteResult()
         return FakeDeleteResult()
     

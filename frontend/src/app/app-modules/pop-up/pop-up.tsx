@@ -7,6 +7,7 @@ export interface PopUpProps {
     onClose: () => void
     onCancel?: () => void
     onApply: () => void
+    applyDisabled?: boolean
     popUpTitle: string
     popUpDescription?: string
     children?: React.ReactNode
@@ -17,6 +18,7 @@ export const PopUp: React.FC<PopUpProps> = ({
     onClose,
     onCancel,
     onApply,
+    applyDisabled = false,
     popUpTitle,
     popUpDescription,
     children,
@@ -61,6 +63,7 @@ export const PopUp: React.FC<PopUpProps> = ({
                         label="Apply"
                         onClick={onApply}
                         test_id="apply-button"
+                        disabled={applyDisabled}
                         // className="button-cancel"
                     />
                 </div>

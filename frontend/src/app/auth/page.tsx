@@ -9,6 +9,22 @@ import './auth.css'
 
 export default function AuthPage() {
     const emailSchema = z.email({ message: 'Invalid email address' })
+    const passwordSchema = z
+        .string()
+        .min(8, { error: 'Password must be at least 8 characters long' })
+        .max(20, { error: 'Password must not exceed 20 characters' })
+        .refine((val) => /[A-Z]/.test(val), {
+            message: 'Password must contain at least one uppercase letter',
+        })
+        .refine((val) => /[a-z]/.test(val), {
+            message: 'Password must contain at least one lowercase letter',
+        })
+        .refine((val) => /[0-9]/.test(val), {
+            message: 'Password must contain at least one number',
+        })
+        .refine((val) => /[!@#$%^&*]/.test(val), {
+            message: 'Password must contain at least one special character',
+        })
     const [mode, setMode] = useState<'login' | 'register'>('login')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -117,6 +133,7 @@ export default function AuthPage() {
                                 value: password,
                                 onChange: (e) => setPassword(e.target.value),
                                 type: 'password',
+                                showPasswordToggle: true,
                                 placeholder: 'Enter your password',
                                 test_id: 'input-password',
                                 name: 'password',
@@ -126,6 +143,31 @@ export default function AuthPage() {
                         showQuestionText={false}
                     />
                 </div>
+                {mode === 'register' && password && (() => {
+                    const parsed = passwordSchema.safeParse(password)
+                    if (!parsed.success) {
+                        const msgs = parsed.error.issues
+                            .map((err) => err.message)
+                            .join('\n')
+                        return (
+                            <div className="auth-password-errors">
+                                <DynamicComponentRenderer
+                                    component="InfoLabel"
+                                    option={{
+                                        optionProps: {
+                                            text: msgs,
+                                            type: 'error',
+                                            test_id: 'info-error',
+                                        },
+                                    }}
+                                    questionText=""
+                                    showQuestionText={false}
+                                />
+                            </div>
+                        )
+                    }
+                    return null
+                })()}
                 {mode === 'register' && (
                     <div className="auth-repeat">
                         <DynamicComponentRenderer
@@ -136,6 +178,7 @@ export default function AuthPage() {
                                     value: repeat,
                                     onChange: (e) => setRepeat(e.target.value),
                                     type: 'password',
+                                    showPasswordToggle: true,
                                     placeholder: 'Repeat your password',
                                     test_id: 'input-repeat-password',
                                     name: 'repeat-password',

@@ -71,4 +71,50 @@ describe("TextInput Component", () => {
         );
         expect(getByTestId("test-id")).toBeInTheDocument();
     });
+
+    it("does not render password toggle by default", () => {
+        const { queryByRole } = render(
+            <TextInput type="password" onChange={() => {}} />
+        );
+        expect(queryByRole("button", { name: "Show password" })).not.toBeInTheDocument();
+    });
+
+    it("renders password toggle when enabled for password fields", () => {
+        const { getByRole } = render(
+            <TextInput type="password" showPasswordToggle onChange={() => {}} />
+        );
+        expect(getByRole("button", { name: "Show password" })).toBeInTheDocument();
+    });
+
+    it("toggles password visibility when the toggle button is clicked", () => {
+        const { getByPlaceholderText, getByRole } = render(
+            <TextInput type="password" showPasswordToggle onChange={() => {}} />
+        );
+
+        const input = getByPlaceholderText("Enter text...");
+        const toggleButton = getByRole("button", { name: "Show password" });
+
+        expect(input).toHaveAttribute("type", "password");
+
+        fireEvent.click(toggleButton);
+        expect(input).toHaveAttribute("type", "text");
+
+        fireEvent.click(toggleButton);
+        expect(input).toHaveAttribute("type", "password");
+    });
+
+    it("renders toggle as a non-submit button with accessible labels", () => {
+        const { getByRole } = render(
+            <TextInput type="password" showPasswordToggle onChange={() => {}} />
+        );
+
+        const toggleButton = getByRole("button", { name: "Show password" });
+        expect(toggleButton).toHaveAttribute("type", "button");
+        expect(toggleButton).toHaveAttribute("aria-pressed", "false");
+
+        fireEvent.click(toggleButton);
+
+        expect(toggleButton).toHaveAttribute("aria-label", "Hide password");
+        expect(toggleButton).toHaveAttribute("aria-pressed", "true");
+    });
 });

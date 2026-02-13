@@ -4,11 +4,17 @@ import userEvent from '@testing-library/user-event'
 import { describe, test, expect, vi, afterEach, beforeEach, Mock } from 'vitest'
 
 // supper clear that vitest not sutable for component tests. Better have server mock library and render page in browser
+const { dynamicRendererSpy } = vi.hoisted(() => ({
+    dynamicRendererSpy: vi.fn(),
+}))
 
 // ---- Mock DynamicComponentRenderer (simple stub inputs/buttons/labels)
 vi.mock('../components/dynamic-component-renderer', () => ({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    DynamicComponentRenderer: ({ component, option }: any) => {
+    DynamicComponentRenderer: (props: any) => {
+        const { component, option } = props
+        dynamicRendererSpy(props)
+
         if (component === 'TextInput') {
             const { label, value, onChange, type, placeholder, test_id } =
                 option.optionProps
@@ -93,6 +99,7 @@ describe('AuthPage component', () => {
         document.body.innerHTML = ''
         vi.clearAllMocks()
         push.mockReset()
+        dynamicRendererSpy.mockReset()
         mockLogin = vi.fn().mockResolvedValue(undefined)
         mockRegister = vi.fn().mockResolvedValue(undefined)
 
@@ -121,6 +128,37 @@ describe('AuthPage component', () => {
         expect(modeButton()).toBeInTheDocument()
         expect(screen.getByText(registerText)).toBeInTheDocument()
         expect(screen.queryByText(loginText)).not.toBeInTheDocument()
+    })
+
+    test('enables password visibility toggle for password input props', () => {
+        render(<AuthPage />)
+
+        const hasPasswordToggleConfig = dynamicRendererSpy.mock.calls
+            .map(([props]) => props)
+            .some(
+                (props) =>
+                    props.component === 'TextInput' &&
+                    props.option.optionProps.name === 'password' &&
+                    props.option.optionProps.showPasswordToggle === true
+            )
+
+        expect(hasPasswordToggleConfig).toBe(true)
+    })
+
+    test('enables password visibility toggle for repeat password input props', () => {
+        render(<AuthPage />)
+        toggleMode()
+
+        const hasRepeatPasswordToggleConfig = dynamicRendererSpy.mock.calls
+            .map(([props]) => props)
+            .some(
+                (props) =>
+                    props.component === 'TextInput' &&
+                    props.option.optionProps.name === 'repeat-password' &&
+                    props.option.optionProps.showPasswordToggle === true
+            )
+
+        expect(hasRepeatPasswordToggleConfig).toBe(true)
     })
 
     test('switches to register mode when Register is clicked', () => {
@@ -161,11 +199,42 @@ describe('AuthPage component', () => {
         })
     })
 
+    test('shows password rule errors in register mode for invalid password', async () => {
+        render(<AuthPage />)
+        toggleMode()
+        await fillPassword('abc')
+        await waitFor(() => {
+            const errorLabel = screen.getByTestId('info-error')
+            expect(errorLabel).toHaveTextContent(
+                'Password must be at least 8 characters long'
+            )
+            expect(errorLabel).toHaveTextContent(
+                'Password must contain at least one uppercase letter'
+            )
+        })
+    })
+
+    test('hides password rule errors when password becomes valid', async () => {
+        render(<AuthPage />)
+        toggleMode()
+        await fillPassword('abc')
+        await waitFor(() => {
+            expect(screen.getByTestId('info-error')).toBeInTheDocument()
+        })
+
+        await userEvent.clear(getPasswordInput())
+        await fillPassword('Password123!')
+
+        await waitFor(() => {
+            expect(screen.queryByTestId('info-error')).not.toBeInTheDocument()
+        })
+    })
+
     test('displays password mismatch error in register mode', async () => {
         render(<AuthPage />)
         toggleMode()
-        await fillPassword('password123')
-        await fillRepeat('password124')
+        await fillPassword('Password123!')
+        await fillRepeat('Password123@')
         submit()
         await waitFor(() => {
             expect(screen.getByTestId('info-error')).toHaveTextContent(
@@ -222,8 +291,8 @@ describe('AuthPage component', () => {
         render(<AuthPage />)
         toggleMode()
         await fillEmail('test@example.com')
-        await fillPassword('password123')
-        await fillRepeat('password123')
+        await fillPassword('Password123!')
+        await fillRepeat('Password123!')
         submit()
         await waitFor(() => {
             expect(screen.getByTestId('info-error')).toHaveTextContent(

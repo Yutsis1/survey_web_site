@@ -51,6 +51,11 @@ class Survey(BaseModel):
     created_by_id: str = None
     questions: List[QuestionItem]
 
+
+class SurveyListResponse(BaseModel):
+    surveys: List[Survey]
+
+
 class SurveyOption(BaseModel):
     id: str
     title: str

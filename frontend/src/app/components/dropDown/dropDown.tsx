@@ -1,12 +1,18 @@
 import './dropDown.css';
 
+export interface DropDownOption {
+  value: string;
+  label: string;
+}
+
 export interface DropDownProps {
-  options: string[];
+  options: DropDownOption[];
   selectedOption: string;
-  onSelect: (option: string) => void;
+  onSelect: (value: string) => void;
   label?: string;
   id?: string;
   name?: string;
+  disabled?: boolean;
 }
 
 export function DropDown({
@@ -16,20 +22,22 @@ export function DropDown({
   label,
   id,
   name,
+  disabled = false,
 }: DropDownProps) {
 return (
     <div className="dropdown-container">
-        {label && <label htmlFor={name} className="dropdown-label">{label}</label>}
+        {label && <label htmlFor={id ?? name} className="dropdown-label">{label}</label>}
         <select
             id={id}
             name={name}
             value={selectedOption}
             onChange={(e) => onSelect(e.target.value)}
             className="dropdown-select"
+            disabled={disabled}
         >
             {options.map((option) => (
-                <option key={option} value={option}>
-                    {option}
+                <option key={option.value} value={option.value}>
+                    {option.label}
                 </option>
             ))}
         </select>
