@@ -15,6 +15,7 @@
 }
   
 .text-input {
+    width: 100%;
     padding: 10px;
     font-size: 16px;
     border: 2px solid var(--color-secondary);
@@ -24,6 +25,26 @@
     color: var(--foreground);
     background-color: var(--background);
 }
+
+.text-input-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.text-input-toggle {
+    padding: 10px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 2px solid var(--color-secondary);
+    border-radius: 5px;
+    color: var(--foreground);
+    background-color: var(--background);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    white-space: nowrap;
+}
   
 .text-input:focus {
     border-color: var(--color-primary);
@@ -32,6 +53,16 @@
 
 .text-input:hover:not(:focus) {
     border-color: var(--color-info);
+}
+
+.text-input-toggle:hover {
+    border-color: var(--color-info);
+}
+
+.text-input-toggle:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
+    outline: none;
 }
 
 .text-input::placeholder {

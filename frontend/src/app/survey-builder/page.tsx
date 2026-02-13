@@ -14,7 +14,7 @@ import { getPopupComponentsAndOptions } from '../app-modules/pop-up/pop-up-quest
 import { createNewQuestion } from '../app-modules/questions/questions-factory'
 import { DeleteDropzone } from '../components/deleteDropzone/deleteDropzone'
 import '../styles.css'
-import { saveSurvey, fetchSurvey } from '../services/surveys'
+import { saveSurvey, fetchSurvey, fetchSurveyOptions } from '../services/surveys'
 import { DropDown } from '../components/dropDown/dropDown'
 
 export default function Home() {
@@ -30,10 +30,16 @@ export default function Home() {
     const [isDragging, setIsDragging] = useState(false)
     const [isOverTrash, setIsOverTrash] = useState(false)
     const [saving, setSaving] = useState(false)
-    const [loadingSurvey, setLoadingSurvey] = useState(false)
 
     // load popups and question
     const [isLoadingPopup, setIsLoadingPopup] = useState(false)
+    const [surveyOptions, setSurveyOptions] = useState<
+        Array<{ value: string; label: string }>
+    >([])
+    const [selectedSurveyId, setSelectedSurveyId] = useState('')
+    const [loadingSurveyOptions, setLoadingSurveyOptions] = useState(false)
+    const [loadingSelectedSurvey, setLoadingSelectedSurvey] = useState(false)
+    const [surveyOptionsError, setSurveyOptionsError] = useState<string | null>(null)
 
     // layouts state management
     const layoutsApi = useLayouts()
@@ -123,21 +129,60 @@ export default function Home() {
         }
     }
 
+    const resetLoadSurveyPopupState = () => {
+        setSurveyOptions([])
+        setSelectedSurveyId('')
+        setSurveyOptionsError(null)
+        setLoadingSurveyOptions(false)
+        setLoadingSelectedSurvey(false)
+    }
+
+    const handleCloseLoadSurveyPopup = () => {
+        setIsLoadingPopup(false)
+        resetLoadSurveyPopupState()
+    }
+
     const handleLoadSurvey = async () => {
-        const id = prompt('Enter survey id')
-        if (!id) return
-        setLoadingSurvey(true)
+        setIsLoadingPopup(true)
+        setSurveyOptions([])
+        setSelectedSurveyId('')
+        setSurveyOptionsError(null)
+        setLoadingSurveyOptions(true)
+
         try {
-            const survey = await fetchSurvey(id)
+            const options = await fetchSurveyOptions()
+            const mappedOptions = options.map((option) => {
+                const title = option.title?.trim() || 'Untitled Survey'
+                return {
+                    value: option.id,
+                    label: `${title} (${option.id.slice(-8)})`,
+                }
+            })
+            setSurveyOptions(mappedOptions)
+            setSelectedSurveyId(mappedOptions[0]?.value ?? '')
+        } catch (e) {
+            console.error(e)
+            setSurveyOptionsError('Failed to load surveys')
+        } finally {
+            setLoadingSurveyOptions(false)
+        }
+    }
+
+    const handleApplyLoadSurvey = async () => {
+        if (!selectedSurveyId) return
+        setLoadingSelectedSurvey(true)
+        try {
+            const survey = await fetchSurvey(selectedSurveyId)
             setQuestions(survey.questions)
             const layouts = generateLayouts(survey.questions)
             layoutsApi.setLayouts(layouts)
             alert('Survey loaded')
+            handleCloseLoadSurveyPopup()
         } catch (e) {
             console.error(e)
             alert('Failed to load survey')
         } finally {
-            setLoadingSurvey(false)
+            setLoadingSelectedSurvey(false)
         }
     }
 
@@ -235,11 +280,15 @@ export default function Home() {
                             disabled: saving,
                         },
                         {
-                            label: loadingSurvey ? 'Loading...' : 'Load Survey',
+                            label:
+                                loadingSurveyOptions || loadingSelectedSurvey
+                                    ? 'Loading...'
+                                    : 'Load Survey',
                             onClick: handleLoadSurvey,
                             className: 'button-base',
                             test_id: 'button-load',
-                            disabled: loadingSurvey,
+                            disabled:
+                                loadingSurveyOptions || loadingSelectedSurvey,
                         },
                         {
                             label: 'Logout',
@@ -312,13 +361,38 @@ export default function Home() {
             </PopUp>
             <PopUp
                 isOpen={isLoadingPopup}
-                onClose={() => setIsLoadingPopup(false)}
-                onApply={() => void 0}
-                popUpTitle="Loading Survey"
+                onClose={handleCloseLoadSurveyPopup}
+                onCancel={handleCloseLoadSurveyPopup}
+                onApply={handleApplyLoadSurvey}
+                applyDisabled={
+                    loadingSurveyOptions ||
+                    loadingSelectedSurvey ||
+                    surveyOptions.length === 0 ||
+                    !selectedSurveyId
+                }
+                popUpTitle="Load Survey"
+                popUpDescription="Select a saved survey to load."
             >
-                <div><DropDown options={[]} selectedOption={''} onSelect={() => {
-                    throw new Error('Function not implemented.')
-                }} /></div>
+                <div>
+                    <DropDown
+                        options={surveyOptions}
+                        selectedOption={selectedSurveyId}
+                        onSelect={setSelectedSurveyId}
+                        label="Saved surveys"
+                        id="saved-surveys"
+                        name="saved-surveys"
+                        disabled={
+                            loadingSurveyOptions ||
+                            loadingSelectedSurvey ||
+                            surveyOptions.length === 0
+                        }
+                    />
+                    {loadingSurveyOptions && <p>Loading surveys...</p>}
+                    {surveyOptionsError && <p>{surveyOptionsError}</p>}
+                    {!loadingSurveyOptions &&
+                        !surveyOptionsError &&
+                        surveyOptions.length === 0 && <p>No surveys available</p>}
+                </div>
             </PopUp>
             <DeleteDropzone
                 isDragging={isDragging}

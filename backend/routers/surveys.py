@@ -40,6 +40,50 @@ async def create_survey(survey: Survey, current_user: User = Depends(get_current
         raise HTTPException(status_code=422, detail=str(e))
 
 
+@router.get("/options", response_model=List[SurveyOption])
+async def get_survey_options(current_user: User = Depends(get_current_user)):
+    """
+    Get a list of survey options (ID and title) for the authenticated user.
+
+    :param current_user: The authenticated user.
+    :type current_user: User
+    :return: List of survey options.
+    :rtype: list[SurveyOption]
+    """
+    cursor = surveys_collection.find({"created_by_id": str(current_user.id)})
+    options = []
+
+    async for survey in cursor:
+        options.append({
+            "id": str(survey["_id"]),
+            "title": survey.get("title", f"Untitled Survey {survey['_id']}")
+        })
+
+    return options
+
+
+@router.get("/", response_model=SurveyListResponse)
+async def list_surveys(current_user: User = Depends(get_current_user)):
+    """
+    List all surveys for the authenticated user.
+
+    :param current_user: The authenticated user.
+    :type current_user: User
+    :return: List of surveys created by the user.
+    :rtype: list[Survey]
+    """
+    # Get surveys created by the current user
+    cursor = surveys_collection.find({"created_by_id": str(current_user.id)})
+    surveys = []
+    
+    async for survey in cursor:
+        survey["id"] = str(survey["_id"])
+        survey.pop("_id", None)
+        surveys.append(survey)
+    
+    return {"surveys": surveys}
+
+
 @router.get("/{id}", response_model=Survey)
 async def get_survey(id: str, current_user: User = Depends(get_current_user)):
     """
@@ -63,53 +107,10 @@ async def get_survey(id: str, current_user: User = Depends(get_current_user)):
     
     if not survey:
         raise HTTPException(status_code=404, detail="Survey not found or access denied")
-    
+
     survey["id"] = str(survey["_id"])
     survey.pop("_id", None)
     return Survey(**survey)
-
-
-@router.get("/", response_model=List[Survey])
-async def list_surveys(current_user: User = Depends(get_current_user)):
-    """
-    List all surveys for the authenticated user.
-
-    :param current_user: The authenticated user.
-    :type current_user: User
-    :return: List of surveys created by the user.
-    :rtype: list[Survey]
-    """
-    # Get surveys created by the current user
-    cursor = surveys_collection.find({"created_by_id": str(current_user.id)})
-    surveys = []
-    
-    async for survey in cursor:
-        survey["id"] = str(survey["_id"])
-        survey.pop("_id", None)
-        surveys.append(survey)
-    
-    return {"surveys": surveys}
-
-@router.get("/options", response_model=List[SurveyOption])
-async def get_survey_options(current_user: User = Depends(get_current_user)):
-    """
-    Get a list of survey options (ID and title) for the authenticated user.
-
-    :param current_user: The authenticated user.
-    :type current_user: User
-    :return: List of survey options.
-    :rtype: list[SurveyOption]
-    """
-    cursor = surveys_collection.find({"created_by_id": str(current_user.id)})
-    options = []
-
-    async for survey in cursor:
-        options.append({
-            "id": str(survey["_id"]),
-            "title": survey.get("title", f"Untitled Survey {survey['_id']}")
-        })
-
-    return options
 
 @router.delete("/{id}")
 async def delete_survey(id: str, current_user: User = Depends(get_current_user)):
@@ -127,7 +128,7 @@ async def delete_survey(id: str, current_user: User = Depends(get_current_user))
     try:
         result = await surveys_collection.delete_one({
             "_id": ObjectId(id),
-            "created_by": str(current_user.id)  # Only delete if owned by current user
+            "created_by_id": str(current_user.id)  # Only delete if owned by current user
         })
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid survey ID format")

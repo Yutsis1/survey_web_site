@@ -1,7 +1,6 @@
 import { fireEvent, render } from "@testing-library/react";
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { PopUp } from "./pop-up";
-import { afterEach } from "node:test";
 
 describe('PopUp Component', () => {
     const mockOnClose = vi.fn()
@@ -65,5 +64,13 @@ describe('PopUp Component', () => {
         
         fireEvent.click(getByTestId('apply-button'))
         expect(mockOnApply).toHaveBeenCalledTimes(1)
+    })
+
+    it('disables Apply button when applyDisabled is true', () => {
+        const { getByTestId } = render(
+            <PopUp {...defaultProps} applyDisabled />
+        )
+
+        expect(getByTestId('apply-button')).toBeDisabled()
     })
 })
