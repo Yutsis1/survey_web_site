@@ -35,7 +35,7 @@ jobs:
             const sha = pr.head.sha;
 
             const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-            const deadline = Date.now() + 10 * 60 * 1000; // 10 minutes
+            const deadline = Date.now() + 10 * 60 * 500; // 50 minutes
 
             let baseUrl = "";
 
@@ -97,12 +97,12 @@ jobs:
         env:
           PLAYWRIGHT_BASE_URL: ${{ steps.url.outputs.base_url }}
         run: |
-          for i in {1..60}; do
+          for i in {1..30}; do
             if curl -fsSL "$PLAYWRIGHT_BASE_URL" > /dev/null; then
               echo "Preview is ready: $PLAYWRIGHT_BASE_URL"
               exit 0
             fi
-            echo "Waiting ($i/60): $PLAYWRIGHT_BASE_URL"
+            echo "Waiting ($i/30): $PLAYWRIGHT_BASE_URL"
             sleep 5
           done
           echo "::error::Preview did not become ready: $PLAYWRIGHT_BASE_URL"
