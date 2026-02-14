@@ -1,114 +1,84 @@
-name: Playwright Tests on Railway PR Preview
+name: "Playwright Tests (label: test-run)"
 
 on:
-  deployment_status:
+  pull_request:
+    types: [labeled]
 
 permissions:
   contents: read
-  pull-requests: read
+  pull-requests: write   # needed to remove label
+  deployments: read
 
 jobs:
-  resolve-context:
-    name: Resolve PR Context
-    if: ${{ github.event.deployment_status.state == 'success' }}
+  resolve-and-test:
+    if: ${{ github.event.label.name == 'test-run' }}
     runs-on: ubuntu-latest
-    outputs:
-      should_run: ${{ steps.resolve.outputs.should_run }}
-      pr_number: ${{ steps.resolve.outputs.pr_number }}
-      base_url: ${{ steps.resolve.outputs.base_url }}
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: frontend
+
     steps:
-      - name: Resolve PR and apply run policy
-        id: resolve
+      - name: Checkout PR head SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Resolve Railway preview URL from deployments
+        id: url
         uses: actions/github-script@v7
         with:
           script: |
             const { owner, repo } = context.repo;
-            const deploymentSha = context.payload.deployment?.sha;
+            const pr = context.payload.pull_request;
+            const sha = pr.head.sha;
 
-            core.setOutput('should_run', 'false');
-            core.setOutput('pr_number', '');
-            core.setOutput('base_url', '');
+            const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+            const deadline = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-            if (!deploymentSha) {
-              core.info('No deployment SHA found in event payload; skipping.');
-              return;
+            let baseUrl = "";
+
+            while (Date.now() < deadline && !baseUrl) {
+              const depResp = await github.rest.repos.listDeployments({
+                owner, repo, sha, per_page: 10,
+              });
+
+              const deployments = depResp.data || [];
+              if (deployments.length) {
+                const newest = deployments[0];
+
+                const stResp = await github.rest.repos.listDeploymentStatuses({
+                  owner, repo, deployment_id: newest.id, per_page: 20,
+                });
+
+                const statuses = stResp.data || [];
+                const success = statuses.find(s => s.state === "success");
+                if (success) {
+                  baseUrl = success.environment_url || success.target_url || "";
+                }
+              }
+
+              if (!baseUrl) {
+                core.info("No successful deployment URL yet; retrying in 10s...");
+                await sleep(10_000);
+              }
             }
-
-            const response = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-              owner,
-              repo,
-              commit_sha: deploymentSha,
-            });
-            const openPrs = response.data.filter((pr) => pr.state === 'open');
-
-            if (openPrs.length === 0) {
-              core.info(`No open PR found for SHA ${deploymentSha}; skipping.`);
-              return;
-            }
-
-            const pr = openPrs.find((candidate) => candidate.head?.sha === deploymentSha) || openPrs[0];
-            const labels = pr.labels
-              .map((label) => (typeof label === 'string' ? label : label.name))
-              .filter(Boolean);
-            const hasTestRunLabel = labels.includes('test-run');
-            const hasAutoMerge = pr.auto_merge !== null;
-
-            core.setOutput('pr_number', String(pr.number));
-
-            if (!hasTestRunLabel || !hasAutoMerge) {
-              core.info(
-                `Policy not met for PR #${pr.number}: test-run label=${hasTestRunLabel}, auto-merge enabled=${hasAutoMerge}.`
-              );
-              return;
-            }
-
-            const baseUrl =
-              context.payload.deployment_status?.environment_url ||
-              context.payload.deployment_status?.target_url ||
-              '';
 
             if (!baseUrl) {
-              core.setFailed(
-                'Deployment succeeded but no preview URL was provided in deployment_status.environment_url or deployment_status.target_url.'
-              );
+              core.setFailed(`No successful deployment URL found for SHA ${sha}`);
               return;
             }
 
-            let parsedUrl;
-            try {
-              parsedUrl = new URL(baseUrl);
-            } catch {
-              core.setFailed(`Deployment URL is invalid: ${baseUrl}`);
+            // basic validation
+            let u;
+            try { u = new URL(baseUrl); } catch { core.setFailed(`Invalid URL: ${baseUrl}`); return; }
+            if (!["http:", "https:"].includes(u.protocol)) {
+              core.setFailed(`URL must be http/https: ${u.toString()}`);
               return;
             }
 
-            if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-              core.setFailed(`Deployment URL must be http/https: ${parsedUrl.toString()}`);
-              return;
-            }
-
-            core.setOutput('base_url', parsedUrl.toString());
-            core.setOutput('should_run', 'true');
-            core.info(`Running Playwright for PR #${pr.number} against ${parsedUrl.toString()}`);
-
-  playwright:
-    name: Run Playwright on Railway Preview
-    needs: resolve-context
-    if: ${{ needs.resolve-context.outputs.should_run == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    concurrency:
-      group: playwright-railway-pr-${{ github.repository }}-pr-${{ needs.resolve-context.outputs.pr_number }}
-      cancel-in-progress: true
-    defaults:
-      run:
-        working-directory: frontend
-    env:
-      PLAYWRIGHT_BASE_URL: ${{ needs.resolve-context.outputs.base_url }}
-      CI: true
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+            core.setOutput("base_url", u.toString());
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -123,27 +93,32 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Wait for Railway preview readiness
+      - name: Wait for preview readiness
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ steps.url.outputs.base_url }}
         run: |
           for i in {1..60}; do
             if curl -fsSL "$PLAYWRIGHT_BASE_URL" > /dev/null; then
               echo "Preview is ready: $PLAYWRIGHT_BASE_URL"
               exit 0
             fi
-            echo "Waiting for preview to become ready ($i/60)..."
+            echo "Waiting ($i/60): $PLAYWRIGHT_BASE_URL"
             sleep 5
           done
-          echo "::error::Preview did not become ready in time: $PLAYWRIGHT_BASE_URL"
+          echo "::error::Preview did not become ready: $PLAYWRIGHT_BASE_URL"
           exit 1
 
       - name: Run Playwright tests
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ steps.url.outputs.base_url }}
+          CI: true
         run: npx playwright test
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-pr-${{ needs.resolve-context.outputs.pr_number }}
+          name: playwright-report-pr-${{ github.event.pull_request.number }}
           path: frontend/playwright-report
           if-no-files-found: ignore
 
@@ -151,6 +126,27 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-test-results-pr-${{ needs.resolve-context.outputs.pr_number }}
+          name: playwright-test-results-pr-${{ github.event.pull_request.number }}
           path: frontend/test-results
           if-no-files-found: ignore
+
+      - name: Remove test-run label (one-shot trigger)
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner,
+                repo,
+                issue_number: prNumber,
+                name: "test-run",
+              });
+              core.info("Removed label: test-run");
+            } catch (e) {
+              // If label already removed or permissions issue, don't mask test failure
+              core.warning(`Could not remove label 'test-run': ${e.message}`);
+            }
