@@ -9,6 +9,16 @@ import logging
 import asyncio
 
 logger = logging.getLogger(__name__)
+    
+def to_asyncpg(url: str) -> str:
+    # Railway: postgresql://...  -> postgresql+asyncpg://...
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    # Some providers still use postgres://
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+    return url
+
 
 async def init_database(max_retries: int = 10, retry_delay: int = 3):
     """Initialize the database and create all tables with retry logic for Railway deployment."""
