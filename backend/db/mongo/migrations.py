@@ -1,143 +1,154 @@
 import logging
 
-from backend.db.mongo.mongoDB import surveys_collection
 from backend.config.settings import MIGRATION_STRATEGY
+from backend.db.mongo.mongoDB import surveys_collection
 from pymongo.errors import OperationFailure
 
 logger = logging.getLogger(__name__)
 
-INDEX_NAME = "uniq_title"
-INDEX_KEYS = [("title", 1)]
+INDEX_NAME = "uniq_owner_title"
+INDEX_KEYS = [("created_by_id", 1), ("title", 1)]
 INDEX_OPTIONS = {
     "name": INDEX_NAME,
     "unique": True,
-    # Allowed in partial indexes; excludes "" and anything not a string.
-    "partialFilterExpression": {"title": {"$gt": ""}},
+    "partialFilterExpression": {
+        "created_by_id": {"$type": "string", "$gt": ""},
+        "title": {"$type": "string", "$gt": ""},
+    },
 }
+
 
 async def _indexes_by_name(col):
     return {idx["name"]: idx async for idx in col.list_indexes()}
 
+
 def _keys_match(idx_doc):
-    # Motor returns {"key": {"title": 1}}
     key = idx_doc.get("key", {})
-    return key == {"title": 1}
+    return key == {"created_by_id": 1, "title": 1}
+
 
 def _spec_matches(idx_doc):
     return (
         _keys_match(idx_doc)
         and bool(idx_doc.get("unique")) is True
-        and idx_doc.get("partialFilterExpression") == INDEX_OPTIONS["partialFilterExpression"]
+        and idx_doc.get("partialFilterExpression")
+        == INDEX_OPTIONS["partialFilterExpression"]
     )
+
+
+async def _cleanup_problematic_titles() -> None:
+    null_title_docs = await surveys_collection.find({"title": None}).to_list(length=None)
+    missing_title_docs = await surveys_collection.find({"title": {"$exists": False}}).to_list(length=None)
+    empty_title_docs = await surveys_collection.find({"title": ""}).to_list(length=None)
+
+    problematic_docs = null_title_docs + missing_title_docs + empty_title_docs
+    if not problematic_docs:
+        return
+
+    logger.info(
+        "Found %s documents with null/missing/empty titles.",
+        len(problematic_docs),
+    )
+
+    if MIGRATION_STRATEGY == "update":
+        for doc in problematic_docs:
+            await surveys_collection.update_one(
+                {"_id": doc["_id"]},
+                {"$set": {"title": f"Untitled Survey {doc['_id']}"}},
+            )
+    elif MIGRATION_STRATEGY == "delete":
+        await surveys_collection.delete_many({"_id": {"$in": [doc["_id"] for doc in problematic_docs]}})
+
+
+async def _cleanup_duplicate_owner_titles() -> None:
+    pipeline = [
+        {
+            "$match": {
+                "created_by_id": {"$type": "string", "$gt": ""},
+                "title": {"$type": "string", "$gt": ""},
+            }
+        },
+        {
+            "$group": {
+                "_id": {"created_by_id": "$created_by_id", "title": "$title"},
+                "count": {"$sum": 1},
+                "docs": {"$push": "$_id"},
+            }
+        },
+        {"$match": {"count": {"$gt": 1}}},
+    ]
+
+    duplicates = await surveys_collection.aggregate(pipeline).to_list(length=None)
+    if not duplicates:
+        return
+
+    logger.info("Found duplicate survey titles for %s owner/title pairs.", len(duplicates))
+
+    for dup in duplicates:
+        docs_sorted = sorted(dup["docs"])
+        to_keep = docs_sorted[0]
+        to_process = docs_sorted[1:]
+        title = dup["_id"]["title"]
+
+        if MIGRATION_STRATEGY == "delete":
+            await surveys_collection.delete_many({"_id": {"$in": to_process}})
+            logger.debug(
+                "Deleted %s duplicates for owner %s and title '%s', keeping %s",
+                len(to_process),
+                dup["_id"]["created_by_id"],
+                title,
+                to_keep,
+            )
+        elif MIGRATION_STRATEGY == "update":
+            for i, doc_id in enumerate(to_process, start=1):
+                new_title = f"{title} (Duplicate {i}-{str(doc_id)[-6:]})"
+                await surveys_collection.update_one(
+                    {"_id": doc_id},
+                    {"$set": {"title": new_title}},
+                )
+
 
 async def run_migrations() -> None:
     """
-    Idempotent index ensure + optional legacy cleanup based on MIGRATION_STRATEGY.
-    Creates/repairs a unique *partial* index on surveys.title to allow many null/missing/empty titles
-    while enforcing uniqueness for real titles.
+    Idempotent index migration.
+    Ensures a unique partial index on (created_by_id, title) so titles are unique per user.
     """
     existing = await _indexes_by_name(surveys_collection)
 
-    # If our desired index already exists with the exact spec, we’re done.
     if INDEX_NAME in existing and _spec_matches(existing[INDEX_NAME]):
-        logger.info("Title index already correct; skipping creation.")
+        logger.info("Owner/title index already correct; skipping creation.")
         return
 
-    # Optional: legacy cleanup only if requested and there are many problematic docs.
-    # (Partial index makes this unnecessary for correctness, but you kept this feature.)
     logger.info("Using migration strategy '%s'.", MIGRATION_STRATEGY)
 
     if MIGRATION_STRATEGY in {"update", "delete"}:
-        logger.info("Applying '%s' strategy for null/missing titles.", MIGRATION_STRATEGY)
-        null_title_docs = await surveys_collection.find({"title": None}).to_list(length=None)
-        missing_title_docs = await surveys_collection.find({"title": {"$exists": False}}).to_list(length=None)
-        total_problematic_docs = len(null_title_docs) + len(missing_title_docs)
-
-        if total_problematic_docs > 1:
-            if MIGRATION_STRATEGY == "update":
-                logger.info(
-                    "Found %s documents with null/missing titles. Updating with unique titles…",
-                    total_problematic_docs,
-                )
-                # Update null titles
-                for i, doc in enumerate(null_title_docs, start=1):
-                    await surveys_collection.update_one(
-                        {"_id": doc["_id"]}, {"$set": {"title": f"Untitled Survey {i}"}}
-                    )
-                # Update missing titles (offset to keep uniqueness)
-                offset = len(null_title_docs)
-                for i, doc in enumerate(missing_title_docs, start=1):
-                    await surveys_collection.update_one(
-                        {"_id": doc["_id"]}, {"$set": {"title": f"Untitled Survey {offset + i}"}}
-                    )
-            elif MIGRATION_STRATEGY == "delete":
-                logger.info(
-                    "Found %s documents with null/missing titles. Deleting to avoid conflicts…",
-                    total_problematic_docs,
-                )
-                await surveys_collection.delete_many({"title": None})
-                await surveys_collection.delete_many({"title": {"$exists": False}})
-
-                # Handle duplicate titles
-                pipeline = [
-                    {"$match": {"title": {"$type": "string", "$gt": ""}}},
-                    {"$group": {"_id": "$title", "count": {"$sum": 1}, "docs": {"$push": "$_id"}}},
-                    {"$match": {"count": {"$gt": 1}}}
-                ]
-                duplicates = await surveys_collection.aggregate(pipeline).to_list(length=None)
-                if duplicates:
-                    logger.info("Found duplicates in %s titles.", len(duplicates))
-                    for dup in duplicates:
-                        title = dup["_id"]
-                        docs = dup["docs"]
-                        # Sort by _id to keep the oldest (assuming ObjectId order)
-                        docs_sorted = sorted(docs)
-                        to_keep = docs_sorted[0]
-                        to_delete = docs_sorted[1:]
-                        if MIGRATION_STRATEGY == "delete":
-                            await surveys_collection.delete_many({"_id": {"$in": to_delete}})
-                            logger.debug(
-                                "Deleted %s duplicates for title '%s' while keeping document %s",
-                                len(to_delete),
-                                title,
-                                to_keep,
-                            )
-                        elif MIGRATION_STRATEGY == "update":
-                            for i, doc_id in enumerate(to_delete, start=1):
-                                new_title = f"{title} (Duplicate {i})"
-                                await surveys_collection.update_one({"_id": doc_id}, {"$set": {"title": new_title}})
-                            logger.debug(
-                                "Renamed %s duplicates for title '%s' while keeping document %s",
-                                len(to_delete),
-                                title,
-                                to_keep,
-                            )
+        await _cleanup_problematic_titles()
+        await _cleanup_duplicate_owner_titles()
     else:
         logger.info(
-            "No legacy cleanup executed; migration strategy '%s' skips null/missing title handling.",
+            "No legacy cleanup executed; migration strategy '%s' skips cleanup.",
             MIGRATION_STRATEGY,
         )
 
-    # If an old auto-named index exists (e.g., "title_1") or a mismatched version of our name, drop it first.
-    to_drop = []
+    to_drop = set()
     if INDEX_NAME in existing and not _spec_matches(existing[INDEX_NAME]):
-        to_drop.append(INDEX_NAME)
-    if "title_1" in existing:  # common legacy auto-name
-        to_drop.append("title_1")
+        to_drop.add(INDEX_NAME)
+
+    for legacy_name in ("uniq_title", "title_1", "created_by_id_1_title_1"):
+        if legacy_name in existing and legacy_name != INDEX_NAME:
+            to_drop.add(legacy_name)
 
     for name in to_drop:
-        logger.info("Dropping legacy index %s …", name)
+        logger.info("Dropping legacy index %s ...", name)
         try:
             await surveys_collection.drop_index(name)
         except OperationFailure as e:
-            logger.warning("drop_index(%s) failed: %s. Continuing…", name, e)
+            logger.warning("drop_index(%s) failed: %s. Continuing...", name, e)
 
-    # Create the correct index (idempotent now that names/specs are handled)
-    logger.info("Creating unique partial index on title field …")
+    logger.info("Creating unique partial index on created_by_id and title...")
     try:
         await surveys_collection.create_index(INDEX_KEYS, **INDEX_OPTIONS)
     except OperationFailure as e:
-        # If a race created the same index between list & create, ignore the conflict.
         if getattr(e, "code", None) == 86:
             logger.info("Index already exists with a compatible name; continuing.")
         else:

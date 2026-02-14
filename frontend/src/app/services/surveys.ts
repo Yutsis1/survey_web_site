@@ -3,7 +3,7 @@ import { apiClient } from './api-client'
 
 
 export interface SurveyPayload {
-  title?: string
+  title: string
   questions: QuestionItem[]
 }
 
