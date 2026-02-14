@@ -2,7 +2,7 @@
 Models for survey questions and options.
 """
 from typing import List, Optional, Union
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class RadioProps(BaseModel):
@@ -50,6 +50,20 @@ class Survey(BaseModel):
     is_public: Optional[bool] = False
     created_by_id: str = None
     questions: List[QuestionItem]
+
+
+class SurveyCreate(BaseModel):
+    title: str
+    is_public: Optional[bool] = False
+    questions: List[QuestionItem]
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, value: str) -> str:
+        title = value.strip()
+        if not title:
+            raise ValueError("Survey title must not be empty")
+        return title
 
 
 class SurveyListResponse(BaseModel):

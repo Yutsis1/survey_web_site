@@ -4,6 +4,7 @@ Route for managing surveys.
 from bson import ObjectId
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.exceptions import RequestValidationError
+from pymongo.errors import DuplicateKeyError
 
 from ..models.api.surveys import *
 from ..db.mongo.mongoDB import surveys_collection
@@ -17,7 +18,7 @@ router = APIRouter(
 
 
 @router.post("/")
-async def create_survey(survey: Survey, current_user: User = Depends(get_current_user)):
+async def create_survey(survey: SurveyCreate, current_user: User = Depends(get_current_user)):
     """Create a new survey.
 
     :param survey: The survey to create.
@@ -36,6 +37,11 @@ async def create_survey(survey: Survey, current_user: User = Depends(get_current
         
         result = await surveys_collection.insert_one(survey_dict)
         return {"id": str(result.inserted_id)}
+    except DuplicateKeyError:
+        raise HTTPException(
+            status_code=409,
+            detail="Survey title already exists for this user",
+        )
     except RequestValidationError as e:
         raise HTTPException(status_code=422, detail=str(e))
 

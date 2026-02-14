@@ -16,6 +16,7 @@ import { DeleteDropzone } from '../components/deleteDropzone/deleteDropzone'
 import '../styles.css'
 import { saveSurvey, fetchSurvey, fetchSurveyOptions } from '../services/surveys'
 import { DropDown } from '../components/dropDown/dropDown'
+import { TextInput } from '../components/text-field/text-field'
 
 export default function Home() {
     const { isAuthenticated, isLoading, logout } = useAuth()
@@ -30,6 +31,7 @@ export default function Home() {
     const [isDragging, setIsDragging] = useState(false)
     const [isOverTrash, setIsOverTrash] = useState(false)
     const [saving, setSaving] = useState(false)
+    const [surveyTitle, setSurveyTitle] = useState('')
 
     // load popups and question
     const [isLoadingPopup, setIsLoadingPopup] = useState(false)
@@ -117,9 +119,16 @@ export default function Home() {
     }
 
     const handleSaveSurvey = async () => {
+        const trimmedTitle = surveyTitle.trim()
+        if (!trimmedTitle) {
+            alert('Survey name is required')
+            return
+        }
+
         setSaving(true)
         try {
-            const { id } = await saveSurvey({ questions })
+            const { id } = await saveSurvey({ title: trimmedTitle, questions })
+            setSurveyTitle(trimmedTitle)
             alert(`Survey saved with id: ${id}`)
         } catch (e) {
             console.error(e)
@@ -174,6 +183,7 @@ export default function Home() {
         try {
             const survey = await fetchSurvey(selectedSurveyId)
             setQuestions(survey.questions)
+            setSurveyTitle(survey.title?.trim() ?? '')
             const layouts = generateLayouts(survey.questions)
             layoutsApi.setLayouts(layouts)
             alert('Survey loaded')
@@ -255,6 +265,17 @@ export default function Home() {
     return (
         <div className="app-container">
             <aside className="sidebar">
+                <div className="survey-title-field">
+                    <TextInput
+                        label="Survey Name"
+                        placeholder="Enter survey name..."
+                        value={surveyTitle}
+                        onChange={(e) => setSurveyTitle(e.target.value)}
+                        id="survey-title-input"
+                        name="survey-title-input"
+                        test_id="survey-title-input"
+                    />
+                </div>
                 <Sidebar
                     buttons={[
                         {
