@@ -3,6 +3,9 @@ import { SurveyCreatorsPage } from '../page-objects/surveys';
 import { AuthPage } from '../page-objects/authPage';
 import { setupBackendMocks } from '../mocks/backend';
 
+// Timeout (ms) used for waiting redirects to survey-builder
+const PAGE_REDIRECT_TIMEOUT = 5000;
+
 test.describe('Home Page Integration Tests', () => {
   let surveyCreatingPage: SurveyCreatorsPage;
 
@@ -22,7 +25,7 @@ test.describe('Home Page Integration Tests', () => {
     await authPage.fillRegisterAuthForm(uniqueEmail, password, password);
     
     // Wait for redirect to survey builder
-    await page.waitForURL('**/survey-builder', { timeout: 5000 });
+    await page.waitForURL('**/survey-builder', { timeout: PAGE_REDIRECT_TIMEOUT });
     
     // Now initialize the survey creator page
     surveyCreatingPage = new SurveyCreatorsPage(page);

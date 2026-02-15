@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { AuthPage } from '../page-objects/authPage';
+
+// Timeout (ms) used for waiting redirects to survey-builder
+const PAGE_REDIRECT_TIMEOUT = 5000;
 // need more development in mock library
 // import { setupBackendMocks } from '../mocks/backend';
 
@@ -33,7 +36,7 @@ test.describe('Auth Page', async () => {
       await authPage.fillRegisterAuthForm(uniqueEmail, validPassword, validPassword);
       
       // After successful registration, should redirect to survey-builder
-      await authPage.page.waitForURL('**/survey-builder', { timeout: 10000 });
+      await authPage.page.waitForURL('**/survey-builder', { timeout: PAGE_REDIRECT_TIMEOUT });
       
       // Verify logout button is visible
       await expect(authPage.page.getByTestId(logoutSelector)).toBeVisible();
@@ -50,7 +53,7 @@ test.describe('Auth Page', async () => {
       
       // Now login with the same credentials
       await authPage.fillLoginForm(uniqueEmail, validPassword);
-      await authPage.page.waitForURL('**/survey-builder', { timeout: 10000 });
+      await authPage.page.waitForURL('**/survey-builder', { timeout: PAGE_REDIRECT_TIMEOUT });
       await expect(authPage.page.getByTestId(logoutSelector)).toBeVisible();
     });
   });
@@ -58,7 +61,7 @@ test.describe('Auth Page', async () => {
     await test.step('Fill registration form and submit', async () => {
       const validPassword = 'Test@1234';
       await authPage.fillRegisterAuthForm(`newuser_${Date.now()}@example.com`, validPassword, validPassword);
-      await authPage.page.waitForURL('**/survey-builder', { timeout: 10000 });
+      await authPage.page.waitForURL('**/survey-builder', { timeout: PAGE_REDIRECT_TIMEOUT });
       await expect(authPage.page.getByTestId(logoutSelector)).toBeVisible();
       await authPage.page.getByTestId(logoutSelector).click();
       await expect(authPage.emailInput).toBeVisible();
