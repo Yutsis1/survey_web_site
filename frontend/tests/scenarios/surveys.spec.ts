@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { SurveyCreatorsPage } from '../page-objects/surveys';
+import { AuthPage } from '../page-objects/authPage';
 import { setupBackendMocks } from '../mocks/backend';
 
 test.describe('Home Page Integration Tests', () => {
@@ -7,8 +8,24 @@ test.describe('Home Page Integration Tests', () => {
 
   test.beforeEach(async ({ page }) => {
     await setupBackendMocks(page);
+    
+    // First, authenticate by registering a new user
+    const authPage = new AuthPage(page);
+    await authPage.goto();
+    await authPage.page.waitForLoadState('domcontentloaded');
+    
+    // Generate unique email for this test run
+    const uniqueEmail = `test_${Date.now()}@example.com`;
+    const password = 'Test@1234'; // Must meet password requirements
+    
+    // Register a new user
+    await authPage.fillRegisterAuthForm(uniqueEmail, password, password);
+    
+    // Wait for redirect to survey builder
+    await page.waitForURL('**/survey-builder', { timeout: 5000 });
+    
+    // Now initialize the survey creator page
     surveyCreatingPage = new SurveyCreatorsPage(page);
-    await surveyCreatingPage.goto();
     await surveyCreatingPage.page.waitForLoadState('domcontentloaded');
   });
 

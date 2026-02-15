@@ -19,23 +19,46 @@ test.describe('Auth Page', async () => {
   test('should display validation errors on empty submission', async () => {
 
     test.step('Submit empty form and check for validation errors', async () => {
+      // Wait for submit button to be visible and enabled
+      await expect(authPage.submitButton).toBeVisible();
       await authPage.submitButton.click();
       await expect(authPage.getInfoLabel('Authentication failed', 'error')).toBeVisible();
     });
   });
   test('should login a new user successfully', async () => {
     await test.step('Fill login form and submit', async () => {
-      await authPage.fillLoginForm('kek_persistent@lol.com', 'password123');
+      // First register a user
+      const uniqueEmail = `login_test_${Date.now()}@example.com`;
+      const validPassword = 'Test@1234';
+      await authPage.fillRegisterAuthForm(uniqueEmail, validPassword, validPassword);
+      
+      // After successful registration, should redirect to survey-builder
+      await authPage.page.waitForURL('**/survey-builder', { timeout: 10000 });
+      
+      // Verify logout button is visible
       await expect(authPage.page.getByTestId(logoutSelector)).toBeVisible();
+      
+      // Logout
       await authPage.page.getByTestId(logoutSelector).click();
+      
+      // After logout, should be back at auth page
       await expect(authPage.emailInput).toBeVisible();
+      
+      // Reload page and verify auth page
       await authPage.page.reload();
       await expect(authPage.emailInput).toBeVisible();
+      
+      // Now login with the same credentials
+      await authPage.fillLoginForm(uniqueEmail, validPassword);
+      await authPage.page.waitForURL('**/survey-builder', { timeout: 10000 });
+      await expect(authPage.page.getByTestId(logoutSelector)).toBeVisible();
     });
   });
   test('should register a new user successfully', async () => {
     await test.step('Fill registration form and submit', async () => {
-      await authPage.fillRegisterAuthForm(`newuser_${Date.now()}@example.com`, 'password123', 'password123');
+      const validPassword = 'Test@1234';
+      await authPage.fillRegisterAuthForm(`newuser_${Date.now()}@example.com`, validPassword, validPassword);
+      await authPage.page.waitForURL('**/survey-builder', { timeout: 10000 });
       await expect(authPage.page.getByTestId(logoutSelector)).toBeVisible();
       await authPage.page.getByTestId(logoutSelector).click();
       await expect(authPage.emailInput).toBeVisible();
