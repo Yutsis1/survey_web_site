@@ -2,6 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import sessionmaker
 from backend.config import settings
+from backend.db.sql.init_db import to_asyncpg
 
 # Synchronous engine for sync operations
 engine = create_engine(
@@ -15,7 +16,7 @@ SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
 # Asynchronous engine for async operations
 async_engine = create_async_engine(
-    settings.DATABASE_URL,
+    to_asyncpg(settings.DATABASE_URL),
     pool_size=10,
     max_overflow=20,
     pool_pre_ping=True,

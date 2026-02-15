@@ -1,14 +1,34 @@
 import { test, expect } from '@playwright/test';
 import { SurveyCreatorsPage } from '../page-objects/surveys';
+import { AuthPage } from '../page-objects/authPage';
 import { setupBackendMocks } from '../mocks/backend';
+
+// Timeout (ms) used for waiting redirects to survey-builder
+const PAGE_REDIRECT_TIMEOUT = 5000;
 
 test.describe('Home Page Integration Tests', () => {
   let surveyCreatingPage: SurveyCreatorsPage;
 
   test.beforeEach(async ({ page }) => {
     await setupBackendMocks(page);
+    
+    // First, authenticate by registering a new user
+    const authPage = new AuthPage(page);
+    await authPage.goto();
+    await authPage.page.waitForLoadState('domcontentloaded');
+    
+    // Generate unique email for this test run
+    const uniqueEmail = `test_${Date.now()}@example.com`;
+    const password = 'Test@1234'; // Must meet password requirements
+    
+    // Register a new user
+    await authPage.fillRegisterAuthForm(uniqueEmail, password, password);
+    
+    // Wait for redirect to survey builder
+    await page.waitForURL('**/survey-builder', { timeout: PAGE_REDIRECT_TIMEOUT });
+    
+    // Now initialize the survey creator page
     surveyCreatingPage = new SurveyCreatorsPage(page);
-    await surveyCreatingPage.goto();
     await surveyCreatingPage.page.waitForLoadState('domcontentloaded');
   });
 
