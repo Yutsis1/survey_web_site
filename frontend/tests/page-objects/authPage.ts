@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 
 export class AuthPage {
     readonly page: Page;
@@ -30,7 +30,14 @@ export class AuthPage {
         await this.page.goto('/auth');
     }
 
+    async waitUntilReady(timeout = 15000) {
+        await expect(this.authBox).toBeVisible({ timeout });
+        await expect(this.submitButton).toBeVisible({ timeout });
+        await expect(this.modeToggle).toBeVisible({ timeout });
+    }
+
     async fillLoginForm(email: string, password: string) {
+        await this.waitUntilReady();
         if (await this.repeatPasswordInput.isVisible()) {
             await this.modeToggle.click(); // switch to login mode if in register mode
         }
@@ -39,6 +46,7 @@ export class AuthPage {
         await this.submitButton.click();
     }
     async fillRegisterAuthForm(email: string, password: string, repeatPassword: string) {
+        await this.waitUntilReady();
         if (!(await this.repeatPasswordInput.isVisible())) {
             await this.modeToggle.click();
         }

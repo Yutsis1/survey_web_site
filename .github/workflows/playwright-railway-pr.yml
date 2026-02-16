@@ -1,0 +1,268 @@
+name: "Playwright Tests (labels: test-run / ready-to-merge)"
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write   # needed to remove label
+  issues: read
+  deployments: read
+
+jobs:
+  resolve-and-test:
+    if: ${{ github.event.label.name == 'test-run' || github.event.label.name == 'ready-to-merge' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout PR head SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Resolve frontend URL from Railway PR metadata
+        id: url
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+            const sha = pr.head.sha;
+            const issueNumber = pr.number;
+
+            const normalizeToken = (raw) =>
+              String(raw || "")
+                .trim()
+                .replace(/^[`"'(]+/, "")
+                .replace(/[`"'),.;]+$/, "")
+                .trim();
+
+            const toUrl = (raw) => {
+              const token = normalizeToken(raw);
+              if (!token) return null;
+              const candidate = /^https?:\/\//i.test(token) ? token : `https://${token}`;
+              try {
+                const parsed = new URL(candidate);
+                if (!["http:", "https:"].includes(parsed.protocol)) return null;
+                return parsed.toString();
+              } catch {
+                return null;
+              }
+            };
+
+            const extractFromComment = (body) => {
+              const text = String(body || "");
+              if (!text) return null;
+
+              const varPatterns = [
+                /frontend\.RAILWAY_PUBLIC_DOMAIN\s*\|\s*`?([^`\s|]+)`?\s*\|/i,
+                /frontend\.RAILWAY_PUBLIC_DOMAIN\s*[:=]\s*`?([^`\s|]+)`?/i,
+                /"frontend\.RAILWAY_PUBLIC_DOMAIN"\s*:\s*"([^"]+)"/i,
+                /RAILWAY_PUBLIC_DOMAIN\s*[:=]\s*`?([^`\s|]+)`?/i,
+              ];
+              for (const re of varPatterns) {
+                const m = text.match(re);
+                if (!m || !m[1]) continue;
+                const asUrl = toUrl(m[1]);
+                if (asUrl) return asUrl;
+              }
+
+              const urlMatches = text.match(/https?:\/\/[^\s<>)"'`]+/gi) || [];
+              if (!urlMatches.length) return null;
+
+              const prioritize = (url) => {
+                const lowerUrl = url.toLowerCase();
+                if (lowerUrl.includes("frontend")) return 3;
+                if (lowerUrl.includes(".railway.app")) return 2;
+                return 1;
+              };
+
+              const sorted = [...urlMatches]
+                .map((u) => ({ u, score: prioritize(u) }))
+                .sort((a, b) => b.score - a.score);
+
+              for (const { u } of sorted) {
+                const asUrl = toUrl(u);
+                if (asUrl) return asUrl;
+              }
+              return null;
+            };
+
+            // 1) Preferred: parse Railway PR comment(s) for frontend public domain/url.
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number: issueNumber,
+              per_page: 100,
+            });
+
+            const sortedComments = [...comments].sort(
+              (a, b) => new Date(b.created_at) - new Date(a.created_at)
+            );
+
+            for (const c of sortedComments) {
+              const body = c.body || "";
+              const looksRelevant =
+                /railway/i.test(body) ||
+                /RAILWAY_PUBLIC_DOMAIN/i.test(body) ||
+                /up\.railway\.app/i.test(body);
+              if (!looksRelevant) continue;
+
+              const found = extractFromComment(body);
+              if (found) {
+                core.info(`Resolved PLAYWRIGHT_BASE_URL from PR comment ${c.id}`);
+                core.setOutput("base_url", found);
+                return;
+              }
+            }
+
+            // 2) Fallback: deployment status URLs for this SHA.
+            const depResp = await github.rest.repos.listDeployments({
+              owner,
+              repo,
+              sha,
+              per_page: 20,
+            });
+
+            const deployments = depResp.data || [];
+            const candidates = [];
+            for (const d of deployments) {
+              const stResp = await github.rest.repos.listDeploymentStatuses({
+                owner,
+                repo,
+                deployment_id: d.id,
+                per_page: 20,
+              });
+              const statuses = stResp.data || [];
+              const success = statuses.find((s) => s.state === "success");
+              const rawUrl = success?.environment_url || success?.target_url;
+              const asUrl = toUrl(rawUrl);
+              if (asUrl) candidates.push(asUrl);
+            }
+
+            const uniqueCandidates = [...new Set(candidates)];
+            if (uniqueCandidates.length) {
+              const frontendFirst = uniqueCandidates.find((u) => /frontend/i.test(u)) || uniqueCandidates[0];
+              core.info("Resolved PLAYWRIGHT_BASE_URL from deployment statuses fallback");
+              core.setOutput("base_url", frontendFirst);
+              return;
+            }
+
+            core.setFailed(
+              "Could not resolve frontend preview URL from Railway PR comments or deployment statuses"
+            );
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Wait for preview readiness
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ steps.url.outputs.base_url }}
+        run: |
+          BASE_URL="${PLAYWRIGHT_BASE_URL%/}"
+          for i in {1..30}; do
+            auth_status=$(curl -sS -o /dev/null -w "%{http_code}" "$BASE_URL/auth" || true)
+            refresh_status=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/proxy/auth/refresh" || true)
+
+            echo "Readiness attempt $i/30: /auth=$auth_status /api/proxy/auth/refresh=$refresh_status"
+
+            if [[ "$auth_status" == "200" && ( "$refresh_status" == "200" || "$refresh_status" == "401" ) ]]; then
+              echo "Preview is ready: $BASE_URL"
+              exit 0
+            fi
+
+            echo "Waiting ($i/30): $BASE_URL"
+            sleep 5
+          done
+          echo "::error::Preview did not become ready: $BASE_URL (last /auth=$auth_status, /api/proxy/auth/refresh=$refresh_status)"
+          exit 1
+
+      - name: Run Playwright tests
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ steps.url.outputs.base_url }}
+          CI: true
+        run: npx playwright test
+
+      - name: Merge PR (ready-to-merge label only)
+        if: ${{ success() && github.event.label.name == 'ready-to-merge' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            const expectedSha = context.payload.pull_request.head.sha;
+
+            try {
+              const result = await github.rest.pulls.merge({
+                owner,
+                repo,
+                pull_number: prNumber,
+                merge_method: "squash",
+                sha: expectedSha,
+              });
+              core.info(`Merged PR #${prNumber} with method=squash. Merge SHA: ${result.data.sha}`);
+            } catch (e) {
+              core.setFailed(
+                `Tests passed but merge was blocked for PR #${prNumber}. ` +
+                `The PR remains open. GitHub API error: ${e.message}`
+              );
+            }
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-pr-${{ github.event.pull_request.number }}
+          path: frontend/playwright-report
+          if-no-files-found: ignore
+
+      - name: Upload Playwright test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results-pr-${{ github.event.pull_request.number }}
+          path: frontend/test-results
+          if-no-files-found: ignore
+
+      - name: Remove trigger label (one-shot trigger)
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            const labelName = context.payload.label?.name;
+
+            if (!labelName) {
+              core.warning("No triggering label found in payload; skipping label removal.");
+              return;
+            }
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner,
+                repo,
+                issue_number: prNumber,
+                name: labelName,
+              });
+              core.info(`Removed label: ${labelName}`);
+            } catch (e) {
+              // If label already removed or permissions issue, don't mask test failure
+              core.warning(`Could not remove label '${labelName}': ${e.message}`);
+            }
