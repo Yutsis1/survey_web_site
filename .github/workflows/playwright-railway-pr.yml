@@ -1,18 +1,18 @@
-name: "Playwright Tests (label: test-run)"
+name: "Playwright Tests (labels: test-run / ready-to-merge)"
 
 on:
   pull_request:
     types: [labeled]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write   # needed to remove label
   issues: read
   deployments: read
 
 jobs:
   resolve-and-test:
-    if: ${{ github.event.label.name == 'test-run' }}
+    if: ${{ github.event.label.name == 'test-run' || github.event.label.name == 'ready-to-merge' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -199,6 +199,31 @@ jobs:
           CI: true
         run: npx playwright test
 
+      - name: Merge PR (ready-to-merge label only)
+        if: ${{ success() && github.event.label.name == 'ready-to-merge' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            const expectedSha = context.payload.pull_request.head.sha;
+
+            try {
+              const result = await github.rest.pulls.merge({
+                owner,
+                repo,
+                pull_number: prNumber,
+                merge_method: "squash",
+                sha: expectedSha,
+              });
+              core.info(`Merged PR #${prNumber} with method=squash. Merge SHA: ${result.data.sha}`);
+            } catch (e) {
+              core.setFailed(
+                `Tests passed but merge was blocked for PR #${prNumber}. ` +
+                `The PR remains open. GitHub API error: ${e.message}`
+              );
+            }
+
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
@@ -215,23 +240,29 @@ jobs:
           path: frontend/test-results
           if-no-files-found: ignore
 
-      - name: Remove test-run label (one-shot trigger)
+      - name: Remove trigger label (one-shot trigger)
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
             const { owner, repo } = context.repo;
             const prNumber = context.payload.pull_request.number;
+            const labelName = context.payload.label?.name;
+
+            if (!labelName) {
+              core.warning("No triggering label found in payload; skipping label removal.");
+              return;
+            }
 
             try {
               await github.rest.issues.removeLabel({
                 owner,
                 repo,
                 issue_number: prNumber,
-                name: "test-run",
+                name: labelName,
               });
-              core.info("Removed label: test-run");
+              core.info(`Removed label: ${labelName}`);
             } catch (e) {
               // If label already removed or permissions issue, don't mask test failure
-              core.warning(`Could not remove label 'test-run': ${e.message}`);
+              core.warning(`Could not remove label '${labelName}': ${e.message}`);
             }
