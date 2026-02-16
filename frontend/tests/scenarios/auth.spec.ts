@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { AuthPage } from '../page-objects/authPage';
 
-// Timeout (ms) used for waiting redirects to survey-builder
-const PAGE_REDIRECT_TIMEOUT = 5000;
+const AUTH_UI_READY_TIMEOUT = 15000;
+const AUTH_ERROR_TIMEOUT = 15000;
+const PAGE_REDIRECT_TIMEOUT = 20000;
 // need more development in mock library
 // import { setupBackendMocks } from '../mocks/backend';
 
@@ -17,15 +18,18 @@ test.describe('Auth Page', async () => {
     authPage = new AuthPage(page);
     await authPage.goto();
     await authPage.page.waitForLoadState('domcontentloaded');
+    await authPage.waitUntilReady(AUTH_UI_READY_TIMEOUT);
   });
 
   test('should display validation errors on empty submission', async () => {
-
-    test.step('Submit empty form and check for validation errors', async () => {
+    await test.step('Submit empty form and check for validation errors', async () => {
       // Wait for submit button to be visible and enabled
-      await expect(authPage.submitButton).toBeVisible();
+      await expect(authPage.submitButton).toBeVisible({ timeout: AUTH_UI_READY_TIMEOUT });
       await authPage.submitButton.click();
-      await expect(authPage.getInfoLabel('Authentication failed', 'error')).toBeVisible();
+      await expect(authPage.getInfoLabel('Authentication failed', 'error')).toBeVisible({
+        timeout: AUTH_ERROR_TIMEOUT,
+      });
+      await expect(authPage.page).toHaveURL(/\/auth(?:[/?#].*)?$/);
     });
   });
   test('should login a new user successfully', async () => {
@@ -45,11 +49,11 @@ test.describe('Auth Page', async () => {
       await authPage.page.getByTestId(logoutSelector).click();
       
       // After logout, should be back at auth page
-      await expect(authPage.emailInput).toBeVisible();
+      await authPage.waitUntilReady(AUTH_UI_READY_TIMEOUT);
       
       // Reload page and verify auth page
       await authPage.page.reload();
-      await expect(authPage.emailInput).toBeVisible();
+      await authPage.waitUntilReady(AUTH_UI_READY_TIMEOUT);
       
       // Now login with the same credentials
       await authPage.fillLoginForm(uniqueEmail, validPassword);
@@ -64,9 +68,9 @@ test.describe('Auth Page', async () => {
       await authPage.page.waitForURL('**/survey-builder', { timeout: PAGE_REDIRECT_TIMEOUT });
       await expect(authPage.page.getByTestId(logoutSelector)).toBeVisible();
       await authPage.page.getByTestId(logoutSelector).click();
-      await expect(authPage.emailInput).toBeVisible();
+      await authPage.waitUntilReady(AUTH_UI_READY_TIMEOUT);
       await authPage.page.reload();
-      await expect(authPage.emailInput).toBeVisible();
+      await authPage.waitUntilReady(AUTH_UI_READY_TIMEOUT);
     });
   });
 });

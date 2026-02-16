@@ -175,15 +175,22 @@ jobs:
         env:
           PLAYWRIGHT_BASE_URL: ${{ steps.url.outputs.base_url }}
         run: |
+          BASE_URL="${PLAYWRIGHT_BASE_URL%/}"
           for i in {1..30}; do
-            if curl -fsSL "$PLAYWRIGHT_BASE_URL" > /dev/null; then
-              echo "Preview is ready: $PLAYWRIGHT_BASE_URL"
+            auth_status=$(curl -sS -o /dev/null -w "%{http_code}" "$BASE_URL/auth" || true)
+            refresh_status=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/proxy/auth/refresh" || true)
+
+            echo "Readiness attempt $i/30: /auth=$auth_status /api/proxy/auth/refresh=$refresh_status"
+
+            if [[ "$auth_status" == "200" && ( "$refresh_status" == "200" || "$refresh_status" == "401" ) ]]; then
+              echo "Preview is ready: $BASE_URL"
               exit 0
             fi
-            echo "Waiting ($i/30): $PLAYWRIGHT_BASE_URL"
+
+            echo "Waiting ($i/30): $BASE_URL"
             sleep 5
           done
-          echo "::error::Preview did not become ready: $PLAYWRIGHT_BASE_URL"
+          echo "::error::Preview did not become ready: $BASE_URL (last /auth=$auth_status, /api/proxy/auth/refresh=$refresh_status)"
           exit 1
 
       - name: Run Playwright tests
