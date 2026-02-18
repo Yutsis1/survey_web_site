@@ -11,22 +11,22 @@ test.describe('Home Page Integration Tests', () => {
 
   test.beforeEach(async ({ page }) => {
     await setupBackendMocks(page);
-    
+
     // First, authenticate by registering a new user
     const authPage = new AuthPage(page);
     await authPage.goto();
     await authPage.page.waitForLoadState('domcontentloaded');
-    
+
     // Generate unique email for this test run
     const uniqueEmail = `test_${Date.now()}@example.com`;
     const password = 'Test@1234'; // Must meet password requirements
-    
+
     // Register a new user
     await authPage.fillRegisterAuthForm(uniqueEmail, password, password);
-    
+
     // Wait for redirect to survey builder
     await page.waitForURL('**/survey-builder', { timeout: PAGE_REDIRECT_TIMEOUT });
-    
+
     // Now initialize the survey creator page
     surveyCreatingPage = new SurveyCreatorsPage(page);
     await surveyCreatingPage.page.waitForLoadState('domcontentloaded');
@@ -77,5 +77,9 @@ test.describe('Home Page Integration Tests', () => {
     // Verify all questions were created
     const questionCount = await surveyCreatingPage.getQuestionCount();
     expect(questionCount).toBe(3);
+
+    await test.step('Save the survey', async () => {
+      await surveyCreatingPage.saveSurvey('Test Survey');
+    });
   });
 });
