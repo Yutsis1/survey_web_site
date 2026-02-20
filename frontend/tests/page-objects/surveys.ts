@@ -141,9 +141,10 @@ export class SurveyCreatorsPage {
     await this.clickSaveSurvey();
   }
 
-  async loadSurvey() {
+  async loadSurvey(title: string) {
     await this.sidebar.loadSurveyButton.click();
-    await this.clickLoadSurvey();
+    await this.loadSurveyPopup.selectSurvey(title);
+    await this.applyPopup();
   }
 
   // Add more methods as needed for specific interactions
