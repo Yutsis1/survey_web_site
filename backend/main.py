@@ -10,8 +10,10 @@ from backend.routers.auth import auth
 from backend.routers import surveys
 from backend.middleware.error_handling import cache_body_middleware, validation_exception_handler
 from backend.db.mongo.migrations import run_migrations
-from backend.db.mongo.seed_data import seed_example_survey
+from backend.db.mongo.seed_data import seed_demo_survey
 from backend.db.sql.init_db import init_database
+from backend.db.sql.migrations import run_migrations as run_sql_migrations
+from backend.db.sql.seed_data import seed_demo_user
 import logging
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -20,9 +22,16 @@ from starlette.middleware.base import BaseHTTPMiddleware
 async def lifespan(app: FastAPI):
     # Initialize PostgreSQL database
     await init_database()
+    # Run SQL migrations (handle demo user password sync)
+    await run_sql_migrations()
+    demo_user = await seed_demo_user()
     # Run MongoDB migrations
     await run_migrations()
-    await seed_example_survey()
+    if demo_user:
+        await seed_demo_survey(
+            created_by_id=str(demo_user.id),
+            created_by_email=demo_user.email,
+        )
     yield
 
 

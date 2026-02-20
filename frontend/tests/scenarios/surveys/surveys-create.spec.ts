@@ -1,16 +1,15 @@
 import { test, expect } from '@playwright/test';
-import { SurveyCreatorsPage } from '../page-objects/surveys';
-import { AuthPage } from '../page-objects/authPage';
-import { setupBackendMocks } from '../mocks/backend';
+import { SurveyCreatorsPage } from '../../page-objects/surveys';
+import { AuthPage } from '../../page-objects/authPage';
+import { defaultObjects } from '../../defults/defaultObjects';
 
-// Timeout (ms) used for waiting redirects to survey-builder
+
 const PAGE_REDIRECT_TIMEOUT = 5000;
 
 test.describe('Home Page Integration Tests', () => {
   let surveyCreatingPage: SurveyCreatorsPage;
 
   test.beforeEach(async ({ page }) => {
-    await setupBackendMocks(page);
 
     // First, authenticate by registering a new user
     const authPage = new AuthPage(page);
@@ -19,7 +18,7 @@ test.describe('Home Page Integration Tests', () => {
 
     // Generate unique email for this test run
     const uniqueEmail = `test_${Date.now()}@example.com`;
-    const password = 'Test@1234'; // Must meet password requirements
+    const password = defaultObjects.user.password; // Must meet password requirements
 
     // Register a new user
     await authPage.fillRegisterAuthForm(uniqueEmail, password, password);
@@ -36,34 +35,34 @@ test.describe('Home Page Integration Tests', () => {
 
     await test.step('Configure radio bar question', async () => {
       await surveyCreatingPage.clickNewQuestion();
-      await expect(surveyCreatingPage.popup.popupContent).toBeVisible();
-      await surveyCreatingPage.popup.configureRadioBar({
+      await expect(surveyCreatingPage.newQuestionPopup.popupContent).toBeVisible();
+      await surveyCreatingPage.newQuestionPopup.configureRadioBar({
         questionText: 'Sample Radio Question',
         groupName: 'Sample Group',
         options: ['Option 1', 'Option 2', 'Option 3'],
       });
       await surveyCreatingPage.applyPopup();
       // Wait for popup to close before proceeding
-      await expect(surveyCreatingPage.popup.popupContent).not.toBeVisible();
+      await expect(surveyCreatingPage.newQuestionPopup.popupContent).not.toBeVisible();
     });
 
     await test.step('Configure text input question', async () => {
       await surveyCreatingPage.clickNewQuestion();
-      await expect(surveyCreatingPage.popup.popupContent).toBeVisible();
-      await surveyCreatingPage.popup.configureTextInput({
+      await expect(surveyCreatingPage.newQuestionPopup.popupContent).toBeVisible();
+      await surveyCreatingPage.newQuestionPopup.configureTextInput({
         questionText: 'Sample Text Input Question',
         fieldLabel: 'Sample Field Label',
         placeholder: 'Sample Placeholder',
       });
       await surveyCreatingPage.applyPopup();
       // Wait for popup to close before proceeding
-      await expect(surveyCreatingPage.popup.popupContent).not.toBeVisible();
+      await expect(surveyCreatingPage.newQuestionPopup.popupContent).not.toBeVisible();
     });
 
     await test.step('Configure checkbox question', async () => {
       await surveyCreatingPage.clickNewQuestion();
-      await expect(surveyCreatingPage.popup.popupContent).toBeVisible();
-      await surveyCreatingPage.popup.configureCheckbox({
+      await expect(surveyCreatingPage.newQuestionPopup.popupContent).toBeVisible();
+      await surveyCreatingPage.newQuestionPopup.configureCheckbox({
         questionText: 'Sample Checkbox Question',
         activeLabel: 'Yes',
         inactiveLabel: 'No',
@@ -71,7 +70,7 @@ test.describe('Home Page Integration Tests', () => {
       });
       await surveyCreatingPage.applyPopup();
       // Wait for popup to close before proceeding
-      await expect(surveyCreatingPage.popup.popupContent).not.toBeVisible();
+      await expect(surveyCreatingPage.newQuestionPopup.popupContent).not.toBeVisible();
     });
 
     // Verify all questions were created

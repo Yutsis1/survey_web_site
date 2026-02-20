@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from types import SimpleNamespace
 from bson import ObjectId
 from fastapi import FastAPI
+from pymongo.errors import DuplicateKeyError
 from backend.db.mongo.mongoDB import surveys_collection
 
 app = FastAPI()
@@ -244,6 +245,109 @@ async def test_get_survey_options_route_is_not_shadowed(monkeypatch):
     resp = client.get("/surveys/options")
     assert resp.status_code == 200
     assert resp.json() == []
+
+
+@pytest.mark.asyncio
+async def test_update_survey_success(monkeypatch):
+    """Test successfully updating a survey owned by the current user."""
+    object_id = ObjectId()
+
+    class FakeUpdateResult:
+        matched_count = 1
+
+    async def fake_update_one(query, update):
+        assert query.get("_id") == object_id
+        assert query.get("created_by_id") == str(fake_user.id)
+        assert update.get("$set", {}).get("title") == "Updated Survey"
+        return FakeUpdateResult()
+
+    monkeypatch.setattr(surveys_collection, "update_one", fake_update_one)
+
+    payload = {
+        "title": "Updated Survey",
+        "questions": [
+            {
+                "id": "q1",
+                "questionText": "Updated question?",
+                "component": "TextInput",
+            }
+        ],
+    }
+
+    resp = client.put(f"/surveys/{str(object_id)}", json=payload)
+    assert resp.status_code == 200
+    assert resp.json() == {"id": str(object_id)}
+
+
+@pytest.mark.asyncio
+async def test_update_survey_not_found(monkeypatch):
+    """Test updating a non-existent survey."""
+
+    class FakeUpdateResult:
+        matched_count = 0
+
+    async def fake_update_one(query, update):
+        return FakeUpdateResult()
+
+    monkeypatch.setattr(surveys_collection, "update_one", fake_update_one)
+
+    payload = {
+        "title": "Missing Survey",
+        "questions": [
+            {
+                "id": "q1",
+                "questionText": "Question?",
+                "component": "TextInput",
+            }
+        ],
+    }
+
+    resp = client.put(f"/surveys/{str(ObjectId())}", json=payload)
+    assert resp.status_code == 404
+    assert resp.json().get("detail") == "Survey not found or access denied"
+
+
+@pytest.mark.asyncio
+async def test_update_survey_invalid_id_format():
+    """Test updating a survey with invalid id format."""
+    payload = {
+        "title": "Any Survey",
+        "questions": [
+            {
+                "id": "q1",
+                "questionText": "Question?",
+                "component": "TextInput",
+            }
+        ],
+    }
+    resp = client.put("/surveys/not-an-object-id", json=payload)
+    assert resp.status_code == 400
+    assert resp.json().get("detail") == "Invalid survey ID format"
+
+
+@pytest.mark.asyncio
+async def test_update_survey_duplicate_title_conflict(monkeypatch):
+    """Test updating a survey to an already used title for the same owner."""
+
+    async def fake_update_one(query, update):
+        raise DuplicateKeyError("duplicate key error")
+
+    monkeypatch.setattr(surveys_collection, "update_one", fake_update_one)
+
+    payload = {
+        "title": "Duplicate Title",
+        "questions": [
+            {
+                "id": "q1",
+                "questionText": "Question?",
+                "component": "TextInput",
+            }
+        ],
+    }
+
+    resp = client.put(f"/surveys/{str(ObjectId())}", json=payload)
+    assert resp.status_code == 409
+    assert resp.json().get("detail") == "Survey title already exists for this user"
 
 
 @pytest.mark.asyncio

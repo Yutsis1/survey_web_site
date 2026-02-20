@@ -118,6 +118,52 @@ async def get_survey(id: str, current_user: User = Depends(get_current_user)):
     survey.pop("_id", None)
     return Survey(**survey)
 
+
+@router.put("/{id}")
+async def update_survey(id: str, survey: SurveyCreate, current_user: User = Depends(get_current_user)):
+    """
+    Update an existing survey by ID for the authenticated owner.
+
+    :param id: The ID of the survey to update.
+    :type id: str
+    :param survey: Updated survey payload.
+    :type survey: SurveyCreate
+    :param current_user: The authenticated user updating the survey.
+    :type current_user: User
+    :raises HTTPException: If ID is invalid, survey is missing, access is denied, or title conflicts.
+    :return: The ID of the updated survey.
+    :rtype: dict
+    """
+    try:
+        object_id = ObjectId(id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid survey ID format")
+
+    try:
+        survey_dict = survey.model_dump(exclude_none=True)
+        survey_dict["created_by_email"] = current_user.email
+
+        result = await surveys_collection.update_one(
+            {
+                "_id": object_id,
+                "created_by_id": str(current_user.id),
+            },
+            {"$set": survey_dict},
+        )
+    except DuplicateKeyError:
+        raise HTTPException(
+            status_code=409,
+            detail="Survey title already exists for this user",
+        )
+    except RequestValidationError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Survey not found or access denied")
+
+    return {"id": id}
+
+
 @router.delete("/{id}")
 async def delete_survey(id: str, current_user: User = Depends(get_current_user)):
     """

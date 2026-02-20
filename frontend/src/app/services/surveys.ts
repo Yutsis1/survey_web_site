@@ -21,9 +21,12 @@ interface SurveyListResponse {
 }
 
 
-export async function saveSurvey(payload: SurveyPayload): Promise<{ id: string }> {
-  const res = await apiClient.fetch('/surveys', {
-    method: 'POST',
+export async function saveSurvey(payload: SurveyPayload, surveyId?: string): Promise<{ id: string }> {
+  const endpoint = surveyId ? `/surveys/${surveyId}` : '/surveys'
+  const method = surveyId ? 'PUT' : 'POST'
+
+  const res = await apiClient.fetch(endpoint, {
+    method,
     body: JSON.stringify(payload),
   })
 

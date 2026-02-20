@@ -22,7 +22,10 @@ DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:pos
 # MongoDB Configuration
 MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 MONGODB_DB_NAME: str = os.getenv("MONGODB_DB_NAME", "surveys_db")
-MIGRATION_STRATEGY: str = os.getenv("MIGRATION_STRATEGY", "delete")  # Options: 'update', 'delete', or 'safe'
+MONGO_MIGRATION_STRATEGY: str = os.getenv("MONGO_MIGRATION_STRATEGY", os.getenv("MIGRATION_STRATEGY", "delete"))  # Options: 'update', 'delete', or 'safe'
+
+# SQL Migration Configuration
+SQL_MIGRATION_STRATEGY: str = os.getenv("SQL_MIGRATION_STRATEGY", os.getenv("MIGRATION_STRATEGY", "delete"))  # Options: 'update', 'delete', or 'safe'
 
 # Security Configuration
 SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
