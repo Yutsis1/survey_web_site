@@ -10,7 +10,9 @@
     "test": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "prepare": "husky || true"
+    "prepare": "husky || true",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.10",
@@ -25,6 +27,8 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@playwright/test": "^1.55.0",
+    "@storybook/addon-docs": "^10.2.10",
+    "@storybook/nextjs-vite": "^10.2.10",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.6.1",
@@ -43,6 +47,7 @@
     "postcss": "^8.5.6",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.12",
+    "storybook": "^10.2.10",
     "tailwindcss": "^3.4.17",
     "typescript": "^5",
     "vite": "^6.3.5",
