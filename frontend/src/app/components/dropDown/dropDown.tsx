@@ -1,4 +1,11 @@
-import './dropDown.css';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export interface DropDownOption {
   value: string;
@@ -25,22 +32,34 @@ export function DropDown({
   disabled = false,
 }: DropDownProps) {
 return (
-    <div className="dropdown-container">
-        {label && <label htmlFor={id ?? name} className="dropdown-label">{label}</label>}
+    <div className="space-y-2">
+        {label && <Label htmlFor={id ?? name}>{label}</Label>}
         <select
-            id={id}
-            name={name}
-            value={selectedOption}
-            onChange={(e) => onSelect(e.target.value)}
-            className="dropdown-select"
-            disabled={disabled}
+          className="sr-only"
+          id={id}
+          name={name}
+          value={selectedOption}
+          onChange={(e) => onSelect(e.target.value)}
+          disabled={disabled}
         >
-            {options.map((option) => (
-                <option key={option.value} value={option.value}>
-                    {option.label}
-                </option>
-            ))}
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
+        <Select value={selectedOption} onValueChange={onSelect} disabled={disabled}>
+          <SelectTrigger id={id ? `${id}-trigger` : undefined} name={name}>
+            <SelectValue placeholder="Select one option" />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
     </div>
 );
 }

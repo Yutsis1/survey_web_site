@@ -1,9 +1,10 @@
 import React from "react";
-import "./button.css"
+import { Button as UIButton } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 
 export interface ButtonProps {
-    label: string;
+    label: React.ReactNode;
     onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
     className?: string;
     test_id?: string;
@@ -13,9 +14,16 @@ export interface ButtonProps {
 
 const Button: React.FC<ButtonProps> = ({ label, className = 'button-base', test_id, onClick, disabled, name }) => {
     return (
-        <button className={className} data-testid={test_id} onClick={onClick} disabled={disabled} name={name}>
+        <UIButton
+            className={cn(className === "button-base" ? "" : className)}
+            data-testid={test_id}
+            onClick={onClick}
+            disabled={disabled}
+            name={name}
+            type="button"
+        >
             {label}
-        </button>
+        </UIButton>
     );
 };
 

@@ -1,63 +1,31 @@
 .app-container {
-    display: flex;
-    flex-direction: row;
-    min-height: 100vh;
-    min-width: 100vw;
-    background-color: var(--background);
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 0;
 }
 
 .content {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-    background-color: var(--background);
-    color: var(--foreground);
+  padding: 1.5rem;
 }
 
-aside {
-    left: 0;
-    top: 0;
-    bottom: 0;
-    background-color: var(--color-light);
-    color: var(--color-dark);
-    overflow-y: auto;
-    padding: 10px;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-    width: 250px;
-    flex-shrink: 0;
-    z-index: 10;
-    display: block;
-    unicode-bidi: isolate;
-    transition: background-color 0.3s ease;
+.question-component {
+  width: 100%;
 }
 
-aside li {
-    padding: 10px;
-    font-size: 18px;
-    cursor: pointer;
-    color: var(--color-dark);
-    border-radius: 4px;
-    transition: all 0.2s ease;
+.question-component h3 {
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
 }
 
-aside li:hover {
-    background-color: var(--color-primary);
-    color: var(--background);
+.option {
+  width: 100%;
 }
 
-/* Dark mode specific adjustments */
-@media (prefers-color-scheme: dark) {
-    aside {
-        background-color: var(--color-dark);
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.4);
-    }
-
-    aside li {
-        color: var(--color-light);
-    }
-
-    aside li:hover {
-        background-color: var(--color-info);
-        color: var(--color-dark);
-    }
+@media (max-width: 1024px) {
+  .app-container {
+    grid-template-columns: 1fr;
+  }
 }

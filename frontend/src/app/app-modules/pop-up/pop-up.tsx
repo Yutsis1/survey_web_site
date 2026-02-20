@@ -1,6 +1,13 @@
 import React from 'react'
 import { Button } from '../../components/button/button'
-import './pop-up.css'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 
 export interface PopUpProps {
     isOpen: boolean
@@ -23,36 +30,23 @@ export const PopUp: React.FC<PopUpProps> = ({
     popUpDescription,
     children,
 }) => {
-    React.useEffect(() => {
-        if (!isOpen) return
-        const handleEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                onClose()
-            }
-        }
-
-        document.addEventListener('keydown', handleEscape)
-        return () => {
-            document.removeEventListener('keydown', handleEscape)
-        }
-    }, [isOpen, onClose])
-
-    if (!isOpen) return null
-
     return (
-        <div className="popup-overlay">
-            <div className="popup-content">
-                <h1 className="popup-title">{popUpTitle}</h1>
-                {popUpDescription && (
-                    <p className="popup-description">{popUpDescription}</p>
-                )}
+        <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
+            <DialogContent className="popup-content border-border bg-[#111111] sm:max-w-xl" showCloseButton={false}>
+                <DialogHeader>
+                    <DialogTitle className="popup-title">{popUpTitle}</DialogTitle>
+                    {popUpDescription && (
+                        <DialogDescription className="popup-description">
+                            {popUpDescription}
+                        </DialogDescription>
+                    )}
+                </DialogHeader>
 
-                {/* Render children components */}
-                <div className="popup-container">
+                <div className="popup-container space-y-3 max-h-[55vh] overflow-auto pr-1">
                     {children}
                 </div>
 
-                <div className="popup-buttons">
+                <DialogFooter className="popup-buttons mt-2">
                     <Button
                         label="Cancel"
                         onClick={onCancel ?? onClose}
@@ -64,10 +58,9 @@ export const PopUp: React.FC<PopUpProps> = ({
                         onClick={onApply}
                         test_id="apply-button"
                         disabled={applyDisabled}
-                        // className="button-cancel"
                     />
-                </div>
-            </div>
-        </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     )
 }

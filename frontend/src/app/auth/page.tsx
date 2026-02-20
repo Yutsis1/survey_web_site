@@ -3,9 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../contexts/auth-context'
-import { DynamicComponentRenderer } from '../components/dynamic-component-renderer'
+import { Loader2 } from 'lucide-react'
 import { z } from 'zod'
-import './auth.css'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function AuthPage() {
     const emailSchema = z.email({ message: 'Invalid email address' })
@@ -38,7 +42,7 @@ export default function AuthPage() {
     // Redirect if already authenticated
     useEffect(() => {
         if (!isLoading && isAuthenticated) {
-            router.push('/survey-builder')
+            router.push('/dashboard')
         }
     }, [isAuthenticated, isLoading, router])
 
@@ -51,13 +55,20 @@ export default function AuthPage() {
             if (mode === 'register') {
                 if (password !== repeat) {
                     setError('Passwords do not match')
+                    setIsSubmitting(false)
+                    return
+                }
+                const parsed = passwordSchema.safeParse(password)
+                if (!parsed.success) {
+                    setError(parsed.error.issues[0]?.message ?? 'Invalid password')
+                    setIsSubmitting(false)
                     return
                 }
                 await register(email, password)
             } else {
                 await login(email, password)
             }
-            router.push('/survey-builder')
+            router.push('/dashboard')
         } catch (error) {
             console.error('Auth error:', error)
             setError('Authentication failed')
@@ -69,15 +80,10 @@ export default function AuthPage() {
     // Show loading while checking authentication status
     if (isLoading) {
         return (
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '100vh',
-                }}
-            >
-                Loading...
+            <div className="flex min-h-screen items-center justify-center">
+                <div className="rounded-md border border-border bg-card px-4 py-2 text-sm text-muted-foreground">
+                    Loading...
+                </div>
             </div>
         )
     }
@@ -87,159 +93,153 @@ export default function AuthPage() {
         return null
     }
 
+    const emailIsValid = !email || emailSchema.safeParse(email).success
+    const passwordValidation = passwordSchema.safeParse(password)
+
     return (
-        <div className="auth-container">
-            <main className="auth-box">
-                <div className="auth-email">
-                    {/* Email Input */}
-                    <DynamicComponentRenderer
-                        component="TextInput"
-                        option={{
-                            optionProps: {
-                                label: 'Email',
-                                value: email,
-                                onChange: (e) => setEmail(e.target.value),
-                                type: 'email',
-                                placeholder: 'Enter your email',
-                                test_id: 'input-email',
-                                name: 'email',
-                            },
-                        }}
-                        questionText="Email"
-                        showQuestionText={false}
-                    />
-                </div>
-                {email && !emailSchema.safeParse(email).success && (
-                    <DynamicComponentRenderer
-                        component="InfoLabel"
-                        option={{
-                            optionProps: {
-                                text: 'Invalid email address',
-                                type: 'error',
-                                test_id: 'info-error',
-                            },
-                        }}
-                        questionText=""
-                        showQuestionText={false}
-                    />
-                )}
-                {/* Password Input */}
-                <div className="auth-password">
-                    <DynamicComponentRenderer
-                        component="TextInput"
-                        option={{
-                            optionProps: {
-                                label: 'Password',
-                                value: password,
-                                onChange: (e) => setPassword(e.target.value),
-                                type: 'password',
-                                showPasswordToggle: true,
-                                placeholder: 'Enter your password',
-                                test_id: 'input-password',
-                                name: 'password',
-                            },
-                        }}
-                        questionText="Password"
-                        showQuestionText={false}
-                    />
-                </div>
-                {mode === 'register' && password && (() => {
-                    const parsed = passwordSchema.safeParse(password)
-                    if (!parsed.success) {
-                        const msgs = parsed.error.issues
-                            .map((err) => err.message)
-                            .join('\n')
-                        return (
-                            <div className="auth-password-errors">
-                                <DynamicComponentRenderer
-                                    component="InfoLabel"
-                                    option={{
-                                        optionProps: {
-                                            text: msgs,
-                                            type: 'error',
-                                            test_id: 'info-error',
-                                        },
-                                    }}
-                                    questionText=""
-                                    showQuestionText={false}
-                                />
-                            </div>
-                        )
-                    }
-                    return null
-                })()}
-                {mode === 'register' && (
-                    <div className="auth-repeat">
-                        <DynamicComponentRenderer
-                            component="TextInput"
-                            option={{
-                                optionProps: {
-                                    label: 'Repeat Password',
-                                    value: repeat,
-                                    onChange: (e) => setRepeat(e.target.value),
-                                    type: 'password',
-                                    showPasswordToggle: true,
-                                    placeholder: 'Repeat your password',
-                                    test_id: 'input-repeat-password',
-                                    name: 'repeat-password',
-                                },
-                            }}
-                            questionText="Repeat Password"
-                            showQuestionText={false}
-                        />
-                    </div>
-                )}
-                {error && (
-                    <DynamicComponentRenderer
-                        component="InfoLabel"
-                        option={{
-                            optionProps: {
-                                text: error,
-                                type: 'error',
-                                test_id: 'info-error',
-                            },
-                        }}
-                        questionText=""
-                        showQuestionText={false}
-                    />
-                )}
-                <DynamicComponentRenderer
-                    component="Button"
-                    option={{
-                        optionProps: {
-                            onClick: handleSubmit,
-                            label: isSubmitting
-                                ? mode === 'login'
-                                    ? 'Logging in...'
-                                    : 'Registering...'
-                                : mode === 'login'
-                                  ? 'Login'
-                                  : 'Register',
-                            test_id: 'auth-submit',
-                            disabled: isSubmitting,
-                        },
-                    }}
-                    questionText=""
-                    showQuestionText={false}
-                />
-                <p>
-                    {mode === 'login'
-                        ? "Don't have an account? "
-                        : 'Already have an account? '}
-                    <a
-                        data-testid="toggle-mode"
-                        onClick={() =>
-                            setMode(mode === 'login' ? 'register' : 'login')
-                        }
-                        style={{
-                            cursor: 'pointer',
-                            textDecoration: 'underline',
+        <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.18),transparent_40%)]" />
+            <Card className="auth-box glass-card relative z-10 w-full max-w-md">
+                <CardHeader className="space-y-4 text-center">
+                    <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Survey Platform</div>
+                    <CardTitle className="text-3xl">SurveyFlow</CardTitle>
+                    <CardDescription>
+                        Build and analyze modern surveys in one workspace.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Tabs
+                        value={mode}
+                        onValueChange={(value: string) => {
+                            setMode(value as 'login' | 'register')
+                            setError(null)
                         }}
                     >
-                        {mode === 'login' ? 'Register' : 'Login'}
-                    </a>
-                </p>
-            </main>
+                        <TabsList className="mb-6 grid w-full grid-cols-2">
+                            <TabsTrigger value="login">Login</TabsTrigger>
+                            <TabsTrigger value="register">Register</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="login">
+                            <form className="space-y-4" onSubmit={handleSubmit}>
+                                <div className="space-y-2" data-testid="input-email">
+                                    <Label htmlFor="email">Email</Label>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        value={email}
+                                        placeholder="Enter your email"
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        autoComplete="email"
+                                    />
+                                </div>
+                                {!emailIsValid && (
+                                    <p className="text-xs text-destructive" data-testid="info-error">
+                                        Invalid email address
+                                    </p>
+                                )}
+
+                                <div className="space-y-2" data-testid="input-password">
+                                    <Label htmlFor="password">Password</Label>
+                                    <Input
+                                        id="password"
+                                        type="password"
+                                        value={password}
+                                        placeholder="Enter your password"
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        autoComplete="current-password"
+                                    />
+                                </div>
+
+                                {error && (
+                                    <p className="text-xs text-destructive" data-testid="info-error">
+                                        {error}
+                                    </p>
+                                )}
+
+                                <Button type="submit" className="w-full" data-testid="auth-submit" disabled={isSubmitting}>
+                                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                                    {isSubmitting ? 'Logging in...' : 'Login'}
+                                </Button>
+                            </form>
+                        </TabsContent>
+
+                        <TabsContent value="register">
+                            <form className="space-y-4" onSubmit={handleSubmit}>
+                                <div className="space-y-2" data-testid="input-email">
+                                    <Label htmlFor="register-email">Email</Label>
+                                    <Input
+                                        id="register-email"
+                                        type="email"
+                                        value={email}
+                                        placeholder="Enter your email"
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        autoComplete="email"
+                                    />
+                                </div>
+                                {!emailIsValid && (
+                                    <p className="text-xs text-destructive" data-testid="info-error">
+                                        Invalid email address
+                                    </p>
+                                )}
+
+                                <div className="space-y-2" data-testid="input-password">
+                                    <Label htmlFor="register-password">Password</Label>
+                                    <Input
+                                        id="register-password"
+                                        type="password"
+                                        value={password}
+                                        placeholder="Create a password"
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        autoComplete="new-password"
+                                    />
+                                </div>
+
+                                {password && !passwordValidation.success && (
+                                    <p className="whitespace-pre-line text-xs text-destructive" data-testid="info-error">
+                                        {passwordValidation.error.issues.map((err) => err.message).join('\n')}
+                                    </p>
+                                )}
+
+                                <div className="space-y-2" data-testid="input-repeat-password">
+                                    <Label htmlFor="repeat-password">Repeat Password</Label>
+                                    <Input
+                                        id="repeat-password"
+                                        type="password"
+                                        value={repeat}
+                                        placeholder="Repeat your password"
+                                        onChange={(e) => setRepeat(e.target.value)}
+                                        autoComplete="new-password"
+                                    />
+                                </div>
+
+                                {error && (
+                                    <p className="text-xs text-destructive" data-testid="info-error">
+                                        {error}
+                                    </p>
+                                )}
+
+                                <Button type="submit" className="w-full" data-testid="auth-submit" disabled={isSubmitting}>
+                                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                                    {isSubmitting ? 'Registering...' : 'Register'}
+                                </Button>
+                            </form>
+                        </TabsContent>
+                    </Tabs>
+
+                    <p className="mt-5 text-center text-sm text-muted-foreground">
+                        {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+                        <button
+                            type="button"
+                            data-testid="toggle-mode"
+                            className="text-primary hover:underline"
+                            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+                        >
+                            {mode === 'login' ? 'Register' : 'Login'}
+                        </button>
+                    </p>
+                </CardContent>
+            </Card>
         </div>
     )
 }

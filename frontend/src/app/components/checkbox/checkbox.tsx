@@ -1,12 +1,14 @@
 "use client";
 import React from "react";
-import "./checkbox.css";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 export interface ToggleSwitchProps {
   activeLabel?: string;
   inactiveLabel?: string;
   checked?: boolean;
-  onChange: (checked: boolean) => void;
+  onChange?: (checked: boolean) => void;
   id?: string;
   name?: string;
 }
@@ -24,7 +26,7 @@ const Checkbox: React.FC<ToggleSwitchProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newChecked = e.target.checked;
     setIsChecked(newChecked);
-    onChange(newChecked);
+    onChange?.(newChecked);
   };
 
   React.useEffect(() => {
@@ -32,17 +34,32 @@ const Checkbox: React.FC<ToggleSwitchProps> = ({
   }, [checked]);
 
   return (
-    <label className="toggle-switch">
+    <div className="flex items-center gap-3">
+      <Switch
+        checked={isChecked}
+        onCheckedChange={(next: boolean) => {
+          setIsChecked(next);
+          onChange?.(next);
+        }}
+        id={id}
+        name={name}
+        aria-label={isChecked ? activeLabel : inactiveLabel}
+      />
+      <Label
+        htmlFor={id}
+        className={cn("text-sm text-muted-foreground", isChecked && "text-foreground")}
+      >
+        {isChecked ? activeLabel : inactiveLabel}
+      </Label>
       <input
         type="checkbox"
+        className="sr-only"
         checked={isChecked}
         onChange={handleChange}
         id={id}
         name={name}
       />
-      <span className="slider"></span>
-      {isChecked ? activeLabel : inactiveLabel}
-    </label>
+    </div>
   );
 };
 

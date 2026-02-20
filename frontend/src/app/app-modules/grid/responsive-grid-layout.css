@@ -3,6 +3,21 @@
     height: 100%;
 }
 
+.react-grid-layout {
+    min-height: 100%;
+}
+
+.react-grid-item.react-grid-placeholder {
+    background: rgba(124, 58, 237, 0.22) !important;
+    border-radius: 0.75rem;
+    border: 1px dashed rgba(124, 58, 237, 0.55);
+    opacity: 0.8 !important;
+}
+
+.react-resizable-handle::after {
+    border-color: rgba(161, 161, 170, 0.6) !important;
+}
+
 
 /* Drag handle visual cues for react-grid-layout */
 .drag-handle {
