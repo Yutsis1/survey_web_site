@@ -32,4 +32,8 @@ export class SidebarComponent {
   get loadSurveyButton(): Locator {
     return this.getButtonLocatorByTestID('button-load');
   }
+
+  get addNameTextInput(): Locator {
+    return this.baseLocator.getByTestId('survey-title-input').locator('input.text-input');
+  }
 }
