@@ -39,6 +39,7 @@ export default function Home() {
         Array<{ value: string; label: string }>
     >([])
     const [selectedSurveyId, setSelectedSurveyId] = useState('')
+    const [activeSurveyId, setActiveSurveyId] = useState<string | null>(null)
     const [loadingSurveyOptions, setLoadingSurveyOptions] = useState(false)
     const [loadingSelectedSurvey, setLoadingSelectedSurvey] = useState(false)
     const [surveyOptionsError, setSurveyOptionsError] = useState<string | null>(null)
@@ -127,7 +128,11 @@ export default function Home() {
 
         setSaving(true)
         try {
-            const { id } = await saveSurvey({ title: trimmedTitle, questions })
+            const { id } = await saveSurvey(
+                { title: trimmedTitle, questions },
+                activeSurveyId ?? undefined
+            )
+            setActiveSurveyId(id)
             setSurveyTitle(trimmedTitle)
             alert(`Survey saved with id: ${id}`)
         } catch (e) {
@@ -184,6 +189,7 @@ export default function Home() {
             const survey = await fetchSurvey(selectedSurveyId)
             setQuestions(survey.questions)
             setSurveyTitle(survey.title?.trim() ?? '')
+            setActiveSurveyId(survey.id)
             const layouts = generateLayouts(survey.questions)
             layoutsApi.setLayouts(layouts)
             alert('Survey loaded')

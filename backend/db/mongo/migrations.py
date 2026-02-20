@@ -1,6 +1,6 @@
 import logging
 
-from backend.config.settings import MIGRATION_STRATEGY
+from backend.config.settings import MONGO_MIGRATION_STRATEGY
 from backend.db.mongo.mongoDB import surveys_collection
 from pymongo.errors import OperationFailure
 
@@ -50,13 +50,13 @@ async def _cleanup_problematic_titles() -> None:
         len(problematic_docs),
     )
 
-    if MIGRATION_STRATEGY == "update":
+    if MONGO_MIGRATION_STRATEGY == "update":
         for doc in problematic_docs:
             await surveys_collection.update_one(
                 {"_id": doc["_id"]},
                 {"$set": {"title": f"Untitled Survey {doc['_id']}"}},
             )
-    elif MIGRATION_STRATEGY == "delete":
+    elif MONGO_MIGRATION_STRATEGY == "delete":
         await surveys_collection.delete_many({"_id": {"$in": [doc["_id"] for doc in problematic_docs]}})
 
 
@@ -90,7 +90,7 @@ async def _cleanup_duplicate_owner_titles() -> None:
         to_process = docs_sorted[1:]
         title = dup["_id"]["title"]
 
-        if MIGRATION_STRATEGY == "delete":
+        if MONGO_MIGRATION_STRATEGY == "delete":
             await surveys_collection.delete_many({"_id": {"$in": to_process}})
             logger.debug(
                 "Deleted %s duplicates for owner %s and title '%s', keeping %s",
@@ -119,15 +119,15 @@ async def run_migrations() -> None:
         logger.info("Owner/title index already correct; skipping creation.")
         return
 
-    logger.info("Using migration strategy '%s'.", MIGRATION_STRATEGY)
+    logger.info("Using migration strategy '%s'.", MONGO_MIGRATION_STRATEGY)
 
-    if MIGRATION_STRATEGY in {"update", "delete"}:
+    if MONGO_MIGRATION_STRATEGY in {"update", "delete"}:
         await _cleanup_problematic_titles()
         await _cleanup_duplicate_owner_titles()
     else:
         logger.info(
             "No legacy cleanup executed; migration strategy '%s' skips cleanup.",
-            MIGRATION_STRATEGY,
+            MONGO_MIGRATION_STRATEGY,
         )
 
     to_drop = set()
