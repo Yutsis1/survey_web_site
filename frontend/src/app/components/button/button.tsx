@@ -1,6 +1,6 @@
 import React from "react";
-import "./button.css"
-
+import { Button as ShadcnButton } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export interface ButtonProps {
     label: string;
@@ -11,11 +11,26 @@ export interface ButtonProps {
     name?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({ label, className = 'button-base', test_id, onClick, disabled, name }) => {
+const Button: React.FC<ButtonProps> = ({ label, className, test_id, onClick, disabled, name }) => {
+    const variant = className?.includes("secondary") || className?.includes("cancel")
+        ? "outline"
+        : className?.includes("destructive") || className?.includes("danger")
+            ? "destructive"
+            : className?.includes("ghost")
+                ? "ghost"
+                : "default";
+
     return (
-        <button className={className} data-testid={test_id} onClick={onClick} disabled={disabled} name={name}>
+        <ShadcnButton
+            variant={variant}
+            className={cn("transition-all", className)}
+            data-testid={test_id}
+            onClick={onClick}
+            disabled={disabled}
+            name={name}
+        >
             {label}
-        </button>
+        </ShadcnButton>
     );
 };
 

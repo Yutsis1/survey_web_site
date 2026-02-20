@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import "./checkbox.css";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 export interface ToggleSwitchProps {
   activeLabel?: string;
@@ -21,8 +22,7 @@ const Checkbox: React.FC<ToggleSwitchProps> = ({
 }) => {
   const [isChecked, setIsChecked] = React.useState(checked ?? false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newChecked = e.target.checked;
+  const handleChange = (newChecked: boolean) => {
     setIsChecked(newChecked);
     onChange(newChecked);
   };
@@ -31,18 +31,20 @@ const Checkbox: React.FC<ToggleSwitchProps> = ({
     setIsChecked(checked ?? false);
   }, [checked]);
 
+  const switchId = id || name || "toggle-switch";
+
   return (
-    <label className="toggle-switch">
-      <input
-        type="checkbox"
+    <div className="flex items-center gap-3">
+      <Switch
+        id={switchId}
         checked={isChecked}
-        onChange={handleChange}
-        id={id}
+        onCheckedChange={handleChange}
         name={name}
       />
-      <span className="slider"></span>
-      {isChecked ? activeLabel : inactiveLabel}
-    </label>
+      <Label htmlFor={switchId} className="text-sm text-foreground cursor-pointer">
+        {isChecked ? activeLabel : inactiveLabel}
+      </Label>
+    </div>
   );
 };
 

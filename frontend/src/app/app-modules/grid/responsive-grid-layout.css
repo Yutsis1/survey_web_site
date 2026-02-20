@@ -3,18 +3,38 @@
     height: 100%;
 }
 
-
-/* Drag handle visual cues for react-grid-layout */
 .drag-handle {
     cursor: grab;
     user-select: none;
     -webkit-user-drag: none;
 }
+
 .drag-handle:active {
     cursor: grabbing;
 }
 
-/* Prevent native dragging behaviour on inner elements which can show disallowed cursor */
 .grid-item * {
     -webkit-user-drag: none;
+}
+
+/* Override react-grid-layout placeholder styles for dark theme */
+.react-grid-placeholder {
+    background: hsl(263 70% 50% / 0.15) !important;
+    border: 1px dashed hsl(263 70% 50% / 0.4) !important;
+    border-radius: 0.5rem !important;
+}
+
+/* Override resize handle for dark theme */
+.react-resizable-handle {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.react-grid-item:hover .react-resizable-handle {
+    opacity: 0.5;
+}
+
+.react-resizable-handle::after {
+    border-right: 2px solid hsl(var(--muted-foreground)) !important;
+    border-bottom: 2px solid hsl(var(--muted-foreground)) !important;
 }

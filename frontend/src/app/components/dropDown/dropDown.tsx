@@ -1,4 +1,5 @@
-import './dropDown.css';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 export interface DropDownOption {
   value: string;
@@ -24,23 +25,25 @@ export function DropDown({
   name,
   disabled = false,
 }: DropDownProps) {
-return (
-    <div className="dropdown-container">
-        {label && <label htmlFor={id ?? name} className="dropdown-label">{label}</label>}
-        <select
-            id={id}
-            name={name}
-            value={selectedOption}
-            onChange={(e) => onSelect(e.target.value)}
-            className="dropdown-select"
-            disabled={disabled}
-        >
-            {options.map((option) => (
-                <option key={option.value} value={option.value}>
-                    {option.label}
-                </option>
-            ))}
-        </select>
+  return (
+    <div className="space-y-2">
+      {label && (
+        <Label htmlFor={id ?? name} className="text-sm font-medium text-foreground">
+          {label}
+        </Label>
+      )}
+      <Select value={selectedOption} onValueChange={onSelect} disabled={disabled}>
+        <SelectTrigger id={id} className="w-full">
+          <SelectValue placeholder="Select an option..." />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
-);
+  );
 }

@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import './radio-bar.css'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Label } from '@/components/ui/label'
 
 interface RadioProps {
     label: string
@@ -24,31 +25,34 @@ const RadioBar: React.FC<RadioBarProps> = ({
     selectedValue,
 }) => {
     const [internalSelectedValue, setInternalSelectedValue] = useState<
-        string | null
-    >(null)
-    // Use external selectedValue if provided, otherwise use internal state
+        string | undefined
+    >(undefined)
     const currentSelectedValue = selectedValue ?? internalSelectedValue
 
     const handleChange = (value: string) => {
         setInternalSelectedValue(value)
-        onChange?.(value) // Call the external onChange if provided
+        onChange?.(value)
     }
 
     return (
-        <div className="radio-bar" data-testid={test_id}>
-            {buttons.map((button, index) => (
-                <label key={index} className="radio-wrapper">
-                    <input
-                        type="radio"
-                        name={name}
-                        value={button.value}
-                        checked={currentSelectedValue === button.value}
-                        onChange={() => handleChange(button.value)}
-                    />
-                    {button.label}
-                </label>
-            ))}
-        </div>
+        <RadioGroup
+            value={currentSelectedValue}
+            onValueChange={handleChange}
+            className="flex flex-col gap-3"
+            data-testid={test_id}
+        >
+            {buttons.map((button, index) => {
+                const itemId = `${name || 'radio'}-${button.value}-${index}`
+                return (
+                    <div key={index} className="flex items-center gap-2">
+                        <RadioGroupItem value={button.value} id={itemId} />
+                        <Label htmlFor={itemId} className="text-sm text-foreground cursor-pointer">
+                            {button.label}
+                        </Label>
+                    </div>
+                )
+            })}
+        </RadioGroup>
     )
 }
 

@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
-import "./text-field.css";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { Eye, EyeOff } from "lucide-react";
 
 export interface TextFieldProps {
   label?: string;
@@ -37,41 +40,43 @@ const TextInput: React.FC<TextFieldProps> = ({
     }
   }, [canTogglePassword]);
 
-  const inputControl = (
-    <div className="text-input-control">
-      <input
-        type={resolvedType}
-        className="text-input"
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        id={id}
-        name={name}
-      />
-      {canTogglePassword && (
-        <button
-          type="button"
-          className="text-input-toggle"
-          onClick={() => setIsPasswordVisible((prev) => !prev)}
-          aria-label={isPasswordVisible ? "Hide password" : "Show password"}
-          aria-pressed={isPasswordVisible}
-        >
-          {isPasswordVisible ? "Hide" : "Show"}
-        </button>
-      )}
-    </div>
-  );
+  const inputId = id || name || label?.toLowerCase().replace(/\s+/g, "-");
 
   return (
-    <div className={`text-input-container ${className}`} data-testid={test_id}>
-      {label ? (
-        <label className="text-input-label">
+    <div className={cn("space-y-2", className)} data-testid={test_id}>
+      {label && (
+        <Label htmlFor={inputId} className="text-sm font-medium text-foreground">
           {label}
-          {inputControl}
-        </label>
-      ) : (
-        inputControl
+        </Label>
       )}
+      <div className="relative">
+        <Input
+          type={resolvedType}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          id={inputId}
+          name={name}
+          className={cn(
+            canTogglePassword && "pr-16"
+          )}
+        />
+        {canTogglePassword && (
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setIsPasswordVisible((prev) => !prev)}
+            aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+            aria-pressed={isPasswordVisible}
+          >
+            {isPasswordVisible ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        )}
+      </div>
     </div>
   );
 };

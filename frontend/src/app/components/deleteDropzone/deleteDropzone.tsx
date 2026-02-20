@@ -1,4 +1,5 @@
-import "./deleteDropzone.css";
+import { cn } from "@/lib/utils";
+import { Trash2 } from "lucide-react";
 
 interface DeleteDropzoneProps {
   isDragging: boolean;
@@ -17,34 +18,31 @@ export const DeleteDropzone: React.FC<DeleteDropzoneProps> = ({
   onDragLeave,
   onDrop,
 }) => {
-  // Outer container is fixed and pointer-events-none so it never blocks the page when hidden.
-  // The inner card has pointer-events-auto and handles drag events only when visible.
   return (
     <div
       aria-hidden={!isDragging}
-      className={
-        "delete-dropzone-outer pointer-events-none fixed left-0 right-0 bottom-6 px-6 transition-transform duration-200 ease-in-out " +
-        (isDragging ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0")
-      }
+      className={cn(
+        "pointer-events-none fixed bottom-6 left-0 right-0 px-6 transition-all duration-200 ease-in-out z-50",
+        isDragging ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+      )}
     >
-    <div
-      className={
-        "delete-dropzone-card pointer-events-auto mx-auto max-w-xl rounded-2xl shadow-lg border flex items-center justify-center py-3"
-      }
-      style={{
-        backgroundColor: isOverTrash ? "var(--color-danger)" : "var(--foreground)",
-        color: isOverTrash ? "var(--color-light)" : "var(--background)",
-        borderColor: isOverTrash ? "var(--color-danger)" : "var(--color-dark)",
-      }}
-      onDragOver={onDragOver}
-      onDragEnter={onDragEnter}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
-      role="button"
-      aria-label="Delete area"
-    >
-      {isOverTrash ? "Release to delete" : "Drag here to delete"}
-    </div>
+      <div
+        className={cn(
+          "pointer-events-auto mx-auto flex max-w-xl items-center justify-center gap-2 rounded-lg border py-3 px-6 text-sm font-medium transition-all duration-150",
+          isOverTrash
+            ? "border-destructive bg-destructive text-destructive-foreground shadow-lg shadow-destructive/20"
+            : "border-border bg-card text-muted-foreground"
+        )}
+        onDragOver={onDragOver}
+        onDragEnter={onDragEnter}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+        role="button"
+        aria-label="Delete area"
+      >
+        <Trash2 className="h-4 w-4" />
+        {isOverTrash ? "Release to delete" : "Drag here to delete"}
+      </div>
     </div>
   );
 };

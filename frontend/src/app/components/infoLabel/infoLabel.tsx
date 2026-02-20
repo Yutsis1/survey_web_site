@@ -1,6 +1,6 @@
 import React from 'react';
-import '../../styles.css'; 
-import './infoLabel.css';
+import { cn } from '@/lib/utils';
+import { AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 export interface InfoLabelProps {
     text: string;
@@ -9,14 +9,33 @@ export interface InfoLabelProps {
     name?: string;
 }
 
+const typeStyles = {
+    info: 'border-primary/30 bg-primary/10 text-primary',
+    warning: 'border-warning/30 bg-warning/10 text-warning',
+    error: 'border-destructive/30 bg-destructive/10 text-destructive',
+};
+
+const typeIcons = {
+    info: Info,
+    warning: AlertTriangle,
+    error: AlertCircle,
+};
+
 export const InfoLabel: React.FC<InfoLabelProps> = ({ text, type = 'info', test_id, name }) => {
+    const Icon = typeIcons[type];
+
     return (
-        <label
-            className={`label-${type}`}
+        <div
+            className={cn(
+                'flex items-center gap-2 rounded-md border px-3 py-2 text-sm',
+                typeStyles[type]
+            )}
             data-testid={test_id}
-            htmlFor={name}
+            role="alert"
+            aria-label={name}
         >
-            {text}
-        </label>
+            <Icon className="h-4 w-4 shrink-0" />
+            <span>{text}</span>
+        </div>
     );
 };

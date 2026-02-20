@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../contexts/auth-context'
-import { Sidebar } from '../app-modules/sidebar/sidebar'
 import { PopUp } from '../app-modules/pop-up/pop-up'
 import { ResponsiveGridLayout } from '../app-modules/grid/responsive-grid-layout'
 import { DynamicComponentRenderer } from '../components/dynamic-component-renderer'
@@ -13,27 +12,46 @@ import { useQuestionBuilder } from '../app-modules/questions/question-builder'
 import { getPopupComponentsAndOptions } from '../app-modules/pop-up/pop-up-questions-config'
 import { createNewQuestion } from '../app-modules/questions/questions-factory'
 import { DeleteDropzone } from '../components/deleteDropzone/deleteDropzone'
-import '../styles.css'
 import { saveSurvey, fetchSurvey, fetchSurveyOptions } from '../services/surveys'
-import { DropDown } from '../components/dropDown/dropDown'
-import { TextInput } from '../components/text-field/text-field'
+import { TopNav } from '../components/top-nav'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
+import { Card } from '@/components/ui/card'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
+import {
+    Plus,
+    Trash2,
+    Save,
+    FolderOpen,
+    GripVertical,
+    Loader2,
+    AlertCircle,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import '../app-modules/grid/responsive-grid-layout.css'
+import '../app-modules/questions/question.css'
 
-export default function Home() {
+export default function SurveyBuilderPage() {
     const { isAuthenticated, isLoading, logout } = useAuth()
     const router = useRouter()
 
-    // creation popup state
     const [isPopUpCreationOpen, setIsPopUpCreationOpen] = useState(false)
     const [questions, setQuestions] = useState<QuestionItem[]>([])
     const [draggingId, setDraggingId] = useState<string | null>(null)
 
-    // deletion dropdown
     const [isDragging, setIsDragging] = useState(false)
     const [isOverTrash, setIsOverTrash] = useState(false)
     const [saving, setSaving] = useState(false)
     const [surveyTitle, setSurveyTitle] = useState('')
 
-    // load popups and question
     const [isLoadingPopup, setIsLoadingPopup] = useState(false)
     const [surveyOptions, setSurveyOptions] = useState<
         Array<{ value: string; label: string }>
@@ -44,23 +62,20 @@ export default function Home() {
     const [loadingSelectedSurvey, setLoadingSelectedSurvey] = useState(false)
     const [surveyOptionsError, setSurveyOptionsError] = useState<string | null>(null)
 
-    // layouts state management
     const layoutsApi = useLayouts()
     const builder = useQuestionBuilder()
 
-    // Redirect if not authenticated
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
             router.push('/auth')
         }
     }, [isAuthenticated, isLoading, router])
 
-    // While react-grid-layout drag is active, track mouse position and set isOverTrash
     useEffect(() => {
         if (!isDragging) return
         const onMove = (ev: MouseEvent) => {
             const dropEl = document.querySelector(
-                '.delete-dropzone-card'
+                '[aria-label="Delete area"]'
             ) as HTMLElement | null
             if (!dropEl) return
             const rect = dropEl.getBoundingClientRect()
@@ -78,19 +93,15 @@ export default function Home() {
         }
     }, [isDragging])
 
-    // Show loading while checking auth
     if (isLoading) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                Loading...
+            <div className="flex min-h-screen items-center justify-center bg-background">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
         )
     }
 
-    // Don't render if not authenticated (will redirect)
-    if (!isAuthenticated) {
-        return null
-    }
+    if (!isAuthenticated) return null
 
     const handleApply = () => {
         if (!builder.selectedType) return setIsPopUpCreationOpen(false)
@@ -108,7 +119,6 @@ export default function Home() {
         const row = Math.floor((idx * w) / cols) * h
 
         layoutsApi.append({ i: String(item.id), x: col, y: row, w, h })
-
         setQuestions((prev) => [...prev, item])
         setIsPopUpCreationOpen(false)
         builder.reset()
@@ -202,15 +212,6 @@ export default function Home() {
         }
     }
 
-    const handleLogout = async () => {
-        try {
-            await logout()
-            router.push('/auth')
-        } catch (e) {
-            console.error('Logout failed:', e)
-        }
-    }
-
     const popup = getPopupComponentsAndOptions({
         selectedType: builder.selectedType,
         setSelectedType: builder.setSelectedType,
@@ -225,9 +226,7 @@ export default function Home() {
         e.dataTransfer.dropEffect = 'move'
     }
 
-    const onTrashDragEnter = () => {
-        setIsOverTrash(true)
-    }
+    const onTrashDragEnter = () => setIsOverTrash(true)
 
     const removeQuestions = (id: string) => {
         setQuestions((prev) => {
@@ -239,15 +238,11 @@ export default function Home() {
         builder.reset()
     }
 
-    const onTrashDragLeave = () => {
-        setIsOverTrash(false)
-    }
+    const onTrashDragLeave = () => setIsOverTrash(false)
 
     const onTrashDrop = (e: React.DragEvent) => {
         e.preventDefault()
-        if (draggingId) {
-            removeQuestions(draggingId)
-        }
+        if (draggingId) removeQuestions(draggingId)
         setIsDragging(false)
         setIsOverTrash(false)
     }
@@ -269,114 +264,181 @@ export default function Home() {
     }
 
     return (
-        <div className="app-container">
-            <aside className="sidebar">
-                <div className="survey-title-field">
-                    <TextInput
-                        label="Survey Name"
-                        placeholder="Enter survey name..."
-                        value={surveyTitle}
-                        onChange={(e) => setSurveyTitle(e.target.value)}
-                        id="survey-title-input"
-                        name="survey-title-input"
-                        test_id="survey-title-input"
-                    />
-                </div>
-                <Sidebar
-                    buttons={[
-                        {
-                            label: 'New Question',
-                            onClick: () => setIsPopUpCreationOpen(true),
-                            className: 'button-base',
-                            test_id: 'button-1',
-                        },
-                        {
-                            label: 'Clear Questions',
-                            onClick: () => {
-                                setQuestions([])
-                                layoutsApi.reset()
-                            },
-                            className: 'button-base',
-                            test_id: 'button-2',
-                        },
-                        {
-                            label: saving ? 'Saving...' : 'Save Survey',
-                            onClick: handleSaveSurvey,
-                            className: 'button-base',
-                            test_id: 'button-save',
-                            disabled: saving,
-                        },
-                        {
-                            label:
-                                loadingSurveyOptions || loadingSelectedSurvey
-                                    ? 'Loading...'
-                                    : 'Load Survey',
-                            onClick: handleLoadSurvey,
-                            className: 'button-base',
-                            test_id: 'button-load',
-                            disabled:
-                                loadingSurveyOptions || loadingSelectedSurvey,
-                        },
-                        {
-                            label: 'Logout',
-                            onClick: handleLogout,
-                            className: 'button-base',
-                            test_id: 'button-logout',
-                        },
-                    ]}
-                />
-            </aside>
+        <div className="flex min-h-screen flex-col bg-background">
+            <TopNav />
+            <div className="flex flex-1">
+                {/* Sidebar */}
+                <aside className="flex w-[260px] shrink-0 flex-col border-r border-border bg-card/50 p-4">
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="survey-title" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                Survey Name
+                            </Label>
+                            <Input
+                                id="survey-title"
+                                placeholder="Enter survey name..."
+                                value={surveyTitle}
+                                onChange={(e) => setSurveyTitle(e.target.value)}
+                                data-testid="survey-title-input"
+                                name="survey-title-input"
+                            />
+                        </div>
 
-            <main className="content">
-                <div className="grid-container">
-                    <ResponsiveGridLayout
-                        className="layout"
-                        layouts={layoutsApi.layouts}
-                        onLayoutChange={(_, l) => layoutsApi.setLayouts(l)}
-                        onDragStart={(...args: unknown[]) => {
-                            const item = args.find((a) => {
-                                return (
-                                    typeof a === 'object' &&
-                                    a !== null &&
-                                    'i' in (a as Record<string, unknown>)
-                                )
-                            }) as Record<string, unknown> | undefined
-                            if (item && typeof item.i === 'string')
-                                setDraggingId(String(item.i))
-                            setIsDragging(true)
+                        <Separator />
+
+                        <div className="flex flex-col gap-2">
+                            <Button
+                                onClick={() => setIsPopUpCreationOpen(true)}
+                                className="justify-start gap-2"
+                                data-testid="button-1"
+                            >
+                                <Plus className="h-4 w-4" />
+                                New Question
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setQuestions([])
+                                    layoutsApi.reset()
+                                }}
+                                className="justify-start gap-2"
+                                data-testid="button-2"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                                Clear Questions
+                            </Button>
+                        </div>
+
+                        <Separator />
+
+                        <div className="flex flex-col gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={handleSaveSurvey}
+                                disabled={saving}
+                                className="justify-start gap-2"
+                                data-testid="button-save"
+                            >
+                                {saving ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Save className="h-4 w-4" />
+                                )}
+                                {saving ? 'Saving...' : 'Save Survey'}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={handleLoadSurvey}
+                                disabled={loadingSurveyOptions || loadingSelectedSurvey}
+                                className="justify-start gap-2"
+                                data-testid="button-load"
+                            >
+                                {loadingSurveyOptions || loadingSelectedSurvey ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <FolderOpen className="h-4 w-4" />
+                                )}
+                                {loadingSurveyOptions || loadingSelectedSurvey ? 'Loading...' : 'Load Survey'}
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Question counter */}
+                    <div className="mt-auto pt-4">
+                        <Separator className="mb-4" />
+                        <p className="text-xs text-muted-foreground">
+                            {questions.length} question{questions.length !== 1 ? 's' : ''}
+                            {activeSurveyId && (
+                                <span className="ml-1 text-primary/70">
+                                    {'(saved)'}
+                                </span>
+                            )}
+                        </p>
+                    </div>
+                </aside>
+
+                {/* Main canvas */}
+                <main className="relative flex-1 overflow-y-auto">
+                    {/* Dot grid background */}
+                    <div
+                        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+                        style={{
+                            backgroundImage: 'radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)',
+                            backgroundSize: '20px 20px',
                         }}
-                        rowHeight={60}
-                        isDraggable
-                        isResizable
-                        compactType={null}
-                        preventCollision={false}
-                        onDragStop={(layout, layouts) => {
-                            if (isOverTrash && draggingId) {
-                                removeQuestions(draggingId)
-                            }
-                            setIsDragging(false)
-                            setDraggingId(null)
-                            setIsOverTrash(false)
-                            layoutsApi.setLayouts(layouts)
-                        }}
-                        onResizeStop={(_, l) => layoutsApi.setLayouts(l)}
-                    >
-                        {questions.map((q) => (
-                            <div key={q.id} className="grid-item">
-                                <div className="drag-handle">⋮⋮</div>
-                                <div className="no-drag">
-                                    <DynamicComponentRenderer
-                                        component={q.component}
-                                        option={q.option}
-                                        questionText={q.questionText}
-                                    />
+                    />
+
+                    <div className="relative z-10 p-4">
+                        {questions.length === 0 ? (
+                            <div className="flex min-h-[calc(100vh-10rem)] flex-col items-center justify-center text-center">
+                                <div className="rounded-lg border border-dashed border-border p-12">
+                                    <Plus className="mx-auto mb-4 h-10 w-10 text-muted-foreground/50" />
+                                    <h3 className="text-lg font-medium text-foreground">No questions yet</h3>
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        Click &quot;New Question&quot; to start building your survey
+                                    </p>
                                 </div>
                             </div>
-                        ))}
-                    </ResponsiveGridLayout>
-                </div>
-            </main>
+                        ) : (
+                            <ResponsiveGridLayout
+                                className="layout"
+                                layouts={layoutsApi.layouts}
+                                onLayoutChange={(_, l) => layoutsApi.setLayouts(l)}
+                                onDragStart={(...args: unknown[]) => {
+                                    const item = args.find((a) => {
+                                        return (
+                                            typeof a === 'object' &&
+                                            a !== null &&
+                                            'i' in (a as Record<string, unknown>)
+                                        )
+                                    }) as Record<string, unknown> | undefined
+                                    if (item && typeof item.i === 'string')
+                                        setDraggingId(String(item.i))
+                                    setIsDragging(true)
+                                }}
+                                rowHeight={60}
+                                isDraggable
+                                isResizable
+                                compactType={null}
+                                preventCollision={false}
+                                onDragStop={(layout, layouts) => {
+                                    if (isOverTrash && draggingId) {
+                                        removeQuestions(draggingId)
+                                    }
+                                    setIsDragging(false)
+                                    setDraggingId(null)
+                                    setIsOverTrash(false)
+                                    layoutsApi.setLayouts(layouts)
+                                }}
+                                onResizeStop={(_, l) => layoutsApi.setLayouts(l)}
+                            >
+                                {questions.map((q) => (
+                                    <div key={q.id}>
+                                        <Card className="h-full overflow-hidden border-border/50 bg-card hover:border-primary/30 transition-colors">
+                                            <div className="flex h-full flex-col">
+                                                <div className="drag-handle flex items-center gap-1 border-b border-border/30 px-3 py-1.5 text-muted-foreground">
+                                                    <GripVertical className="h-3.5 w-3.5" />
+                                                    <span className="text-xs font-medium truncate">{q.questionText}</span>
+                                                </div>
+                                                <div className="no-drag flex-1 p-3 overflow-auto">
+                                                    <DynamicComponentRenderer
+                                                        component={q.component}
+                                                        option={q.option}
+                                                        questionText={q.questionText}
+                                                        showQuestionText={false}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    </div>
+                                ))}
+                            </ResponsiveGridLayout>
+                        )}
+                    </div>
+                </main>
+            </div>
 
+            {/* Dialogs */}
             <PopUp
                 isOpen={isPopUpCreationOpen}
                 onClose={handleClose}
@@ -386,6 +448,7 @@ export default function Home() {
             >
                 {popup.components}
             </PopUp>
+
             <PopUp
                 isOpen={isLoadingPopup}
                 onClose={handleCloseLoadSurveyPopup}
@@ -400,27 +463,39 @@ export default function Home() {
                 popUpTitle="Load Survey"
                 popUpDescription="Select a saved survey to load."
             >
-                <div>
-                    <DropDown
-                        options={surveyOptions}
-                        selectedOption={selectedSurveyId}
-                        onSelect={setSelectedSurveyId}
-                        label="Saved surveys"
-                        id="saved-surveys"
-                        name="saved-surveys"
-                        disabled={
-                            loadingSurveyOptions ||
-                            loadingSelectedSurvey ||
-                            surveyOptions.length === 0
-                        }
-                    />
-                    {loadingSurveyOptions && <p>Loading surveys...</p>}
-                    {surveyOptionsError && <p>{surveyOptionsError}</p>}
-                    {!loadingSurveyOptions &&
-                        !surveyOptionsError &&
-                        surveyOptions.length === 0 && <p>No surveys available</p>}
+                <div className="space-y-3">
+                    {loadingSurveyOptions ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Loading surveys...
+                        </div>
+                    ) : surveyOptionsError ? (
+                        <div className="flex items-center gap-2 text-sm text-destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            {surveyOptionsError}
+                        </div>
+                    ) : surveyOptions.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No surveys available</p>
+                    ) : (
+                        <div className="space-y-2">
+                            <Label>Saved surveys</Label>
+                            <Select value={selectedSurveyId} onValueChange={setSelectedSurveyId}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a survey..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {surveyOptions.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
                 </div>
             </PopUp>
+
             <DeleteDropzone
                 isDragging={isDragging}
                 isOverTrash={isOverTrash}

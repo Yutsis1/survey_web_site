@@ -3,6 +3,7 @@
 import { useAuth } from '../contexts/auth-context'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { Loader2 } from 'lucide-react'
 
 interface ProtectedRouteProps {
     children: React.ReactNode
@@ -20,15 +21,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
     if (isLoading) {
         return (
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '100vh',
-                }}
-            >
-                Loading...
+            <div className="flex min-h-screen items-center justify-center bg-background">
+                <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Loading...</p>
+                </div>
             </div>
         )
     }

@@ -1,6 +1,13 @@
 import React from 'react'
-import { Button } from '../../components/button/button'
-import './pop-up.css'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
+import { Button as ShadcnButton } from '@/components/ui/button'
 
 export interface PopUpProps {
     isOpen: boolean
@@ -23,51 +30,37 @@ export const PopUp: React.FC<PopUpProps> = ({
     popUpDescription,
     children,
 }) => {
-    React.useEffect(() => {
-        if (!isOpen) return
-        const handleEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                onClose()
-            }
-        }
-
-        document.addEventListener('keydown', handleEscape)
-        return () => {
-            document.removeEventListener('keydown', handleEscape)
-        }
-    }, [isOpen, onClose])
-
-    if (!isOpen) return null
-
     return (
-        <div className="popup-overlay">
-            <div className="popup-content">
-                <h1 className="popup-title">{popUpTitle}</h1>
-                {popUpDescription && (
-                    <p className="popup-description">{popUpDescription}</p>
-                )}
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                    <DialogTitle>{popUpTitle}</DialogTitle>
+                    {popUpDescription && (
+                        <DialogDescription>{popUpDescription}</DialogDescription>
+                    )}
+                </DialogHeader>
 
-                {/* Render children components */}
-                <div className="popup-container">
+                <div className="space-y-4 py-4">
                     {children}
                 </div>
 
-                <div className="popup-buttons">
-                    <Button
-                        label="Cancel"
+                <DialogFooter>
+                    <ShadcnButton
+                        variant="outline"
                         onClick={onCancel ?? onClose}
-                        test_id="cancel-button"
-                        className="button-secondary"
-                    />
-                    <Button
-                        label="Apply"
+                        data-testid="cancel-button"
+                    >
+                        Cancel
+                    </ShadcnButton>
+                    <ShadcnButton
                         onClick={onApply}
-                        test_id="apply-button"
                         disabled={applyDisabled}
-                        // className="button-cancel"
-                    />
-                </div>
-            </div>
-        </div>
+                        data-testid="apply-button"
+                    >
+                        Apply
+                    </ShadcnButton>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     )
 }
