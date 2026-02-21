@@ -21,11 +21,9 @@ export function useTheme() {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const [theme, setTheme] = useState<Theme>('dark')
-    const [isClient, setIsClient] = useState(false)
 
     // Initialize theme from localStorage on mount
     useEffect(() => {
-        setIsClient(true)
         const storedTheme = localStorage.getItem('theme-preference') as Theme | null
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
 
@@ -48,11 +46,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const newTheme = theme === 'dark' ? 'light' : 'dark'
         setTheme(newTheme)
         applyTheme(newTheme)
-    }
-
-    // Prevent rendering until client-side hydration is complete
-    if (!isClient) {
-        return <>{children}</>
     }
 
     return (
