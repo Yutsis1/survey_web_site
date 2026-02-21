@@ -35,6 +35,7 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
+      style={{ pointerEvents: 'none' }}
       className={cn("fixed inset-0 z-50 bg-black/70 backdrop-blur-sm", className)}
       {...props}
     />
@@ -51,25 +52,23 @@ function DialogContent({
 }) {
   return (
     <DialogPortal>
-      <div className="popup-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
-        <DialogOverlay className="popup-overlay-bg absolute inset-0" />
-        <DialogPrimitive.Content
-          data-slot="dialog-content"
-          className={cn(
-            "popup-content relative z-10 grid w-full max-w-lg gap-4 border border-border bg-card p-6 shadow-lg rounded-xl",
-            className
-          )}
-          {...props}
-        >
-          {children}
-          {showCloseButton && (
-            <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring">
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </DialogPrimitive.Close>
-          )}
-        </DialogPrimitive.Content>
-      </div>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        data-slot="dialog-content"
+        className={cn(
+          "popup-overlay popup-content fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-card p-6 shadow-lg rounded-xl",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        {showCloseButton && (
+          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
+        )}
+      </DialogPrimitive.Content>
     </DialogPortal>
   )
 }

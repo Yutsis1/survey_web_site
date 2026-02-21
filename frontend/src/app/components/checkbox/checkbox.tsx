@@ -11,6 +11,7 @@ export interface ToggleSwitchProps {
   onChange?: (checked: boolean) => void;
   id?: string;
   name?: string;
+  test_id?: string;
 }
 
 const Checkbox: React.FC<ToggleSwitchProps> = ({
@@ -20,6 +21,7 @@ const Checkbox: React.FC<ToggleSwitchProps> = ({
   onChange,
   id,
   name,
+  test_id,
 }) => {
   const [isChecked, setIsChecked] = React.useState(checked ?? false);
 
@@ -44,6 +46,7 @@ const Checkbox: React.FC<ToggleSwitchProps> = ({
         id={id}
         name={name}
         aria-label={isChecked ? activeLabel : inactiveLabel}
+        data-testid={test_id}
       />
       <Label
         htmlFor={id}
@@ -58,6 +61,7 @@ const Checkbox: React.FC<ToggleSwitchProps> = ({
         onChange={handleChange}
         id={id}
         name={name}
+        data-testid={test_id ? `${test_id}-input` : undefined}
       />
     </div>
   );

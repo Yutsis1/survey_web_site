@@ -1,4 +1,7 @@
 import { Page, Locator, expect } from '@playwright/test';
+import { defaultObjects } from '../defults/defaultObjects';
+
+const WAIT_TIMEOUT = defaultObjects.defaultTimeout;
 
 export class AuthPage {
     readonly page: Page;
@@ -14,7 +17,7 @@ export class AuthPage {
 
     constructor(page: Page) {
         this.page = page;
-        this.authBox = page.locator('main.auth-box');
+        this.authBox = page.locator('div[data-slot=card].auth-box');
         this.emailInput = this.authBox.getByTestId('input-email').locator('input');
         this.passwordInput = this.authBox.getByTestId('input-password').locator('input');
         this.repeatPasswordInput = this.authBox.getByTestId('input-repeat-password').locator('input');
@@ -23,14 +26,14 @@ export class AuthPage {
     }
 
     getInfoLabel(text: string, type: 'info' | 'warning' | 'error'): Locator {
-        return this.authBox.locator(`label[data-testid=info-${type}]`, { hasText: text });
+        return this.authBox.locator(`*[data-testid=info-${type}]`, { hasText: text });
     }
 
     async goto() {
         await this.page.goto('/auth');
     }
 
-    async waitUntilReady(timeout = 15000) {
+    async waitUntilReady(timeout = WAIT_TIMEOUT) {
         await expect(this.authBox).toBeVisible({ timeout });
         await expect(this.submitButton).toBeVisible({ timeout });
         await expect(this.modeToggle).toBeVisible({ timeout });

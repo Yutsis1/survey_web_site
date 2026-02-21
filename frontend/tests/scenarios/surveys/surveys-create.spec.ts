@@ -4,8 +4,9 @@ import { AuthPage } from '../../page-objects/authPage';
 import { defaultObjects } from '../../defults/defaultObjects';
 
 
-const PAGE_REDIRECT_TIMEOUT = 5000;
+const PAGE_REDIRECT_TIMEOUT = defaultObjects.defaultTimeout;
 
+// Skipping due to 
 test.describe('Home Page Integration Tests', () => {
   let surveyCreatingPage: SurveyCreatorsPage;
 
@@ -23,8 +24,10 @@ test.describe('Home Page Integration Tests', () => {
     // Register a new user
     await authPage.fillRegisterAuthForm(uniqueEmail, password, password);
 
-    // Wait for redirect to survey builder
-    await page.waitForURL('**/survey-builder', { timeout: PAGE_REDIRECT_TIMEOUT });
+    // Wait for redirect to survey dashboard
+    await page.waitForURL('**/dashboard', { timeout: PAGE_REDIRECT_TIMEOUT });
+
+    await authPage.page.locator('nav a').getByText('Builder').click();
 
     // Now initialize the survey creator page
     surveyCreatingPage = new SurveyCreatorsPage(page);

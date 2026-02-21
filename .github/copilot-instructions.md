@@ -178,6 +178,6 @@ You are an AI assistant helping develop the Survey Web Site project. Follow thes
 ## When You're Uncertain
 
 1. Check similar existing code in the repository
-2. Review the README and documentation files
+2. Review the README and documentation files or other .md files in folders scopes 
 3. Look at test files to understand expected behavior
 4. Ask clarifying questions about requirements or constraints

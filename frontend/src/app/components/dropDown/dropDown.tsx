@@ -20,6 +20,7 @@ export interface DropDownProps {
   id?: string;
   name?: string;
   disabled?: boolean;
+  test_id?: string;
 }
 
 export function DropDown({
@@ -30,12 +31,14 @@ export function DropDown({
   id,
   name,
   disabled = false,
+  test_id,
 }: DropDownProps) {
 return (
     <div className="space-y-2">
         {label && <Label htmlFor={id ?? name}>{label}</Label>}
         <select
           className="sr-only"
+          data-testid={test_id}
           id={id}
           name={name}
           value={selectedOption}
@@ -49,12 +52,12 @@ return (
           ))}
         </select>
         <Select value={selectedOption} onValueChange={onSelect} disabled={disabled}>
-          <SelectTrigger id={id ? `${id}-trigger` : undefined} name={name}>
+          <SelectTrigger id={id ? `${id}-trigger` : undefined} name={name} data-testid={test_id ? `${test_id}-trigger` : undefined}>
             <SelectValue placeholder="Select one option" />
           </SelectTrigger>
           <SelectContent>
             {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
+              <SelectItem key={option.value} value={option.value} data-testid={test_id ? `${test_id}-item-${option.value}` : undefined}>
                 {option.label}
               </SelectItem>
             ))}
