@@ -34,6 +34,6 @@ export class SidebarComponent {
   }
 
   get addNameTextInput(): Locator {
-    return this.baseLocator.getByTestId('survey-title-input').locator('input.text-input');
+    return this.baseLocator.locator('[data-testid="survey-title-input"] input');
   }
 }
