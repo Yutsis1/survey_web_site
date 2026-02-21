@@ -1,7 +1,8 @@
 
 import type { Layout } from 'react-grid-layout'
 import { CreateConfig, QuestionItem } from './question-types'
-import { componentMapping } from '@/app/components/interfaceMapping'
+
+const defaultQuestionOptions = ['TextInput', 'Checkbox', 'RadioBar']
 
 export function createNewQuestion(
   questionType: QuestionItem['component'],
@@ -35,7 +36,7 @@ export function createNewQuestion(
         option: {
           optionProps: {
             name: config.radioBar?.name ?? 'Select an option',
-            buttons: (config.radioBar?.buttons?.length ? config.radioBar.buttons : Object.keys(componentMapping))
+            buttons: (config.radioBar?.buttons?.length ? config.radioBar.buttons : defaultQuestionOptions)
               .map(label => ({ label, value: label })),
             test_id: 'radio-bar-question-type',
             onChange: (v: string) => console.log('Radio changed:', v),

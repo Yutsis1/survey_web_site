@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState } from 'react'
-import './radio-bar.css'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 
 interface RadioProps {
     label: string
@@ -23,32 +25,40 @@ const RadioBar: React.FC<RadioBarProps> = ({
     onChange,
     selectedValue,
 }) => {
-    const [internalSelectedValue, setInternalSelectedValue] = useState<
-        string | null
-    >(null)
-    // Use external selectedValue if provided, otherwise use internal state
+    const [internalSelectedValue, setInternalSelectedValue] = useState('')
     const currentSelectedValue = selectedValue ?? internalSelectedValue
 
     const handleChange = (value: string) => {
         setInternalSelectedValue(value)
-        onChange?.(value) // Call the external onChange if provided
+        onChange?.(value)
     }
 
     return (
-        <div className="radio-bar" data-testid={test_id}>
+        <RadioGroup
+            data-testid={test_id}
+            value={currentSelectedValue}
+            onValueChange={handleChange}
+            name={name}
+            className="grid gap-2"
+        >
             {buttons.map((button, index) => (
-                <label key={index} className="radio-wrapper">
-                    <input
-                        type="radio"
-                        name={name}
+                <div
+                    key={index}
+                    className={cn(
+                        "flex items-center gap-2 rounded-md border border-border bg-secondary/35 px-3 py-2",
+                        currentSelectedValue === button.value && "border-primary/60 bg-primary/10"
+                    )}
+                >
+                    <RadioGroupItem
+                        id={`${name ?? 'radio'}-${index}`}
                         value={button.value}
-                        checked={currentSelectedValue === button.value}
-                        onChange={() => handleChange(button.value)}
                     />
-                    {button.label}
-                </label>
+                    <Label htmlFor={`${name ?? 'radio'}-${index}`}>
+                        {button.label}
+                    </Label>
+                </div>
             ))}
-        </div>
+        </RadioGroup>
     )
 }
 

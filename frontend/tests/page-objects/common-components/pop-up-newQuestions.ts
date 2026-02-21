@@ -43,7 +43,8 @@ export class PopupNewQuestionComponent extends PopupComponent {
         return this.popupContent.locator(`'input[name="${this.textFieldNames.toggleOptions}"]'`);
     }
     get checkbox() {
-        return this.popupContent.locator('label:has(input[name="defaultState"])');
+        // Updated to use switch role instead of label with input
+        return this.popupContent.getByRole('switch');
     }
 
     async selectRadioButton(value: string) {

@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
-import "./text-field.css";
+import { Eye, EyeOff } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export interface TextFieldProps {
   label?: string;
   placeholder?: string;
   value?: string;
   test_id?: string;
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   type?: string;
   className?: string;
   id?: string;
@@ -38,37 +42,39 @@ const TextInput: React.FC<TextFieldProps> = ({
   }, [canTogglePassword]);
 
   const inputControl = (
-    <div className="text-input-control">
-      <input
+    <div className="relative">
+      <Input
         type={resolvedType}
-        className="text-input"
         placeholder={placeholder}
         value={value}
         onChange={onChange}
         id={id}
         name={name}
+        className={cn("text-input", canTogglePassword ? "pr-11" : "")}
       />
       {canTogglePassword && (
-        <button
+        <Button
           type="button"
-          className="text-input-toggle"
+          variant="ghost"
+          size="icon"
+          className="absolute right-1 top-1 h-8 w-8 text-muted-foreground hover:text-foreground"
           onClick={() => setIsPasswordVisible((prev) => !prev)}
           aria-label={isPasswordVisible ? "Hide password" : "Show password"}
           aria-pressed={isPasswordVisible}
         >
-          {isPasswordVisible ? "Hide" : "Show"}
-        </button>
+          {isPasswordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </Button>
       )}
     </div>
   );
 
   return (
-    <div className={`text-input-container ${className}`} data-testid={test_id}>
+    <div className={cn("space-y-2", className)} data-testid={test_id}>
       {label ? (
-        <label className="text-input-label">
+        <Label htmlFor={id}>
           {label}
           {inputControl}
-        </label>
+        </Label>
       ) : (
         inputControl
       )}

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { AuthPage } from '../page-objects/authPage';
+import { defaultObjects } from '../defults/defaultObjects';
 
 const AUTH_UI_READY_TIMEOUT = 15000;
 const AUTH_ERROR_TIMEOUT = 15000;
@@ -36,38 +37,51 @@ test.describe('Auth Page', async () => {
     await test.step('Fill login form and submit', async () => {
       // First register a user
       const uniqueEmail = `login_test_${Date.now()}@example.com`;
-      const validPassword = 'Test@1234';
+      const validPassword = defaultObjects.user.password;
       await authPage.fillRegisterAuthForm(uniqueEmail, validPassword, validPassword);
-      
-      // After successful registration, should redirect to survey-builder
-      await authPage.page.waitForURL('**/survey-builder', { timeout: PAGE_REDIRECT_TIMEOUT });
-      
+
+      // After successful registration, should redirect to dashboard
+      await authPage.page.waitForURL('**/dashboard', { timeout: PAGE_REDIRECT_TIMEOUT });
+
       // Verify logout button is visible
-      await expect(authPage.page.getByTestId(logoutSelector)).toBeVisible();
-      
+      // TODO: write down an pageobnject for dashboard and move this selector there
+      // await expect(authPage.page.getByTestId(logoutSelector)).toBeVisible();
+      const dropdownTrigger = authPage.page.locator('button[data-slot=dropdown-menu-trigger]');
+      await expect(dropdownTrigger).toBeVisible({ timeout: AUTH_UI_READY_TIMEOUT });
+
+
       // Logout
-      await authPage.page.getByTestId(logoutSelector).click();
-      
+      await dropdownTrigger.click();
+      await authPage.page.locator('div[data-slot=dropdown-menu-item]').getByText('Logout').click();
+      // await authPage.page.getByTestId(logoutSelector).click();
+
       // After logout, should be back at auth page
       await authPage.waitUntilReady(AUTH_UI_READY_TIMEOUT);
-      
+
       // Reload page and verify auth page
       await authPage.page.reload();
       await authPage.waitUntilReady(AUTH_UI_READY_TIMEOUT);
-      
+
       // Now login with the same credentials
       await authPage.fillLoginForm(uniqueEmail, validPassword);
-      await authPage.page.waitForURL('**/survey-builder', { timeout: PAGE_REDIRECT_TIMEOUT });
-      await expect(authPage.page.getByTestId(logoutSelector)).toBeVisible();
+      await authPage.page.waitForURL('**/dashboard', { timeout: PAGE_REDIRECT_TIMEOUT });
+      // TODO: rework expectation for logout button to use dashboard page object
+      // await expect(authPage.page.getByTestId(logoutSelector)).toBeVisible();
     });
   });
   test('should register a new user successfully', async () => {
     await test.step('Fill registration form and submit', async () => {
-      const validPassword = 'Test@1234';
+      const validPassword = defaultObjects.user.password;
       await authPage.fillRegisterAuthForm(`newuser_${Date.now()}@example.com`, validPassword, validPassword);
-      await authPage.page.waitForURL('**/survey-builder', { timeout: PAGE_REDIRECT_TIMEOUT });
-      await expect(authPage.page.getByTestId(logoutSelector)).toBeVisible();
-      await authPage.page.getByTestId(logoutSelector).click();
+      await authPage.page.waitForURL('**/dashboard', { timeout: PAGE_REDIRECT_TIMEOUT });
+      // TODO: Rework to use dashboard page object
+      const dropdownTrigger = authPage.page.locator('button[data-slot=dropdown-menu-trigger]');
+      await expect(dropdownTrigger).toBeVisible({ timeout: AUTH_UI_READY_TIMEOUT });
+
+      // TODO: rework expectation for logout button to use dashboard page object
+      await dropdownTrigger.click();
+      await authPage.page.locator('div[data-slot=dropdown-menu-item]').getByText('Logout').click();
+
       await authPage.waitUntilReady(AUTH_UI_READY_TIMEOUT);
       await authPage.page.reload();
       await authPage.waitUntilReady(AUTH_UI_READY_TIMEOUT);

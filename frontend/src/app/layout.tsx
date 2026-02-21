@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from './contexts/auth-context'
 import { AuthGuard } from './components/auth-guard'
+import { AppShell } from './components/app-shell'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,16 +24,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <title>Survey Web Site</title>
-        <meta name="description" content="Create and manage surveys" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
           <AuthGuard>
-            {children}
+            <AppShell>{children}</AppShell>
           </AuthGuard>
         </AuthProvider>
       </body>

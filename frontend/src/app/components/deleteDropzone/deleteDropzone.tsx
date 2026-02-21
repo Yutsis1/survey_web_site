@@ -1,5 +1,3 @@
-import "./deleteDropzone.css";
-
 interface DeleteDropzoneProps {
   isDragging: boolean;
   isOverTrash: boolean;
@@ -29,12 +27,13 @@ export const DeleteDropzone: React.FC<DeleteDropzoneProps> = ({
     >
     <div
       className={
-        "delete-dropzone-card pointer-events-auto mx-auto max-w-xl rounded-2xl shadow-lg border flex items-center justify-center py-3"
+        "delete-dropzone-card pointer-events-auto mx-auto max-w-xl rounded-2xl shadow-lg border flex items-center justify-center py-4 backdrop-blur-md"
       }
       style={{
-        backgroundColor: isOverTrash ? "var(--color-danger)" : "var(--foreground)",
-        color: isOverTrash ? "var(--color-light)" : "var(--background)",
-        borderColor: isOverTrash ? "var(--color-danger)" : "var(--color-dark)",
+        backgroundColor: isOverTrash ? "rgba(239, 68, 68, 0.22)" : "rgba(17, 17, 17, 0.85)",
+        color: isOverTrash ? "#fee2e2" : "#a1a1aa",
+        borderColor: isOverTrash ? "rgba(239, 68, 68, 0.9)" : "rgba(38, 38, 38, 1)",
+        boxShadow: isOverTrash ? "0 0 30px rgba(239,68,68,0.35)" : "0 0 0 1px rgba(38,38,38,0.8)",
       }}
       onDragOver={onDragOver}
       onDragEnter={onDragEnter}

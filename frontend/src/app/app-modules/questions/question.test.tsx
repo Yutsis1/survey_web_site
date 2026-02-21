@@ -1,5 +1,5 @@
 import React from 'react'
-import { render } from '@testing-library/react'
+import { fireEvent, render } from '@testing-library/react'
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { Question, QuestionProps } from './question'
 
@@ -37,9 +37,16 @@ describe('Question Component', () => {
 
         it('renders the checkbox component', () => {
             const component = render(<Question {...props} />)
-            expect(component.getByText('OFF')).toBeInTheDocument()
-            component.getByText('OFF').click()
+            expect(component.getByRole('switch', { name: 'OFF' })).toHaveAttribute(
+                'aria-checked',
+                'false'
+            )
+            fireEvent.click(component.getByRole('switch', { name: 'OFF' }))
             expect(component.getByText('ON')).toBeInTheDocument()
+            expect(component.getByRole('switch', { name: 'ON' })).toHaveAttribute(
+                'aria-checked',
+                'true'
+            )
         })
     })
     describe('RadioBar', () => {

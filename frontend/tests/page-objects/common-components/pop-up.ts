@@ -8,8 +8,9 @@ export class PopupComponent {
 
   constructor(page: Page, baseLocator?: Locator) {
     this.page = page;
-    this.baseLocator = baseLocator ?? page.locator('div.popup-overlay');
-    this.popupContent = this.baseLocator.locator('div.popup-content');
+    // Updated to match new Dialog structure: use role dialog or the popup-content class directly
+    this.baseLocator = baseLocator ?? page.locator('div.popup-content');
+    this.popupContent = this.baseLocator;
     this.bottomButtonsContainer = this.baseLocator.locator('div.popup-buttons');
   }
 
