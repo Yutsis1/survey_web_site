@@ -105,6 +105,7 @@ export default function SurveyResponsePage() {
       return {
         optionProps: {
           ...optionProps,
+          name: `${optionProps.name ?? 'radio'}-${question.id}`,
           selectedValue: String(answers[question.id] ?? ""),
           onChange: (value: string) =>
             setAnswers((prev) => ({ ...prev, [question.id]: value })),
