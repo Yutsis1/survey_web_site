@@ -198,7 +198,7 @@ export default function SurveyResponsePage() {
 
       <div className="space-y-4">
         {survey?.questions.map((question, index) => (
-          <Card key={question.id} className="border-border bg-[#111111]">
+          <Card key={question.id} className="border-border bg-card">
             <CardContent className="p-5">
               <div className="mb-3 text-xs uppercase tracking-wide text-muted-foreground">
                 Question {index + 1}

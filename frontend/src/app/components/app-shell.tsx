@@ -8,6 +8,7 @@ import { LayoutDashboard, LogOut, Menu, PanelsTopLeft, X } from "lucide-react"
 import { useAuth } from "@/app/contexts/auth-context"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { LampToggle } from "@/components/theme-lamp-toggle"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,7 +75,7 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="min-h-screen">
       {showNav && (
-        <header className="sticky top-0 z-40 border-b border-[#262626] bg-[#0a0a0a]/90 backdrop-blur">
+        <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
           <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
             <div className="flex items-center gap-8">
               <Link href="/dashboard" className="text-sm font-semibold tracking-wide text-foreground">
@@ -107,6 +108,13 @@ export function AppShell({ children }: AppShellProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
                   <DropdownMenuLabel>Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <div className="flex items-center justify-between cursor-pointer">
+                      <span>Theme</span>
+                      <LampToggle />
+                    </div>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -141,6 +149,10 @@ export function AppShell({ children }: AppShellProps) {
                   icon={<PanelsTopLeft className="h-4 w-4" />}
                   label="Builder"
                 />
+                <div className="flex items-center justify-between px-3 py-2">
+                  <span className="text-sm">Theme</span>
+                  <LampToggle />
+                </div>
                 <Button
                   variant="outline"
                   className="justify-start"

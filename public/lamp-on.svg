@@ -1,0 +1,18 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Glow effect (subtle) -->
+  <circle cx="12" cy="11" r="8" fill="#fbbf24" opacity="0.2"/>
+  
+  <!-- Bulb filled (on) -->
+  <path d="M12 3C10.34 3 9 4.34 9 6C9 7.31 9.69 8.47 10.7 9.08C10.24 9.68 10 10.41 10 11.2C10 13.4 11.6 15.2 13.6 15.2C15.6 15.2 17.2 13.4 17.2 11.2C17.2 10.41 16.96 9.68 16.5 9.08C17.51 8.47 18.2 7.31 18.2 6C18.2 4.34 16.86 3 15.2 3M12 3C13.66 3 15 4.34 15 6M12 21V19M8 19H16" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Bulb fill (on state) -->
+  <circle cx="13.1" cy="11.2" r="2.5" fill="#fbbf24" opacity="0.8"/>
+  
+  <!-- Bright rays (on state) -->
+  <line x1="12" y1="1" x2="12" y2="2" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="6" y1="6" x2="7" y2="7" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+  <line x1="18" y1="6" x2="17" y2="7" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+  
+  <!-- Socket bottom -->
+  <rect x="11" y="19" width="2" height="2" fill="#fbbf24" rx="0.5"/>
+</svg>

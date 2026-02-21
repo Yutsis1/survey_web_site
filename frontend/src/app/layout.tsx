@@ -2,6 +2,7 @@
 
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from './contexts/theme-context'
 import { AuthProvider } from './contexts/auth-context'
 import { AuthGuard } from './components/auth-guard'
 import { AppShell } from './components/app-shell'
@@ -27,11 +28,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <AuthGuard>
-            <AppShell>{children}</AppShell>
-          </AuthGuard>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <AuthGuard>
+              <AppShell>{children}</AppShell>
+            </AuthGuard>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
