@@ -124,8 +124,8 @@ export function AppShell({ children }: AppShellProps) {
                 <DropdownMenuContent align="end" className="w-40">
                   <DropdownMenuLabel>Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <div className="flex items-center justify-between cursor-pointer">
+                  <DropdownMenuItem>
+                    <div className="flex items-center justify-between">
                       <span>Theme</span>
                       <LampToggle />
                     </div>
