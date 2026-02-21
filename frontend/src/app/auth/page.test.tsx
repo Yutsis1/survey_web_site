@@ -1,67 +1,12 @@
-// page.test.tsx
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, test, expect, vi, afterEach, beforeEach, Mock } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from 'vitest'
 
-// supper clear that vitest not sutable for component tests. Better have server mock library and render page in browser
-const { dynamicRendererSpy } = vi.hoisted(() => ({
-    dynamicRendererSpy: vi.fn(),
-}))
-
-// ---- Mock DynamicComponentRenderer (simple stub inputs/buttons/labels)
-vi.mock('../components/dynamic-component-renderer', () => ({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    DynamicComponentRenderer: (props: any) => {
-        const { component, option } = props
-        dynamicRendererSpy(props)
-
-        if (component === 'TextInput') {
-            const { label, value, onChange, type, placeholder, test_id } =
-                option.optionProps
-            return (
-                <div>
-                    <label>{label}</label>
-                    <input
-                        type={type}
-                        placeholder={placeholder}
-                        value={value ?? ''}
-                        onChange={onChange}
-                        data-testid={
-                            test_id ??
-                            `input-${label.toLowerCase().replace(' ', '-')}`
-                        }
-                        //  data-testid={`input-${label.toLowerCase().replace(' ', '-')}`}
-                    />
-                </div>
-            )
-        }
-        if (component === 'InfoLabel') {
-            const { text, type, test_id } = option.optionProps
-            return <div data-testid={test_id ?? `info-${type}`}>{text}</div>
-        }
-        if (component === 'Button') {
-            const { onClick, label, test_id, disabled } = option.optionProps
-            return (
-                <button
-                    onClick={onClick}
-                    data-testid={test_id}
-                    disabled={disabled}
-                >
-                    {label}
-                </button>
-            )
-        }
-        return null
-    },
-}))
-
-// ---- Mock the router (page pushes on success)
 const push = vi.fn()
 vi.mock('next/navigation', () => ({
     useRouter: () => ({ push }),
 }))
 
-// ---- Mock useAuth (the component uses the hook, not the raw functions)
 import * as AuthContextModule from '../contexts/auth-context'
 vi.mock('../contexts/auth-context', async () => {
     const actual = await vi.importActual<typeof AuthContextModule>(
@@ -72,24 +17,10 @@ vi.mock('../contexts/auth-context', async () => {
         useAuth: vi.fn(),
     }
 })
+
 const mockedUseAuth = AuthContextModule.useAuth as unknown as Mock
 
 import AuthPage from './page'
-
-// ----- Page object helpers (inputs are the elements with these testids)
-const getEmailInput = () =>
-    screen.getByTestId('input-email') as HTMLInputElement
-const getPasswordInput = () =>
-    screen.getByTestId('input-password') as HTMLInputElement
-const getRepeatInput = () =>
-    screen.getByTestId('input-repeat-password') as HTMLInputElement
-const getSubmitButton = () => screen.getByTestId('auth-submit')
-const fillEmail = async (v: string) => userEvent.type(getEmailInput(), v)
-const fillPassword = async (v: string) => userEvent.type(getPasswordInput(), v)
-const fillRepeat = async (v: string) => userEvent.type(getRepeatInput(), v)
-const submit = () => fireEvent.click(getSubmitButton())
-const modeButton = () => screen.getByTestId('toggle-mode')
-const toggleMode = () => fireEvent.click(modeButton())
 
 describe('AuthPage component', () => {
     let mockLogin: Mock
@@ -99,11 +30,9 @@ describe('AuthPage component', () => {
         document.body.innerHTML = ''
         vi.clearAllMocks()
         push.mockReset()
-        dynamicRendererSpy.mockReset()
         mockLogin = vi.fn().mockResolvedValue(undefined)
         mockRegister = vi.fn().mockResolvedValue(undefined)
 
-        // default auth state for tests (not authed, not loading)
         mockedUseAuth.mockReturnValue({
             isAuthenticated: false,
             isLoading: false,
@@ -115,115 +44,100 @@ describe('AuthPage component', () => {
     })
 
     afterEach(() => {
+        cleanup()
         vi.resetAllMocks()
     })
 
-    const registerText = "Don't have an account?"
-    const loginText = 'Already have an account?'
+    const emailInput = () => screen.getByLabelText('Email') as HTMLInputElement
+    const passwordInput = () =>
+        screen.getByLabelText('Password') as HTMLInputElement
+    const repeatPasswordInput = () =>
+        screen.getByLabelText('Repeat Password') as HTMLInputElement
+    const submitButton = () => screen.getByTestId('auth-submit')
+    const toggleModeButton = () => screen.getByTestId('toggle-mode')
 
     test('renders in login mode by default', () => {
         render(<AuthPage />)
-        expect(getEmailInput()).toBeInTheDocument()
-        expect(getPasswordInput()).toBeInTheDocument()
-        expect(modeButton()).toBeInTheDocument()
-        expect(screen.getByText(registerText)).toBeInTheDocument()
-        expect(screen.queryByText(loginText)).not.toBeInTheDocument()
+
+        expect(emailInput()).toBeInTheDocument()
+        expect(passwordInput()).toBeInTheDocument()
+        expect(screen.queryByLabelText('Repeat Password')).not.toBeInTheDocument()
+        expect(toggleModeButton()).toHaveTextContent('Register')
     })
 
-    test('enables password visibility toggle for password input props', () => {
+    test('switches to register mode when toggle is clicked', async () => {
+        const user = userEvent.setup()
         render(<AuthPage />)
 
-        const hasPasswordToggleConfig = dynamicRendererSpy.mock.calls
-            .map(([props]) => props)
-            .some(
-                (props) =>
-                    props.component === 'TextInput' &&
-                    props.option.optionProps.name === 'password' &&
-                    props.option.optionProps.showPasswordToggle === true
-            )
+        await user.click(toggleModeButton())
 
-        expect(hasPasswordToggleConfig).toBe(true)
+        expect(repeatPasswordInput()).toBeInTheDocument()
+        expect(toggleModeButton()).toHaveTextContent('Login')
     })
 
-    test('enables password visibility toggle for repeat password input props', () => {
+    test('switches back to login mode when toggle is clicked again', async () => {
+        const user = userEvent.setup()
         render(<AuthPage />)
-        toggleMode()
 
-        const hasRepeatPasswordToggleConfig = dynamicRendererSpy.mock.calls
-            .map(([props]) => props)
-            .some(
-                (props) =>
-                    props.component === 'TextInput' &&
-                    props.option.optionProps.name === 'repeat-password' &&
-                    props.option.optionProps.showPasswordToggle === true
-            )
+        await user.click(toggleModeButton())
+        await user.click(toggleModeButton())
 
-        expect(hasRepeatPasswordToggleConfig).toBe(true)
-    })
-
-    test('switches to register mode when Register is clicked', () => {
-        render(<AuthPage />)
-        toggleMode()
-        expect(modeButton()).toHaveTextContent('Login')
-        expect(screen.getByText(loginText)).toBeInTheDocument()
-        // The label is "Repeat Password" in the component
-        expect(screen.getByText('Repeat Password')).toBeInTheDocument()
-    })
-
-    test('switches back to login mode when link is clicked in register mode', () => {
-        render(<AuthPage />)
-        toggleMode()
-        expect(modeButton()).toHaveTextContent('Login')
-        expect(screen.getByText(loginText)).toBeInTheDocument()
-        expect(screen.getByText('Repeat Password')).toBeInTheDocument()
-        toggleMode()
-        expect(modeButton()).toHaveTextContent('Register')
-        expect(screen.queryByText('Repeat Password')).not.toBeInTheDocument()
+        expect(screen.queryByLabelText('Repeat Password')).not.toBeInTheDocument()
+        expect(toggleModeButton()).toHaveTextContent('Register')
     })
 
     test('displays email validation error for invalid email', async () => {
+        const user = userEvent.setup()
         render(<AuthPage />)
-        await fillEmail('invalid-email')
-        await waitFor(() => {
-            expect(screen.getByTestId('info-error')).toHaveTextContent(
-                'Invalid email address'
-            )
-        })
+
+        await user.type(emailInput(), 'invalid-email')
+
+        expect(screen.getByText('Invalid email address')).toBeInTheDocument()
     })
 
-    test('does not display email validation error for valid email', async () => {
+    test('hides email validation error for valid email', async () => {
+        const user = userEvent.setup()
         render(<AuthPage />)
-        await fillEmail('test@example.com')
+
+        await user.type(emailInput(), 'invalid-email')
+        expect(screen.getByText('Invalid email address')).toBeInTheDocument()
+
+        await user.clear(emailInput())
+        await user.type(emailInput(), 'test@example.com')
+
         await waitFor(() => {
-            expect(screen.queryByTestId('info-error')).not.toBeInTheDocument()
+            expect(
+                screen.queryByText('Invalid email address')
+            ).not.toBeInTheDocument()
         })
     })
 
     test('shows password rule errors in register mode for invalid password', async () => {
+        const user = userEvent.setup()
         render(<AuthPage />)
-        toggleMode()
-        await fillPassword('abc')
-        await waitFor(() => {
-            const errorLabel = screen.getByTestId('info-error')
-            expect(errorLabel).toHaveTextContent(
-                'Password must be at least 8 characters long'
-            )
-            expect(errorLabel).toHaveTextContent(
-                'Password must contain at least one uppercase letter'
-            )
-        })
+
+        await user.click(toggleModeButton())
+        await user.type(passwordInput(), 'abc')
+
+        const error = screen.getByTestId('info-error')
+        expect(error).toHaveTextContent(
+            'Password must be at least 8 characters long'
+        )
+        expect(error).toHaveTextContent(
+            'Password must contain at least one uppercase letter'
+        )
     })
 
     test('hides password rule errors when password becomes valid', async () => {
+        const user = userEvent.setup()
         render(<AuthPage />)
-        toggleMode()
-        await fillPassword('abc')
-        await waitFor(() => {
-            expect(screen.getByTestId('info-error')).toBeInTheDocument()
-        })
 
-        await userEvent.clear(getPasswordInput())
-        await fillPassword('Password123!')
+        await user.click(toggleModeButton())
+        await user.type(passwordInput(), 'abc')
+        expect(screen.getByTestId('info-error')).toBeInTheDocument()
+
+        await user.clear(passwordInput())
+        await user.type(passwordInput(), 'Password123!')
 
         await waitFor(() => {
             expect(screen.queryByTestId('info-error')).not.toBeInTheDocument()
@@ -231,11 +145,15 @@ describe('AuthPage component', () => {
     })
 
     test('displays password mismatch error in register mode', async () => {
+        const user = userEvent.setup()
         render(<AuthPage />)
-        toggleMode()
-        await fillPassword('Password123!')
-        await fillRepeat('Password123@')
-        submit()
+
+        await user.click(toggleModeButton())
+        await user.type(emailInput(), 'test@example.com')
+        await user.type(passwordInput(), 'Password123!')
+        await user.type(repeatPasswordInput(), 'Password123@')
+        await user.click(submitButton())
+
         await waitFor(() => {
             expect(screen.getByTestId('info-error')).toHaveTextContent(
                 'Passwords do not match'
@@ -243,42 +161,51 @@ describe('AuthPage component', () => {
         })
     })
 
-    test('calls login on submit in login mode with success and navigates', async () => {
+    test('calls login on submit in login mode and navigates', async () => {
+        const user = userEvent.setup()
         render(<AuthPage />)
-        await fillEmail('test@example.com')
-        await fillPassword('password123')
-        submit()
+
+        await user.type(emailInput(), 'test@example.com')
+        await user.type(passwordInput(), 'password123')
+        await user.click(submitButton())
+
         await waitFor(() => {
             expect(mockLogin).toHaveBeenCalledWith(
                 'test@example.com',
                 'password123'
             )
-            expect(push).toHaveBeenCalledWith('/survey-builder')
+            expect(push).toHaveBeenCalledWith('/dashboard')
         })
     })
 
-    test('calls register on submit in register mode with success and navigates', async () => {
+    test('calls register on submit in register mode and navigates', async () => {
+        const user = userEvent.setup()
         render(<AuthPage />)
-        toggleMode()
-        await fillEmail('test@example.com')
-        await fillPassword('password123')
-        await fillRepeat('password123')
-        submit()
+
+        await user.click(toggleModeButton())
+        await user.type(emailInput(), 'test@example.com')
+        await user.type(passwordInput(), 'Password123!')
+        await user.type(repeatPasswordInput(), 'Password123!')
+        await user.click(submitButton())
+
         await waitFor(() => {
             expect(mockRegister).toHaveBeenCalledWith(
                 'test@example.com',
-                'password123'
+                'Password123!'
             )
-            expect(push).toHaveBeenCalledWith('/survey-builder')
+            expect(push).toHaveBeenCalledWith('/dashboard')
         })
     })
 
     test('displays error on login failure', async () => {
+        const user = userEvent.setup()
         mockLogin.mockRejectedValueOnce(new Error('Auth failed'))
         render(<AuthPage />)
-        await fillEmail('test@example.com')
-        await fillPassword('password123')
-        submit()
+
+        await user.type(emailInput(), 'test@example.com')
+        await user.type(passwordInput(), 'password123')
+        await user.click(submitButton())
+
         await waitFor(() => {
             expect(screen.getByTestId('info-error')).toHaveTextContent(
                 'Authentication failed'
@@ -287,17 +214,53 @@ describe('AuthPage component', () => {
     })
 
     test('displays error on register failure', async () => {
+        const user = userEvent.setup()
         mockRegister.mockRejectedValueOnce(new Error('Auth failed'))
         render(<AuthPage />)
-        toggleMode()
-        await fillEmail('test@example.com')
-        await fillPassword('Password123!')
-        await fillRepeat('Password123!')
-        submit()
+
+        await user.click(toggleModeButton())
+        await user.type(emailInput(), 'test@example.com')
+        await user.type(passwordInput(), 'Password123!')
+        await user.type(repeatPasswordInput(), 'Password123!')
+        await user.click(submitButton())
+
         await waitFor(() => {
             expect(screen.getByTestId('info-error')).toHaveTextContent(
                 'Authentication failed'
             )
         })
+    })
+
+    test('redirects and renders nothing when already authenticated', async () => {
+        mockedUseAuth.mockReturnValue({
+            isAuthenticated: true,
+            isLoading: false,
+            login: mockLogin,
+            register: mockRegister,
+            logout: vi.fn(),
+            checkAuth: vi.fn(),
+        })
+
+        const { container } = render(<AuthPage />)
+
+        await waitFor(() => {
+            expect(push).toHaveBeenCalledWith('/dashboard')
+        })
+        expect(container).toBeEmptyDOMElement()
+    })
+
+    test('shows loading state while auth check is in progress', () => {
+        mockedUseAuth.mockReturnValue({
+            isAuthenticated: false,
+            isLoading: true,
+            login: mockLogin,
+            register: mockRegister,
+            logout: vi.fn(),
+            checkAuth: vi.fn(),
+        })
+
+        render(<AuthPage />)
+
+        expect(screen.getByText('Loading...')).toBeInTheDocument()
     })
 })

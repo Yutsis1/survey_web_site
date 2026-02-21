@@ -37,7 +37,7 @@ describe('DropDown component', () => {
 
     it('calls onSelect with selected value', () => {
         const onSelect = vi.fn()
-        render(
+        const { container } = render(
             <DropDown
                 options={options}
                 selectedOption="survey-1"
@@ -45,7 +45,9 @@ describe('DropDown component', () => {
             />
         )
 
-        fireEvent.change(screen.getByRole('combobox'), {
+        const nativeSelect = container.querySelector('select')
+        expect(nativeSelect).not.toBeNull()
+        fireEvent.change(nativeSelect as HTMLSelectElement, {
             target: { value: 'survey-2' },
         })
 
@@ -62,6 +64,9 @@ describe('DropDown component', () => {
             />
         )
 
-        expect(screen.getByRole('combobox')).toBeDisabled()
+        const comboBoxes = screen.getAllByRole('combobox')
+        comboBoxes.forEach((comboBox) => {
+            expect(comboBox).toBeDisabled()
+        })
     })
 })

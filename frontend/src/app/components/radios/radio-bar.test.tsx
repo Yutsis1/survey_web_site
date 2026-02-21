@@ -29,19 +29,19 @@ describe('RadioBar Component', () => {
     })
 
     test('selects the correct radio button on change', () => {
-        const { getByLabelText } = render(
+        const { getByRole } = render(
             <RadioBar buttons={buttons} name="testRadio" />
         )
-        const option1 = getByLabelText('Option 1') as HTMLInputElement
-        const option2 = getByLabelText('Option 2') as HTMLInputElement
+        const option1 = getByRole('radio', { name: 'Option 1' })
+        const option2 = getByRole('radio', { name: 'Option 2' })
 
         fireEvent.click(option1)
-        expect(option1.checked).toBe(true)
-        expect(option2.checked).toBe(false)
+        expect(option1).toHaveAttribute('aria-checked', 'true')
+        expect(option2).toHaveAttribute('aria-checked', 'false')
 
         fireEvent.click(option2)
-        expect(option1.checked).toBe(false)
-        expect(option2.checked).toBe(true)
+        expect(option1).toHaveAttribute('aria-checked', 'false')
+        expect(option2).toHaveAttribute('aria-checked', 'true')
     })
 
     test('renders with test_id', () => {

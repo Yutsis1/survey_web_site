@@ -25,21 +25,18 @@ const RadioBar: React.FC<RadioBarProps> = ({
     onChange,
     selectedValue,
 }) => {
-    const [internalSelectedValue, setInternalSelectedValue] = useState<
-        string | null
-    >(null)
-    // Use external selectedValue if provided, otherwise use internal state
+    const [internalSelectedValue, setInternalSelectedValue] = useState('')
     const currentSelectedValue = selectedValue ?? internalSelectedValue
 
     const handleChange = (value: string) => {
         setInternalSelectedValue(value)
-        onChange?.(value) // Call the external onChange if provided
+        onChange?.(value)
     }
 
     return (
         <RadioGroup
             data-testid={test_id}
-            value={currentSelectedValue ?? undefined}
+            value={currentSelectedValue}
             onValueChange={handleChange}
             name={name}
             className="grid gap-2"
