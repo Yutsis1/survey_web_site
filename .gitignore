@@ -50,3 +50,5 @@ __pycache__/
 
 *storybook.log
 storybook-static
+
+/.playwright-mcp

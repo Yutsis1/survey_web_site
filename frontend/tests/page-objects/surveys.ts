@@ -137,6 +137,7 @@ export class SurveyCreatorsPage {
   }
 
   async saveSurvey(title: string) {
+    await this.sidebar.addNameTextInput.waitFor({ state: 'visible', timeout: 10000 });
     await this.sidebar.addNameTextInput.fill(title);
     await this.clickSaveSurvey();
   }

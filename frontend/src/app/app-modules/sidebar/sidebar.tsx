@@ -19,7 +19,7 @@ const iconByLabel: Record<string, React.ReactNode> = {
 
 const Sidebar: React.FC<SidebarProps> = ({ buttons }) => {
   return (
-    <div className="rounded-xl border border-border bg-[#111111] p-3">
+    <div className="rounded-xl border border-border bg-card p-3">
       <ul className="space-y-2">
         {buttons.map((button, index) => (
           <li key={index} className="sidebar-button-item">
@@ -32,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ buttons }) => {
               }
               onClick={button.onClick}
               className={cn(
-                "w-full justify-start border border-border bg-[#171717] hover:bg-[#1f1f1f]",
+                "w-full justify-start border border-border bg-secondary text-secondary-foreground hover:bg-secondary/80",
                 String(button.label).toLowerCase().includes("logout") &&
                   "border-destructive/35 text-destructive hover:bg-destructive/20",
                 button.className

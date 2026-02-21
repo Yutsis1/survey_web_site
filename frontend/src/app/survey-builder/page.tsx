@@ -268,8 +268,8 @@ export default function SurveyBuilderPage() {
   return (
     <>
       <div className="app-container">
-        <aside className="sidebar border-r border-border bg-[#111111]/70 p-4 backdrop-blur-md">
-          <div className="mb-4 rounded-xl border border-border bg-[#0f0f0f] p-4">
+        <aside className="sidebar border-r border-border bg-card/70 p-4 backdrop-blur-md">
+          <div className="mb-4 rounded-xl border border-border bg-card p-4">
             <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
               <Sparkles className="h-4 w-4 text-primary" />
               Survey Builder
@@ -333,7 +333,7 @@ export default function SurveyBuilderPage() {
 
           <Separator className="my-4" />
 
-          <div className="rounded-xl border border-border bg-[#0f0f0f] p-3 text-xs">
+          <div className="rounded-xl border border-border bg-card p-3 text-xs">
             <div className="mb-2 flex items-center gap-2 font-medium text-foreground">
               <LayoutGrid className="h-4 w-4 text-primary" />
               Public Survey Link
@@ -357,7 +357,7 @@ export default function SurveyBuilderPage() {
         </aside>
 
         <main className="content">
-          <div className="grid-container dot-grid-bg min-h-[calc(100vh-8rem)] rounded-xl border border-border bg-[#0b0b0b] p-2">
+          <div className="grid-container dot-grid-bg min-h-[calc(100vh-8rem)] rounded-xl border border-border bg-background p-2">
             <ResponsiveGridLayout
               className="layout"
               layouts={layoutsApi.layouts}
@@ -389,9 +389,9 @@ export default function SurveyBuilderPage() {
               {questions.map((q) => (
                 <Card
                   key={q.id}
-                  className="grid-item h-full border-border/80 bg-[#111111]/95 p-3 transition hover:border-primary/60 hover:shadow-[0_0_0_1px_rgba(124,58,237,0.35),0_0_24px_rgba(124,58,237,0.2)]"
+                  className="grid-item h-full border-border/80 bg-card/95 p-3 transition hover:border-primary/60 hover:shadow-[0_0_0_1px_rgba(124,58,237,0.35),0_0_24px_rgba(124,58,237,0.2)]"
                 >
-                  <div className="drag-handle inline-flex rounded-md border border-border bg-[#171717] px-2 py-1 text-xs text-muted-foreground">
+                  <div className="drag-handle inline-flex rounded-md border border-border bg-secondary px-2 py-1 text-xs text-muted-foreground">
                     Drag
                   </div>
                   <div className="no-drag mt-3">

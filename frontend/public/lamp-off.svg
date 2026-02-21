@@ -1,0 +1,10 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Lamp bulb OFF (Purple) -->
+  <circle cx="12" cy="8" r="5" fill="#a855f7" stroke="#a855f7" stroke-width="2"/>
+  <!-- Base of lamp -->
+  <rect x="10" y="13" width="4" height="3" fill="#a855f7"/>
+  <!-- Stand -->
+  <path d="M 9 16 L 8 20 M 15 16 L 16 20" stroke="#a855f7" stroke-width="2" stroke-linecap="round"/>
+  <!-- Bottom connector -->
+  <line x1="8" y1="20" x2="16" y2="20" stroke="#a855f7" stroke-width="2" stroke-linecap="round"/>
+</svg>

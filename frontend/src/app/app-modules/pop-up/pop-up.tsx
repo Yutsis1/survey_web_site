@@ -32,7 +32,7 @@ export const PopUp: React.FC<PopUpProps> = ({
 }) => {
     return (
         <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
-            <DialogContent className="popup-content border-border bg-[#111111] sm:max-w-xl" showCloseButton={false}>
+            <DialogContent className="popup-content border-border bg-card sm:max-w-xl" showCloseButton={false}>
                 <DialogHeader>
                     <DialogTitle className="popup-title">{popUpTitle}</DialogTitle>
                     {popUpDescription && (

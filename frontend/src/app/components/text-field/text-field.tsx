@@ -50,7 +50,7 @@ const TextInput: React.FC<TextFieldProps> = ({
         onChange={onChange}
         id={id}
         name={name}
-        className={cn("text-input", canTogglePassword ? "pr-11" : "")}
+        className={cn("text-foreground", canTogglePassword ? "pr-11" : "")}
       />
       {canTogglePassword && (
         <Button
@@ -71,7 +71,7 @@ const TextInput: React.FC<TextFieldProps> = ({
   return (
     <div className={cn("space-y-2", className)} data-testid={test_id}>
       {label ? (
-        <Label htmlFor={id}>
+        <Label htmlFor={id} className="text-foreground">
           {label}
           {inputControl}
         </Label>
