@@ -1,10 +1,67 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Bulb -->
-  <path d="M12 3C10.34 3 9 4.34 9 6C9 7.31 9.69 8.47 10.7 9.08C10.24 9.68 10 10.41 10 11.2C10 13.4 11.6 15.2 13.6 15.2C15.6 15.2 17.2 13.4 17.2 11.2C17.2 10.41 16.96 9.68 16.5 9.08C17.51 8.47 18.2 7.31 18.2 6C18.2 4.34 16.86 3 15.2 3M12 3C13.66 3 15 4.34 15 6M12 21V19M8 19H16" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  
-  <!-- Socket bottom -->
-  <rect x="11" y="19" width="2" height="2" fill="#a78bfa" rx="0.5"/>
-  
-  <!-- Wire coil indicator (off state) -->
-  <path d="M11.5 15.2C11.3 15.2 11.2 15.3 11.2 15.5" stroke="#a78bfa" stroke-width="1" opacity="0.6"/>
+<!-- lamp-dark.svg (purple lamp for dark theme) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Purple lamp (dark theme)">
+  <defs>
+    <linearGradient id="shadePurple" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#B07CFF"/>
+      <stop offset="1" stop-color="#6A2CFF"/>
+    </linearGradient>
+    <linearGradient id="metalDark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2B2F3A"/>
+      <stop offset="1" stop-color="#141824"/>
+    </linearGradient>
+    <radialGradient id="glowPurple" cx="50%" cy="38%" r="60%">
+      <stop offset="0" stop-color="#C9A7FF" stop-opacity="0.9"/>
+      <stop offset="0.45" stop-color="#7A3DFF" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur"/>
+      <feOffset dx="0" dy="4" result="off"/>
+      <feColorMatrix in="off" type="matrix"
+        values="0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0.35 0" result="shadow"/>
+      <feMerge>
+        <feMergeNode in="shadow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- background hint circle (optional, subtle) -->
+  <circle cx="128" cy="128" r="118" fill="#0B0D14"/>
+
+  <!-- purple glow -->
+  <ellipse cx="128" cy="106" rx="92" ry="72" fill="url(#glowPurple)"/>
+
+  <!-- cable -->
+  <path d="M128 22c-10 0-18 8-18 18v22c0 10 8 18 18 18s18-8 18-18V40c0-10-8-18-18-18z"
+        fill="url(#metalDark)"/>
+
+  <!-- lamp head (shade) -->
+  <path filter="url(#softShadow)"
+        d="M68 108c0-38 28-68 60-68s60 30 60 68c0 10-4 18-10 24-10 10-24 18-50 18s-40-8-50-18c-6-6-10-14-10-24z"
+        fill="url(#shadePurple)"/>
+
+  <!-- inner rim -->
+  <path d="M84 110c0-28 20-50 44-50s44 22 44 50c0 7-3 13-7 17-7 7-18 12-37 12s-30-5-37-12c-4-4-7-10-7-17z"
+        fill="#2A163C" opacity="0.55"/>
+
+  <!-- bulb -->
+  <circle cx="128" cy="118" r="18" fill="#E9D8FF" opacity="0.9"/>
+  <circle cx="122" cy="112" r="6" fill="#FFFFFF" opacity="0.55"/>
+
+  <!-- stem -->
+  <path filter="url(#softShadow)"
+        d="M120 150h16c6 0 10 4 10 10v28c0 6-4 10-10 10h-16c-6 0-10-4-10-10v-28c0-6 4-10 10-10z"
+        fill="url(#metalDark)"/>
+
+  <!-- base -->
+  <path filter="url(#softShadow)"
+        d="M78 214c0-18 22-28 50-28s50 10 50 28c0 10-6 16-14 16H92c-8 0-14-6-14-16z"
+        fill="url(#metalDark)"/>
+
+  <!-- base highlight -->
+  <path d="M92 206c10-8 24-12 36-12s26 4 36 12" fill="none" stroke="#B07CFF" stroke-opacity="0.25" stroke-width="6" stroke-linecap="round"/>
 </svg>

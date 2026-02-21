@@ -1,5 +1,20 @@
 "use client"
 
+/**
+ * AppShell Component
+ * 
+ * Main application shell that provides layout, navigation, and authentication UI.
+ * Renders a sticky header with navigation links and user menu when authenticated.
+ * Includes responsive mobile menu toggle and theme switching functionality.
+ * 
+ * Features:
+ * - Sticky navigation header with responsive design
+ * - Auth-aware navigation (hidden on auth/survey pages)
+ * - User dropdown menu with logout and theme toggle
+ * - Mobile-friendly hamburger menu
+ * - Renders main content via children prop
+ */
+
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
