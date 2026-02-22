@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { mockSurveys, createMockAuthResponse } from '@/tests/service/mocks/data'
+import { MockApiServer } from '@/tests/service/mocks/server'
 
 const API_URL = process.env.API_URL || 'http://127.0.0.1:8000'
+const USE_MOCK_API = process.env.NEXT_PUBLIC_MOCK_API === 'true'
+
+// Initialize mock server with mock data
+const mockServer = new MockApiServer(mockSurveys, createMockAuthResponse())
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 type HandlerParams = { params: Promise<{ path: string[] }> }
@@ -24,9 +30,17 @@ async function proxyRequest(
   pathSegments: string[],
   method: string
 ) {
+  const path = pathSegments.join('/')
+  const pathname = `/${path}`
+
+  // Use mock data if NEXT_PUBLIC_MOCK_API is enabled
+  if (USE_MOCK_API) {
+    const response = mockServer.handleRequest(pathname, method)
+    return NextResponse.json(response.data, { status: response.status })
+  }
+
+  // Standard proxy to backend
   try {
-    const path = pathSegments.join('/')
-    const url = new URL(`${API_URL}/${path}`)
     
     // Forward query parameters
     request.nextUrl.searchParams.forEach((value, key) => {
