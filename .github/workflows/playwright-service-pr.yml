@@ -1,0 +1,59 @@
+name: "Playwright Service Tests (labels: test-run / ready-to-merge)"
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  service-tests:
+    if: ${{ github.event.label.name == 'test-run' || github.event.label.name == 'ready-to-merge' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout PR head SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright service tests
+        env:
+          CI: true
+        run: npx playwright test --config playwright.service.config.ts
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-service-report-pr-${{ github.event.pull_request.number }}
+          path: frontend/playwright-report
+          if-no-files-found: ignore
+
+      - name: Upload Playwright test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-service-test-results-pr-${{ github.event.pull_request.number }}
+          path: frontend/test-results
+          if-no-files-found: ignore

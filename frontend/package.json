@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:service": "playwright test --config playwright.service.config.ts",
     "test:e2e:ui": "playwright test --ui",
     "prepare": "husky || true",
     "storybook": "storybook dev -p 6006",

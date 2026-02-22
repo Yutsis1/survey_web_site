@@ -115,7 +115,7 @@ export function AppShell({ children }: AppShellProps) {
             <div className="hidden items-center gap-2 md:flex">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" data-testid="account-menu-trigger">
                     <Avatar className="h-8 w-8 border border-border">
                       <AvatarFallback>SF</AvatarFallback>
                     </Avatar>

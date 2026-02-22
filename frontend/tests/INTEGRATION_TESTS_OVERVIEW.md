@@ -13,11 +13,16 @@ Playwright-based test suite using Page Object Model pattern for maintainable E2E
 
 ```
 tests/
-├── scenarios/              # Test specs
+├── integration/            # Integration test specs (real backend)
 │   ├── auth.spec.ts
 │   └── surveys/
 │       ├── surveys-create.spec.ts
 │       └── surveys-update.spec.ts
+├── service/                # Service test specs (mocked backend)
+│   ├── mocks/
+│   │   └── backend.ts
+│   ├── theme-toggle.spec.ts
+│   └── surveys-load.spec.ts
 ├── page-objects/          # Page Object Model
 │   ├── authPage.ts
 │   ├── surveys.ts
@@ -28,8 +33,7 @@ tests/
 │       └── sidebar.ts
 ├── defults/               # Test data & constants
 │   └── defaultObjects.ts
-├── debug/                 # Debugging utilities (empty)
-└── mocks/                 # API mocks (planned)
+└── debug/                 # Debugging utilities (empty)
 ```
 
 ---
@@ -158,8 +162,10 @@ await authPage.fillLoginForm(
 ## Running Tests
 
 ```bash
-npx playwright test                        # All tests
-npx playwright test scenarios/auth.spec.ts # Specific file
+npx playwright test                                   # Integration tests
+npx playwright test integration/auth.spec.ts         # Specific integration file
+npx playwright test --config playwright.service.config.ts  # Service tests
+npx playwright test --config playwright.service.config.ts service/theme-toggle.spec.ts # Specific service file
 npx playwright test --debug                # Debug mode
 npx playwright test --ui                   # UI mode
 npx playwright test -g "login"             # By name
