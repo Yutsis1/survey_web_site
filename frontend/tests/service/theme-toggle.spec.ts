@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test'
 import { setupBackendMocks } from './mocks/backend'
+import { defaultObjects } from '../defults/defaultObjects'
 
 const THEME_STORAGE_KEY = 'theme-preference'
+
+const defaultTimeout = defaultObjects.defaultTimeout
 
 test.describe('Theme Service Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -10,7 +13,7 @@ test.describe('Theme Service Tests', () => {
       localStorage.setItem(key, 'dark')
     }, THEME_STORAGE_KEY)
     await page.goto('/survey-builder')
-    await page.getByTestId('account-menu-trigger').waitFor({ state: 'visible', timeout: 15000 })
+    await page.getByTestId('account-menu-trigger').waitFor({ state: 'visible', timeout: defaultTimeout })
   })
 
   test('switches to light theme', async ({ page }) => {
@@ -23,3 +26,4 @@ test.describe('Theme Service Tests', () => {
     expect(storedTheme).toBe('light')
   })
 })
+
