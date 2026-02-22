@@ -41,6 +41,22 @@ npm start
 
 If a `dev` script is not present you can use `npm start` as the project was previously using that command.
 
+Running frontend with a stubbed backend (local mocks)
+
+The frontend includes a stubbed mode that runs the Next.js app with a local mock server supplying predictable API responses. This is useful when the backend is unavailable or when developing UI components in isolation.
+
+Commands:
+
+```powershell
+cd frontend
+npm ci
+npm run dev:stub
+```
+
+- `npm run dev:stub` starts Next.js plus a lightweight mock server that responds to frontend API requests.
+- The mock responses used by the stub are kept under [frontend/tests/service/mocks](frontend/tests/service/mocks). If you introduce new API endpoints for the UI, add or update the corresponding mocks (for example `backend.ts`, `data.ts`, `next-api-handlers.ts`, or `server.ts`) so Storybook, unit tests, and integration tests have predictable stubs.
+- To run the frontend against a real backend, set `NEXT_PUBLIC_API_URL` and run `npm run dev`.
+
 Running frontend with Docker:
 
 ```powershell

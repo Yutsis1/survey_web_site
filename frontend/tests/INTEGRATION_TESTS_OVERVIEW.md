@@ -13,11 +13,18 @@ Playwright-based test suite using Page Object Model pattern for maintainable E2E
 
 ```
 tests/
-├── scenarios/              # Test specs
+├── integration/            # Integration test specs (real backend)
+│   ├── README.md           # Integration tests guide
 │   ├── auth.spec.ts
 │   └── surveys/
 │       ├── surveys-create.spec.ts
 │       └── surveys-update.spec.ts
+├── service/                # Service test specs (mocked backend)
+│   ├── README.md           # Service tests guide
+│   ├── mocks/
+│   │   └── backend.ts
+│   ├── theme-toggle.spec.ts
+│   └── surveys-load.spec.ts
 ├── page-objects/          # Page Object Model
 │   ├── authPage.ts
 │   ├── surveys.ts
@@ -28,9 +35,30 @@ tests/
 │       └── sidebar.ts
 ├── defults/               # Test data & constants
 │   └── defaultObjects.ts
-├── debug/                 # Debugging utilities (empty)
-└── mocks/                 # API mocks (planned)
+└── debug/                 # Debugging utilities (empty)
 ```
+
+---
+
+## Test Types
+
+### Integration Tests (Real Backend)
+Full E2E tests that run against actual backend, databases, and APIs. See [integration/README.md](integration/README.md) for details.
+
+**Use for:**
+- Complete user workflows
+- Authentication flows
+- API integration validation
+- Database state verification
+
+### Service Tests (Mocked Backend)
+Fast, isolated tests with mocked API responses. See [service/README.md](service/README.md) for details.
+
+**Use for:**
+- UI component behavior
+- Theme switching
+- Survey loading and display
+- Features independent from backend
 
 ---
 
@@ -158,14 +186,29 @@ await authPage.fillLoginForm(
 ## Running Tests
 
 ```bash
-npx playwright test                        # All tests
-npx playwright test scenarios/auth.spec.ts # Specific file
-npx playwright test --debug                # Debug mode
-npx playwright test --ui                   # UI mode
-npx playwright test -g "login"             # By name
-npx playwright show-report                 # View report
+# Integration tests (real backend)
+npx playwright test
+npx playwright test integration/auth.spec.ts
+
+# Service tests (mocked backend)
+npx playwright test --config playwright.service.config.ts
+npx playwright test --config playwright.service.config.ts service/theme-toggle.spec.ts
+
+# Debug & UI modes
+npx playwright test --debug
+npx playwright test --ui
+
+# By name pattern
+npx playwright test -g "login"
+
+# View report
+npx playwright show-report
 ```
 
 ---
 
-**See also:** [POPUP-USAGE-EXAMPLES.md](page-objects/POPUP-USAGE-EXAMPLES.md) for detailed popup patterns.
+## Quick Links
+
+- [Integration Tests Guide](integration/README.md) - Real backend testing
+- [Service Tests Guide](service/README.md) - Mocked backend testing
+- [POPUP-USAGE-EXAMPLES.md](page-objects/POPUP-USAGE-EXAMPLES.md) - Popup patterns
