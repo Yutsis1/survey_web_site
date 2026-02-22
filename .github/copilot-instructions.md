@@ -150,6 +150,13 @@ You are an AI assistant helping develop the Survey Web Site project. Follow thes
    - Add tests for new functionality
    - Update relevant type definitions
    - Include proper error handling
+    - **UI Development Flow:** When adding or changing UI views/components, always:
+       - Add Storybook stories for the new view/component under the appropriate `frontend/src` location and update Storybook configuration if needed.
+       - Update or create Storybook snapshots and verify the new stories render correctly.
+       - Ensure component-level Vitest stories/tests are added alongside the component.
+    - **API / Mocking Guidance:** If the new view requires a backend endpoint or changes existing API behavior, you MUST add or update a frontend mock in `frontend/tests/service/mocks` (for example, update `backend.ts`, `data.ts`, `next-api-handlers.ts`, or `server.ts`) so Storybook, unit tests, and integration tests can run against predictable stubs.
+       - Keep mocks minimal and focused: prefer adding request/response shapes required by the UI rather than full backend logic.
+       - Document any new mock files or handlers in the component's story or test setup so other developers can find them quickly.
 
 3. **When Fixing Bugs**
    - Add a test that reproduces the bug first
