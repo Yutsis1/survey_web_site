@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
-import { InfoLabel } from './infoLabel';
+import { InfoLabel } from '@/components/app/infoLabel/infoLabel';
 
 const meta = {
   title: 'Components/InfoLabel',

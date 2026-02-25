@@ -1,5 +1,5 @@
 import type { Layout } from 'react-grid-layout'
-import type { ComponentPropsMapping, Option } from '../../components/interfaceMapping'
+import type { ComponentPropsMapping, Option } from '@/components/app/interfaceMapping'
 
 export interface QuestionItem {
   id: string

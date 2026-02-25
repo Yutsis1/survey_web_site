@@ -17,8 +17,11 @@ This document describes the current architecture of the `frontend` application.
 
 ## High-Level Structure
 
-- `src/app`: App Router pages, feature modules, auth context, services, app-specific components.
+- `src/app`: App Router pages, feature modules, auth context, services, and route logic.
+- `src/components/app`: App-specific reusable components used by routes/modules.
 - `src/components/ui`: Shared design-system-style UI primitives (`button`, `card`, `input`, `tabs`, etc.).
+- `src/stories/ui`: Storybook stories for shared UI primitives.
+- `src/stories/app`: Storybook stories for app-level components.
 - `src/config`: Runtime environment parsing and API base URL selection.
 - `tests`: Playwright Integration tests using Page Object Model.
 
@@ -151,7 +154,9 @@ Flow:
   - setup: `src/app/setupTests.ts`
   - excludes Playwright folders
 - E2E tests: `tests/` with Page Object Model (`tests/page-objects/**`)
-- Storybook stories: colocated `*.stories.tsx` across `src/**`
+- Storybook stories:
+  - `src/stories/ui/**/*.stories.tsx`
+  - `src/stories/app/**/*.stories.tsx`
 - Lint/prettier hooks via Husky + lint-staged.
 
 ## Build and Runtime

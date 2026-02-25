@@ -1,7 +1,7 @@
-import { DynamicComponentRenderer } from "@/app/components/dynamic-component-renderer"
-import { ToggleSwitchProps } from "@/app/components/checkbox/checkbox"
-import { TextFieldProps } from "@/app/components/text-field/text-field"
-import { RadioBarProps } from "@/app/components/radios/radio-bar"
+import { DynamicComponentRenderer } from "@/components/app/dynamic-component-renderer"
+import { ToggleSwitchProps } from "@/components/app/checkbox/checkbox"
+import { TextFieldProps } from "@/components/app/text-field/text-field"
+import { RadioBarProps } from "@/components/app/radios/radio-bar"
 
 interface CheckboxState {
   activeLabel: string

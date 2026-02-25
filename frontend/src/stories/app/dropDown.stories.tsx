@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { fn } from 'storybook/test';
 
-import { DropDown } from './dropDown';
+import { DropDown } from '@/components/app/dropDown/dropDown';
 
 const options = [
   { value: 'survey-1', label: 'Survey One (abc12345)' },

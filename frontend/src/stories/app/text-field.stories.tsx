@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { fn } from 'storybook/test';
 
-import { TextInput } from './text-field';
+import { TextInput } from '@/components/app/text-field/text-field';
 
 const meta = {
   title: 'Components/TextInput',

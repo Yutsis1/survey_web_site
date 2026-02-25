@@ -134,6 +134,50 @@ To run in detached mode (background):
 docker-compose up -d --build
 ```
 
+## Storybook & UI Testing
+
+The frontend uses Storybook for component development and visual testing, with integration to Chromatic.
+Story files are organized under:
+
+- `frontend/src/stories/ui` for shared UI primitives (`src/components/ui`).
+- `frontend/src/stories/app` for app-level components.
+
+### Running Storybook locally
+
+```powershell
+cd frontend
+npm run storybook
+```
+
+Storybook will start on `http://localhost:6006`.
+
+### Publishing to Chromatic
+
+For local publishing:
+
+```powershell
+cd frontend
+npm run chromatic -- --project-token=<your-project-token>
+```
+
+You can also set the token in an environment variable:
+
+```powershell
+$env:CHROMATIC_PROJECT_TOKEN='<your-project-token>'
+npm run chromatic -- --project-token=$env:CHROMATIC_PROJECT_TOKEN
+```
+
+Build the static Storybook output:
+
+```powershell
+npm run build-storybook
+```
+
+CI publishing on pull requests:
+
+- Workflow: `.github/workflows/chromatic-frontend.yml`
+- Required GitHub repository secret: `CHROMATIC_PROJECT_TOKEN`
+
 ## Development notes
 
 - Tests and linters: check `package.json` and the project root for available scripts (for example `npm test`, `npm run lint`).

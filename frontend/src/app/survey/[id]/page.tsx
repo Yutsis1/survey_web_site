@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useParams } from "next/navigation"
 import { CheckCircle2, Loader2 } from "lucide-react"
 
-import { DynamicComponentRenderer } from "@/app/components/dynamic-component-renderer"
+import { DynamicComponentRenderer } from "@/components/app/dynamic-component-renderer"
 import { QuestionItem } from "@/app/app-modules/questions/question-types"
 import {
   fetchPublicSurveyById,

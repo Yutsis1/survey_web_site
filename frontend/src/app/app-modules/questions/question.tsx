@@ -2,8 +2,8 @@ import React from 'react'
 import {
     ComponentPropsMapping,
     Option,
-} from '../../components/interfaceMapping'
-import { DynamicComponentRenderer } from '../../components/dynamic-component-renderer'
+} from '@/components/app/interfaceMapping'
+import { DynamicComponentRenderer } from '@/components/app/dynamic-component-renderer'
 
 export interface QuestionProps<T extends keyof ComponentPropsMapping> {
     questionText: string
