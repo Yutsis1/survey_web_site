@@ -110,6 +110,12 @@ export const mockSurveys: MockSurvey[] = [
   },
 ]
 
+export const DEFAULT_SURVEY_ID = mockSurveys[0]?.id ?? 'survey-radio'
+
+export function getMockSurveyById(id: string): MockSurvey | undefined {
+  return mockSurveys.find((survey) => survey.id === id)
+}
+
 export function toOptions(surveys: MockSurvey[]): MockSurveyOption[] {
   return surveys.map((survey) => ({ id: survey.id, title: survey.title }))
 }

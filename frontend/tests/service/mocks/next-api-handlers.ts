@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { mockSurveys, toOptions, createMockAuthResponse } from './data'
+import { mockSurveys, toOptions, createMockAuthResponse, getMockSurveyById } from './data'
 
 /**
  * Handlers for Next.js dynamic API routes to serve mock data in dev:stub mode
@@ -45,7 +45,7 @@ async function handleProxyRequest(
   // Get specific survey by ID
   if (pathname.startsWith('/surveys/') && method === 'GET') {
     const surveyId = pathname.split('/').pop()
-    const survey = mockSurveys.find((s) => s.id === surveyId)
+    const survey = surveyId ? getMockSurveyById(surveyId) : undefined
     if (!survey) {
       return NextResponse.json({ message: 'Not found' }, { status: 404 })
     }
