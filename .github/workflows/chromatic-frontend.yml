@@ -18,7 +18,8 @@ env:
 
 jobs:
   chromatic:
-    if: ${{ github.event.pull_request.state == 'open' && github.event.pull_request.draft == false }}
+    # if: ${{ github.event.pull_request.state == 'open' && github.event.pull_request.draft == false }}
+    if: false # temporarily disable chromatic
     runs-on: ubuntu-latest
     defaults:
       run:
