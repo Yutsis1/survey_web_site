@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, ButtonProps } from "@/app/components/button/button";
+import { Button, ButtonProps } from "@/components/app/button/button";
 import { FilePlus2, LogOut, Save, Trash2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 

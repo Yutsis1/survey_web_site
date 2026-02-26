@@ -14,7 +14,8 @@
     "test:e2e:ui": "playwright test --ui",
     "prepare": "husky || true",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "chromatic": "npx chromatic --ci --exit-zero-on-changes --exit-once-uploaded"
   },
   "overrides": {
     "eslint-plugin-import": "^2.32.0",
@@ -52,6 +53,7 @@
   "devDependencies": {
     "@playwright/test": "^1.55.0",
     "@storybook/addon-docs": "^10.2.10",
+    "@storybook/addon-vitest": "^10.2.12",
     "@storybook/nextjs-vite": "^10.2.10",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
@@ -77,6 +79,9 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5",
     "vite": "^6.3.5",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "playwright": "^1.58.2",
+    "@vitest/browser": "^3.2.4",
+    "@vitest/coverage-v8": "^3.2.4"
   }
 }

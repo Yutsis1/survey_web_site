@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useParams } from "next/navigation"
 import { CheckCircle2, Loader2 } from "lucide-react"
 
-import { DynamicComponentRenderer } from "@/app/components/dynamic-component-renderer"
+import { DynamicComponentRenderer } from "@/components/app/dynamic-component-renderer"
 import { QuestionItem } from "@/app/app-modules/questions/question-types"
 import {
   fetchPublicSurveyById,
@@ -53,6 +53,8 @@ export default function SurveyResponsePage() {
             initialAnswers[question.id] = String(optionProps.value ?? "")
           } else if (question.component === "RadioBar") {
             initialAnswers[question.id] = String(optionProps.selectedValue ?? "")
+          } else if (question.component === "DropDown") {
+            initialAnswers[question.id] = String(optionProps.selectedOption ?? "")
           }
         })
         setAnswers(initialAnswers)
@@ -108,6 +110,17 @@ export default function SurveyResponsePage() {
           name: `${optionProps.name ?? 'radio'}-${question.id}`,
           selectedValue: String(answers[question.id] ?? ""),
           onChange: (value: string) =>
+            setAnswers((prev) => ({ ...prev, [question.id]: value })),
+        },
+      }
+    }
+
+    if (question.component === "DropDown") {
+      return {
+        optionProps: {
+          ...optionProps,
+          selectedOption: String(answers[question.id] ?? ""),
+          onSelect: (value: string) =>
             setAnswers((prev) => ({ ...prev, [question.id]: value })),
         },
       }

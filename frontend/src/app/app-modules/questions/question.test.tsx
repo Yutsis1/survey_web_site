@@ -102,6 +102,43 @@ describe('Question Component', () => {
             expect(component.getByDisplayValue('test')).toBeInTheDocument()
         })
     })
+    describe('DropDown', () => {
+        const onSelect = vi.fn()
+        const props: QuestionProps<'DropDown'> = {
+            questionText: 'Choose your size',
+            component: 'DropDown',
+            option: {
+                optionProps: {
+                    label: 'Size',
+                    selectedOption: 'Medium',
+                    options: [
+                        { label: 'Small', value: 'Small' },
+                        { label: 'Medium', value: 'Medium' },
+                        { label: 'Large', value: 'Large' },
+                    ],
+                    onSelect,
+                },
+            },
+            showQuestionText: true,
+        }
+
+        it('renders the question text', () => {
+            const { getByText } = render(<Question {...props} />)
+            expect(getByText(props.questionText)).toBeInTheDocument()
+        })
+
+        it('calls onSelect when selection changes', () => {
+            const { container } = render(<Question {...props} />)
+            const nativeSelect = container.querySelector('select')
+            expect(nativeSelect).not.toBeNull()
+
+            fireEvent.change(nativeSelect as HTMLSelectElement, {
+                target: { value: 'Large' },
+            })
+
+            expect(onSelect).toHaveBeenCalledWith('Large')
+        })
+    })
     describe('DynamicComponentRenderer', () => {
         const props: QuestionProps<'TextInput'> = {
             questionText: 'KEK',

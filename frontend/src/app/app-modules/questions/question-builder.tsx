@@ -9,12 +9,14 @@ export function useQuestionBuilder() {
   const [checkbox, setCheckbox] = useState(DEFAULTS.checkbox)
   const [textInput, setTextInput] = useState(DEFAULTS.textInput)
   const [radioBar, setRadioBar] = useState(DEFAULTS.radioBar)
+  const [dropDown, setDropDown] = useState(DEFAULTS.dropDown)
 
   const buildConfig = (): CreateConfig => ({
     questionText,
     checkbox,
     textInput,
     radioBar,
+    dropDown,
   })
 
   const reset = () => {
@@ -23,6 +25,7 @@ export function useQuestionBuilder() {
     setCheckbox(DEFAULTS.checkbox)
     setTextInput(DEFAULTS.textInput)
     setRadioBar(DEFAULTS.radioBar)
+    setDropDown(DEFAULTS.dropDown)
   }
 
   return {
@@ -31,6 +34,7 @@ export function useQuestionBuilder() {
     checkbox: { value: checkbox, set: setCheckbox },
     textInput: { value: textInput, set: setTextInput },
     radioBar: { value: radioBar, set: setRadioBar },
+    dropDown: { value: dropDown, set: setDropDown },
     buildConfig,
     reset,
   }

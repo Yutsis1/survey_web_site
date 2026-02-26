@@ -7,6 +7,7 @@ const SURVEYS = [
   { id: 'survey-radio', testId: 'mock-radio' },
   { id: 'survey-toggle', testId: 'mock-toggle' },
   { id: 'survey-text', testId: 'mock-text' },
+  { id: 'survey-dropdown', testId: 'mock-dropdown' },
 ]
 
 const defaultTimeout = defaultObjects.defaultTimeout

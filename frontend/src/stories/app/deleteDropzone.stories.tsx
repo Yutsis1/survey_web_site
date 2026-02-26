@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { fn } from 'storybook/test';
 
-import { DeleteDropzone } from './deleteDropzone';
+import { DeleteDropzone } from '@/components/app/deleteDropzone/deleteDropzone';
 
 const meta = {
   title: 'Components/DeleteDropzone',

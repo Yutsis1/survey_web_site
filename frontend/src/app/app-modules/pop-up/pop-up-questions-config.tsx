@@ -1,7 +1,8 @@
-import { DynamicComponentRenderer } from "@/app/components/dynamic-component-renderer"
-import { ToggleSwitchProps } from "@/app/components/checkbox/checkbox"
-import { TextFieldProps } from "@/app/components/text-field/text-field"
-import { RadioBarProps } from "@/app/components/radios/radio-bar"
+import { DynamicComponentRenderer } from "@/components/app/dynamic-component-renderer"
+import { ToggleSwitchProps } from "@/components/app/checkbox/checkbox"
+import { DropDownProps } from "@/components/app/dropDown/dropDown"
+import { TextFieldProps } from "@/components/app/text-field/text-field"
+import { RadioBarProps } from "@/components/app/radios/radio-bar"
 
 interface CheckboxState {
   activeLabel: string
@@ -19,6 +20,11 @@ interface RadioBarState {
   buttons: string[]
 }
 
+interface DropDownState {
+  options: string[]
+  selectedOption: string
+}
+
 type Builders = {
   selectedType: string
   setSelectedType: (v: string) => void
@@ -26,6 +32,7 @@ type Builders = {
   checkbox: { value: CheckboxState; set: React.Dispatch<React.SetStateAction<CheckboxState>> }
   textInput: { value: TextInputState; set: React.Dispatch<React.SetStateAction<TextInputState>> }
   radioBar: { value: RadioBarState; set: React.Dispatch<React.SetStateAction<RadioBarState>> }
+  dropDown: { value: DropDownState; set: React.Dispatch<React.SetStateAction<DropDownState>> }
 }
 
 interface PopupConfig {
@@ -33,7 +40,7 @@ interface PopupConfig {
   questionText: string
 }
 
-const supportedQuestionTypes = ["TextInput", "Checkbox", "RadioBar"]
+const supportedQuestionTypes = ["TextInput", "Checkbox", "RadioBar", "DropDown"]
 
 export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
   const typeSelector = (
@@ -196,6 +203,55 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
           />,
         ],
         questionText: "Configure Radio Bar Question",
+      }
+    case "DropDown":
+      return {
+        components: [
+          typeSelector,
+          questionTextField,
+          <DynamicComponentRenderer
+            key="dropdown-options-list"
+            component="TextInput"
+            option={{
+              optionProps: {
+                label: "Options (comma-separated)",
+                placeholder: "Example: Small,Medium,Large",
+                onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                  const parsed = String(e.target.value)
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter(Boolean)
+                  b.dropDown.set((prev) => ({
+                    ...prev,
+                    options: parsed,
+                    selectedOption: parsed.includes(prev.selectedOption) ? prev.selectedOption : (parsed[0] ?? ""),
+                  }))
+                },
+                name: "dropDownOptionsList",
+              } as TextFieldProps,
+            }}
+            showQuestionText={false}
+          />,
+          <DynamicComponentRenderer
+            key="dropdown-default-value"
+            component="DropDown"
+            option={{
+              optionProps: {
+                label: "Default selected value",
+                options: b.dropDown.value.options.map((option) => ({ label: option, value: option })),
+                selectedOption: b.dropDown.value.selectedOption,
+                onSelect: (selectedOption: string) =>
+                  b.dropDown.set((prev) => ({ ...prev, selectedOption })),
+                id: "drop-down-default-option",
+                name: "dropDownDefaultOption",
+                test_id: "drop-down-default-option",
+                disabled: b.dropDown.value.options.length === 0,
+              } as DropDownProps,
+            }}
+            showQuestionText={false}
+          />,
+        ],
+        questionText: "Configure Dropdown Question",
       }
     default:
       return {

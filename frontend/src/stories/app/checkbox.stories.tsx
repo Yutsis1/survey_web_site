@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { fn } from 'storybook/test';
 
-import { Checkbox } from './checkbox';
+import { Checkbox } from '@/components/app/checkbox/checkbox';
 
 const meta = {
   title: 'Components/Checkbox',

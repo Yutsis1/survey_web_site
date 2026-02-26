@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { fn } from 'storybook/test';
 
-import { RadioBar } from './radio-bar';
+import { RadioBar } from '@/components/app/radios/radio-bar';
 
 const buttons = [
   { label: 'Option 1', value: '1' },

@@ -8,7 +8,8 @@ export class PopupNewQuestionComponent extends PopupComponent {
     readonly questionTypes = {
         textInput: "TextInput",
         checkbox: "Checkbox",
-        radioBar: "RadioBar"
+        radioBar: "RadioBar",
+        dropDown: "DropDown"
     };
 
     readonly textFieldNames = {
@@ -18,7 +19,9 @@ export class PopupNewQuestionComponent extends PopupComponent {
         fieldLabel: 'fieldLabel',
         placeholder: 'placeholderText',
         groupName: 'groupName',
-        toggleOptions: 'optionsList'
+        toggleOptions: 'optionsList',
+        dropDownOptions: 'dropDownOptionsList',
+        dropDownDefaultOption: 'dropDownDefaultOption'
     };
 
     constructor(page: Page, baseLocator?: Locator) {
@@ -48,7 +51,7 @@ export class PopupNewQuestionComponent extends PopupComponent {
     }
 
     async selectRadioButton(value: string) {
-        return await this.questionSelector.getByRole('radio', { name: value }).check();
+        return await this.questionSelector.getByRole('radio', { name: value }).click();
     }
 
     async writeInTextField(value: string, textFieldName: string) {
@@ -122,6 +125,27 @@ export class PopupNewQuestionComponent extends PopupComponent {
         if (config.options) {
             const optionsString = config.options.join(',');
             await this.writeInTextField(optionsString, this.textFieldNames.toggleOptions);
+        }
+    }
+
+    async configureDropDown(config: {
+        questionText?: string;
+        options?: string[];
+        defaultOption?: string;
+    }) {
+        await this.selectRadioButton(this.questionTypes.dropDown);
+
+        if (config.questionText) {
+            await this.writeInTextField(config.questionText, this.textFieldNames.question);
+        }
+        if (config.options) {
+            const optionsString = config.options.join(',');
+            await this.writeInTextField(optionsString, this.textFieldNames.dropDownOptions);
+        }
+        if (config.defaultOption) {
+            await this.popupContent
+                .locator(`select[name="${this.textFieldNames.dropDownDefaultOption}"]`)
+                .selectOption({ value: config.defaultOption });
         }
     }
 

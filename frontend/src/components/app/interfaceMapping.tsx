@@ -1,4 +1,5 @@
 import { Checkbox, ToggleSwitchProps } from './checkbox/checkbox'
+import { DropDown, DropDownProps } from './dropDown/dropDown'
 import { RadioBar, RadioBarProps } from './radios/radio-bar'
 import { TextFieldProps, TextInput } from './text-field/text-field'
 import { Button, ButtonProps } from './button/button'
@@ -11,6 +12,7 @@ export interface Option<T> {
 export type ComponentPropsMapping = {
     TextInput: TextFieldProps
     Checkbox: ToggleSwitchProps
+    DropDown: DropDownProps
     RadioBar: RadioBarProps
     Button: ButtonProps
     InfoLabel: InfoLabelProps
@@ -19,6 +21,7 @@ export type ComponentPropsMapping = {
 export const componentMapping = {
     TextInput: TextInput,
     Checkbox: Checkbox,
+    DropDown: DropDown,
     RadioBar: RadioBar,
     Button: Button,
     InfoLabel: InfoLabel,

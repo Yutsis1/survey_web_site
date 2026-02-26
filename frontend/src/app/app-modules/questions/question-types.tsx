@@ -1,5 +1,5 @@
 import type { Layout } from 'react-grid-layout'
-import type { ComponentPropsMapping, Option } from '../../components/interfaceMapping'
+import type { ComponentPropsMapping, Option } from '@/components/app/interfaceMapping'
 
 export interface QuestionItem {
   id: string
@@ -12,10 +12,12 @@ export interface QuestionItem {
 export type CheckboxConfig = { activeLabel: string; inactiveLabel: string; checked: boolean }
 export type TextInputConfig = { label: string; placeholder: string }
 export type RadioBarConfig = { name: string; buttons: string[] }
+export type DropDownConfig = { options: string[]; selectedOption: string }
 
 export type CreateConfig = {
   questionText: string
   checkbox?: CheckboxConfig
   textInput?: TextInputConfig
   radioBar?: RadioBarConfig
+  dropDown?: DropDownConfig
 }
