@@ -51,4 +51,7 @@ __pycache__/
 *storybook.log
 storybook-static
 
+# test outputs
 /.playwright-mcp
+/test-results-service-temp
+/test-results-e2e-temp

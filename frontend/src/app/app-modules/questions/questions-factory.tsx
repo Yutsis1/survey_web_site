@@ -3,6 +3,7 @@ import type { Layout } from 'react-grid-layout'
 import { CreateConfig, QuestionItem } from './question-types'
 
 const defaultQuestionOptions = ['TextInput', 'Checkbox', 'RadioBar']
+const defaultDropDownOptions = ['Option 1', 'Option 2']
 
 export function createNewQuestion(
   questionType: QuestionItem['component'],
@@ -58,6 +59,28 @@ export function createNewQuestion(
         },
         layout,
       }
+    case 'DropDown': {
+      const options = (config.dropDown?.options?.length ? config.dropDown.options : defaultDropDownOptions)
+        .map((option) => option.trim())
+        .filter(Boolean)
+      const selectedOption = options.includes(config.dropDown?.selectedOption ?? '')
+        ? (config.dropDown?.selectedOption as string)
+        : (options[0] ?? '')
+
+      return {
+        id,
+        questionText: config.questionText || `New ${questionType} Question`,
+        component: 'DropDown',
+        option: {
+          optionProps: {
+            options: options.map((option) => ({ label: option, value: option })),
+            selectedOption,
+            onSelect: (value: string) => console.log('Dropdown changed:', value),
+          },
+        },
+        layout,
+      }
+    }
     default:
       throw new Error(`Unsupported question type: ${questionType}`)
   }

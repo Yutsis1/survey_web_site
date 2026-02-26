@@ -32,9 +32,24 @@ class RadioBarProps(BaseModel):
     test_id: Optional[str] = None
 
 
+class DropDownOption(BaseModel):
+    label: str
+    value: str
+
+
+class DropDownProps(BaseModel):
+    options: List[DropDownOption]
+    selectedOption: str
+    label: Optional[str] = None
+    id: Optional[str] = None
+    name: Optional[str] = None
+    disabled: Optional[bool] = None
+    test_id: Optional[str] = None
+
+
 # Option wrapper to match frontend Option<T> interface
 class Option(BaseModel):
-    optionProps: Union[ToggleSwitchProps, TextFieldProps, RadioBarProps]
+    optionProps: Union[ToggleSwitchProps, TextFieldProps, RadioBarProps, DropDownProps]
 
 
 class QuestionItem(BaseModel):

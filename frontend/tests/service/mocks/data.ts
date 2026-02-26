@@ -6,7 +6,7 @@ export type MockSurvey = {
   questions: Array<{
     id: string
     questionText: string
-    component: 'TextInput' | 'Checkbox' | 'RadioBar'
+    component: 'TextInput' | 'Checkbox' | 'RadioBar' | 'DropDown'
     option: { optionProps: Record<string, unknown> }
     layout: { i: string; x: number; y: number; w: number; h: number }
   }>
@@ -81,6 +81,30 @@ export const mockSurveys: MockSurvey[] = [
           },
         },
         layout: { i: 'question-text', x: 0, y: 0, w: 2, h: 2 },
+      },
+    ],
+  },
+  {
+    id: 'survey-dropdown',
+    title: 'Dropdown Survey',
+    questions: [
+      {
+        id: 'question-dropdown',
+        questionText: 'Pick your size',
+        component: 'DropDown',
+        option: {
+          optionProps: {
+            label: 'Size',
+            selectedOption: 'Medium',
+            options: [
+              { label: 'Small', value: 'Small' },
+              { label: 'Medium', value: 'Medium' },
+              { label: 'Large', value: 'Large' },
+            ],
+            test_id: 'mock-dropdown',
+          },
+        },
+        layout: { i: 'question-dropdown', x: 0, y: 0, w: 2, h: 2 },
       },
     ],
   },

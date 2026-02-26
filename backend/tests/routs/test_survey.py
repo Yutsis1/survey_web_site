@@ -248,6 +248,54 @@ async def test_get_survey_options_route_is_not_shadowed(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_create_survey_preserves_dropdown_option_props(monkeypatch):
+    """Test dropdown optionProps are preserved during survey creation."""
+    inserted_id = ObjectId()
+
+    class FakeInsertResult:
+        def __init__(self, result_id):
+            self.inserted_id = result_id
+
+    async def fake_insert_one(document):
+        question = document.get("questions", [])[0]
+        option_props = question.get("option", {}).get("optionProps", {})
+        assert option_props.get("selectedOption") == "Medium"
+        assert option_props.get("options") == [
+            {"label": "Small", "value": "Small"},
+            {"label": "Medium", "value": "Medium"},
+            {"label": "Large", "value": "Large"},
+        ]
+        return FakeInsertResult(inserted_id)
+
+    monkeypatch.setattr(surveys_collection, "insert_one", fake_insert_one)
+
+    payload = {
+        "title": "Dropdown Survey",
+        "questions": [
+            {
+                "id": "q1",
+                "questionText": "Pick your size",
+                "component": "DropDown",
+                "option": {
+                    "optionProps": {
+                        "selectedOption": "Medium",
+                        "options": [
+                            {"label": "Small", "value": "Small"},
+                            {"label": "Medium", "value": "Medium"},
+                            {"label": "Large", "value": "Large"},
+                        ],
+                    }
+                },
+            }
+        ],
+    }
+
+    resp = client.post("/surveys/", json=payload)
+    assert resp.status_code == 200
+    assert resp.json() == {"id": str(inserted_id)}
+
+
+@pytest.mark.asyncio
 async def test_update_survey_success(monkeypatch):
     """Test successfully updating a survey owned by the current user."""
     object_id = ObjectId()
@@ -270,6 +318,54 @@ async def test_update_survey_success(monkeypatch):
                 "id": "q1",
                 "questionText": "Updated question?",
                 "component": "TextInput",
+            }
+        ],
+    }
+
+    resp = client.put(f"/surveys/{str(object_id)}", json=payload)
+    assert resp.status_code == 200
+    assert resp.json() == {"id": str(object_id)}
+
+
+@pytest.mark.asyncio
+async def test_update_survey_preserves_dropdown_option_props(monkeypatch):
+    """Test dropdown optionProps are preserved during survey update."""
+    object_id = ObjectId()
+
+    class FakeUpdateResult:
+        matched_count = 1
+
+    async def fake_update_one(query, update):
+        assert query.get("_id") == object_id
+        question = update.get("$set", {}).get("questions", [])[0]
+        option_props = question.get("option", {}).get("optionProps", {})
+        assert option_props.get("selectedOption") == "Medium"
+        assert option_props.get("options") == [
+            {"label": "Small", "value": "Small"},
+            {"label": "Medium", "value": "Medium"},
+            {"label": "Large", "value": "Large"},
+        ]
+        return FakeUpdateResult()
+
+    monkeypatch.setattr(surveys_collection, "update_one", fake_update_one)
+
+    payload = {
+        "title": "Updated Survey",
+        "questions": [
+            {
+                "id": "q1",
+                "questionText": "Pick your size",
+                "component": "DropDown",
+                "option": {
+                    "optionProps": {
+                        "selectedOption": "Medium",
+                        "options": [
+                            {"label": "Small", "value": "Small"},
+                            {"label": "Medium", "value": "Medium"},
+                            {"label": "Large", "value": "Large"},
+                        ],
+                    }
+                },
             }
         ],
     }

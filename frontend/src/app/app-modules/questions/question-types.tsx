@@ -12,10 +12,12 @@ export interface QuestionItem {
 export type CheckboxConfig = { activeLabel: string; inactiveLabel: string; checked: boolean }
 export type TextInputConfig = { label: string; placeholder: string }
 export type RadioBarConfig = { name: string; buttons: string[] }
+export type DropDownConfig = { options: string[]; selectedOption: string }
 
 export type CreateConfig = {
   questionText: string
   checkbox?: CheckboxConfig
   textInput?: TextInputConfig
   radioBar?: RadioBarConfig
+  dropDown?: DropDownConfig
 }

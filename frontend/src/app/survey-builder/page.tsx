@@ -217,6 +217,7 @@ export default function SurveyBuilderPage() {
     checkbox: builder.checkbox,
     textInput: builder.textInput,
     radioBar: builder.radioBar,
+    dropDown: builder.dropDown,
   })
 
   const onTrashDragOver = (e: React.DragEvent<HTMLDivElement>) => {
