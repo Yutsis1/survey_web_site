@@ -37,13 +37,15 @@ function SummaryCard({
   title,
   value,
   description,
+  testId,
 }: {
   title: string
   value: string
   description: string
+  testId?: string
 }) {
   return (
-    <Card className="border-border bg-card/90">
+    <Card className="border-border bg-card/90" data-testid={testId}>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
       </CardHeader>
@@ -130,7 +132,7 @@ export default function DashboardPage() {
 
       {!loadingData && error && (
         <Card className="border-destructive/40">
-          <CardContent className="p-4 text-sm text-destructive">{error}</CardContent>
+          <CardContent className="p-4 text-sm text-destructive" data-testid="dashboard-error">{error}</CardContent>
         </Card>
       )}
 
@@ -141,21 +143,25 @@ export default function DashboardPage() {
               title="Total Surveys"
               value={String(data.summary.totalSurveys)}
               description="Number of created surveys."
+              testId="summary-card-total-surveys"
             />
             <SummaryCard
               title="Total Responses"
               value={String(data.summary.totalResponses)}
               description="All submissions across surveys."
+              testId="summary-card-total-responses"
             />
             <SummaryCard
               title="Avg Completion Rate"
               value={`${data.summary.avgCompletionRate}%`}
               description="Average answered questions per submission."
+              testId="summary-card-avg-completion-rate"
             />
             <SummaryCard
               title="Active Surveys"
               value={String(data.summary.activeSurveys)}
               description="Surveys with at least one response."
+              testId="summary-card-active-surveys"
             />
           </div>
 
@@ -164,7 +170,7 @@ export default function DashboardPage() {
               <CardTitle>Surveys</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
+              <Table data-testid="surveys-table">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Survey Name</TableHead>
@@ -184,11 +190,11 @@ export default function DashboardPage() {
                     >
                       <TableCell className="font-medium">{survey.title}</TableCell>
                       <TableCell>
-                        <Badge variant={survey.status === "active" ? "success" : "outline"}>
+                        <Badge variant={survey.status === "active" ? "success" : "outline"} data-testid="survey-status-badge">
                           {survey.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{survey.responsesCount}</TableCell>
+                      <TableCell data-testid="survey-responses-count">{survey.responsesCount}</TableCell>
                       <TableCell>{survey.createdDate}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -198,7 +204,7 @@ export default function DashboardPage() {
                             asChild
                             onClick={(event: MouseEvent<HTMLElement>) => event.stopPropagation()}
                           >
-                            <Link href="/survey-builder">
+                            <Link href={`/survey-builder/${survey.surveyId}`}>
                               <FilePenLine className="h-3.5 w-3.5" />
                               Edit
                             </Link>

@@ -1,5 +1,5 @@
 import type { MockSurvey, MockAuthResponse } from './data'
-import { toOptions } from './data'
+import { getMockSurveyById, toOptions } from './data'
 
 export type MockResponse = {
   status: number
@@ -62,7 +62,7 @@ export class MockApiServer {
       return { status: 404, data: { message: 'Not found' } }
     }
 
-    const survey = this.surveys.find((s) => s.id === surveyId)
+    const survey = getMockSurveyById(surveyId)
     if (!survey) {
       return { status: 404, data: { message: 'Not found' } }
     }
