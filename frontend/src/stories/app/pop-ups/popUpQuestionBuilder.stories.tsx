@@ -116,3 +116,51 @@ export const ApplyDisabled: Story = {
     applyDisabled: true,
   },
 };
+
+export const DarkTheme: Story = {
+  args: {
+    selectedType: 'TextInput',
+    popUpTitle: 'Create a new question',
+    popUpDescription: 'Pick a question type and configure the fields.',
+    applyDisabled: false,
+  },
+  globals: {
+    theme: 'dark',
+  },
+};
+
+export const LightTheme: Story = {
+  args: {
+    selectedType: 'TextInput',
+    popUpTitle: 'Create a new question',
+    popUpDescription: 'Pick a question type and configure the fields.',
+    applyDisabled: false,
+  },
+  globals: {
+    theme: 'light',
+  },
+};
+
+export const DarkThemeDropDown: Story = {
+  args: {
+    selectedType: 'DropDown',
+    popUpTitle: 'Create a new question',
+    popUpDescription: 'Pick a question type and configure the fields.',
+    applyDisabled: false,
+  },
+  globals: {
+    theme: 'dark',
+  },
+};
+
+export const LightThemeRadioBar: Story = {
+  args: {
+    selectedType: 'RadioBar',
+    popUpTitle: 'Create a new question',
+    popUpDescription: 'Pick a question type and configure the fields.',
+    applyDisabled: false,
+  },
+  globals: {
+    theme: 'light',
+  },
+};

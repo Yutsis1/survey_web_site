@@ -183,7 +183,7 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
             showQuestionText={false}
           />,
           <div key="options-list" className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Options</label>
+            <label className="block text-sm font-medium text-foreground">Options</label>
             <div className="space-y-2">
               {b.radioBar.value.buttons.map((button, index) => (
                 <div key={index} className="flex gap-2">
@@ -196,14 +196,14 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
                       b.radioBar.set((prev) => ({ ...prev, buttons: updated }))
                     }}
                     placeholder="Enter option..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="flex-1 px-3 py-2 border border-border rounded-md shadow-sm bg-input text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                   <button
                     onClick={() => {
                       const updated = b.radioBar.value.buttons.filter((_, i) => i !== index)
                       b.radioBar.set((prev) => ({ ...prev, buttons: updated }))
                     }}
-                    className="px-3 py-2 text-gray-500 hover:text-red-600 font-semibold text-lg"
+                    className="px-3 py-2 text-muted-foreground hover:text-destructive font-semibold text-lg transition-colors"
                     title="Delete option"
                   >
                     ×
@@ -215,7 +215,7 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
               onClick={() =>
                 b.radioBar.set((prev) => ({ ...prev, buttons: [...prev.buttons, ""] }))
               }
-              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm font-medium"
+              className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium transition-colors"
             >
               + Add extra option
             </button>
@@ -229,7 +229,7 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
           typeSelector,
           questionTextField,
           <div key="dropdown-options-list" className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Options</label>
+            <label className="block text-sm font-medium text-foreground">Options</label>
             <div className="space-y-2">
               {b.dropDown.value.options.map((option, index) => (
                 <div key={index} className="flex gap-2">
@@ -246,7 +246,7 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
                       }))
                     }}
                     placeholder="Enter option..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="flex-1 px-3 py-2 border border-border rounded-md shadow-sm bg-input text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                   <button
                     onClick={() => {
@@ -257,7 +257,7 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
                         selectedOption: updated.includes(prev.selectedOption) ? prev.selectedOption : (updated[0] ?? ""),
                       }))
                     }}
-                    className="px-3 py-2 text-gray-500 hover:text-red-600 font-semibold text-lg"
+                    className="px-3 py-2 text-muted-foreground hover:text-destructive font-semibold text-lg transition-colors"
                     title="Delete option"
                   >
                     ×
@@ -272,7 +272,7 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
                   options: [...prev.options, ""],
                 }))
               }
-              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm font-medium"
+              className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium transition-colors"
             >
               + Add extra option
             </button>
