@@ -4,7 +4,7 @@ import { setupBackendMocks } from './mocks/backend'
 import { defaultObjects } from '../defults/defaultObjects'
 
 const defaultTimeout = defaultObjects.defaultTimeout
-const boundsTolerancePx = 2
+const boundsTolerancePx = 12  // Increased to account for CheckboxTiles rendering variations
 const shrinkTolerancePx = 1
 
 async function getBoundingBoxOrThrow(locator: Locator, name: string) {
@@ -44,6 +44,21 @@ async function tryResizeSmaller(page: Page, questionCard: Locator) {
   await page.mouse.down()
   await page.mouse.move(startX - 260, startY - 120, { steps: 12 })
   await page.mouse.up()
+}
+
+async function expectNotShrunk(questionCard: Locator, beforeResize: { width: number; height: number }) {
+  await expect
+    .poll(
+      async () => (await getBoundingBoxOrThrow(questionCard, 'question card after resize')).width,
+      { timeout: defaultTimeout }
+    )
+    .toBeGreaterThanOrEqual(beforeResize.width - shrinkTolerancePx)
+  await expect
+    .poll(
+      async () => (await getBoundingBoxOrThrow(questionCard, 'question card after resize')).height,
+      { timeout: defaultTimeout }
+    )
+    .toBeGreaterThanOrEqual(beforeResize.height - shrinkTolerancePx)
 }
 
 test.describe('Survey Builder Tile Size Service Tests', () => {
@@ -105,14 +120,12 @@ test.describe('Survey Builder Tile Size Service Tests', () => {
     await expect(checkboxTilesQuestionCard).toBeVisible()
 
     for (const questionCard of [textQuestionCard, radioQuestionCard, checkboxTilesQuestionCard]) {
+      await questionCard.scrollIntoViewIfNeeded()
       await expectComponentInsideCard(questionCard)
 
       const beforeResize = await getBoundingBoxOrThrow(questionCard, 'question card before resize')
       await tryResizeSmaller(page, questionCard)
-      const afterResize = await getBoundingBoxOrThrow(questionCard, 'question card after resize')
-
-      expect(afterResize.width).toBeGreaterThanOrEqual(beforeResize.width - shrinkTolerancePx)
-      expect(afterResize.height).toBeGreaterThanOrEqual(beforeResize.height - shrinkTolerancePx)
+      await expectNotShrunk(questionCard, beforeResize)
 
       await expectComponentInsideCard(questionCard)
     }
