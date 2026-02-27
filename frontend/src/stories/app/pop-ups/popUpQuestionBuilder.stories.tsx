@@ -6,7 +6,7 @@ import { PopUp } from '@/app/app-modules/pop-up/pop-up';
 import { getPopupComponentsAndOptions } from '@/app/app-modules/pop-up/pop-up-questions-config';
 import { useQuestionBuilder } from '@/app/app-modules/questions/question-builder';
 
-const QUESTION_TYPES = ['TextInput', 'Checkbox', 'RadioBar', 'DropDown'] as const;
+const QUESTION_TYPES = ['TextInput', 'Checkbox', 'RadioBar', 'CheckboxTiles', 'DropDown'] as const;
 
 type QuestionType = (typeof QUESTION_TYPES)[number];
 
@@ -30,6 +30,7 @@ function PopUpQuestionBuilderStory({
     checkbox,
     textInput,
     radioBar,
+    checkboxTiles,
     dropDown,
   } = useQuestionBuilder();
 
@@ -46,6 +47,7 @@ function PopUpQuestionBuilderStory({
     checkbox,
     textInput,
     radioBar,
+    checkboxTiles,
     dropDown,
   });
 
@@ -107,6 +109,12 @@ export const RadioBar: Story = {
 export const DropDown: Story = {
   args: {
     selectedType: 'DropDown',
+  },
+};
+
+export const CheckboxTiles: Story = {
+  args: {
+    selectedType: 'CheckboxTiles',
   },
 };
 

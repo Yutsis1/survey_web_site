@@ -62,11 +62,11 @@ test.describe('Home Page Integration Tests', () => {
       await expect(surveyCreatingPage.newQuestionPopup.popupContent).not.toBeVisible()
     })
 
-    await test.step('Configure checkbox question', async () => {
+    await test.step('Configure switch question', async () => {
       await surveyCreatingPage.clickNewQuestion()
       await expect(surveyCreatingPage.newQuestionPopup.popupContent).toBeVisible()
       await surveyCreatingPage.newQuestionPopup.configureCheckbox({
-        questionText: 'Sample Checkbox Question',
+        questionText: 'Sample Switch Question',
         activeLabel: 'Yes',
         inactiveLabel: 'No',
         defaultState: true,
@@ -76,9 +76,22 @@ test.describe('Home Page Integration Tests', () => {
       await expect(surveyCreatingPage.newQuestionPopup.popupContent).not.toBeVisible()
     })
 
+    await test.step('Configure checkbox tiles question', async () => {
+      await surveyCreatingPage.clickNewQuestion()
+      await expect(surveyCreatingPage.newQuestionPopup.popupContent).toBeVisible()
+      await surveyCreatingPage.newQuestionPopup.configureCheckboxTiles({
+        questionText: 'Sample Checkbox Tiles Question',
+        name: 'Sample Checkbox Tiles Group',
+        options: ['Option 1', 'Option 2', 'Option 3'],
+      })
+      await surveyCreatingPage.applyPopup()
+      // Wait for popup to close before proceeding
+      await expect(surveyCreatingPage.newQuestionPopup.popupContent).not.toBeVisible()
+    })
+
     // Verify all questions were created
     const questionCount = await surveyCreatingPage.getQuestionCount()
-    expect(questionCount).toBe(3)
+    expect(questionCount).toBe(4)
 
     await test.step('Save the survey', async () => {
       await surveyCreatingPage.saveSurvey('Test Survey')

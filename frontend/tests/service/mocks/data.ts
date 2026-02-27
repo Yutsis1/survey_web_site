@@ -6,7 +6,7 @@ export type MockSurvey = {
   questions: Array<{
     id: string
     questionText: string
-    component: 'TextInput' | 'Checkbox' | 'RadioBar' | 'DropDown'
+    component: 'TextInput' | 'Checkbox' | 'RadioBar' | 'DropDown' | 'CheckboxTiles'
     option: { optionProps: Record<string, unknown> }
     layout: { i: string; x: number; y: number; w: number; h: number }
   }>
@@ -105,6 +105,31 @@ export const mockSurveys: MockSurvey[] = [
           },
         },
         layout: { i: 'question-dropdown', x: 0, y: 0, w: 2, h: 2 },
+      },
+    ],
+  },
+  {
+    id: 'survey-checkbox-tiles',
+    title: 'Checkbox Tiles Survey',
+    questions: [
+      {
+        id: 'question-checkbox-tiles',
+        questionText: 'Select your preferences',
+        component: 'CheckboxTiles',
+        option: {
+          optionProps: {
+            name: 'preferences',
+            buttons: [
+              { label: 'Option A', value: 'option-a' },
+              { label: 'Option B', value: 'option-b' },
+              { label: 'Option C', value: 'option-c' },
+              { label: 'Option D', value: 'option-d' },
+            ],
+            selectedValues: ['option-a'],
+            test_id: 'mock-checkbox-tiles',
+          },
+        },
+        layout: { i: 'question-checkbox-tiles', x: 0, y: 0, w: 2, h: 3 },
       },
     ],
   },

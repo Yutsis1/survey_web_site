@@ -1,5 +1,5 @@
 import React from "react";
-import { Checkbox } from "./checkbox";
+import { Checkbox } from "./switch";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 

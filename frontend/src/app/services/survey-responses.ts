@@ -3,7 +3,7 @@ import { SurveyResponse } from "./surveys"
 
 export interface SurveyAnswer {
   questionId: string
-  value: string | boolean
+  value: string | boolean | string[]
 }
 
 export interface SubmitSurveyResponsePayload {

@@ -9,7 +9,8 @@ export class PopupNewQuestionComponent extends PopupComponent {
         textInput: "TextInput",
         checkbox: "Checkbox",
         radioBar: "RadioBar",
-        dropDown: "DropDown"
+        dropDown: "DropDown",
+        checkboxTiles: "CheckboxTiles"
     };
 
     readonly textFieldNames = {
@@ -21,7 +22,9 @@ export class PopupNewQuestionComponent extends PopupComponent {
         groupName: 'groupName',
         toggleOptions: 'optionsList',
         dropDownOptions: 'dropDownOptionsList',
-        dropDownDefaultOption: 'dropDownDefaultOption'
+        dropDownDefaultOption: 'dropDownDefaultOption',
+        checkboxTilesName: 'checkboxTilesGroupName',
+        checkboxTilesOptions: 'checkboxTilesOptionsList'
     };
 
     constructor(page: Page, baseLocator?: Locator) {
@@ -146,6 +149,26 @@ export class PopupNewQuestionComponent extends PopupComponent {
             await this.popupContent
                 .locator(`select[name="${this.textFieldNames.dropDownDefaultOption}"]`)
                 .selectOption({ value: config.defaultOption });
+        }
+    }
+
+    // CheckboxTiles configuration methods
+    async configureCheckboxTiles(config: {
+        questionText?: string;
+        name?: string;
+        options?: string[];
+    }) {
+        await this.selectRadioButton(this.questionTypes.checkboxTiles);
+
+        if (config.questionText) {
+            await this.writeInTextField(config.questionText, this.textFieldNames.question);
+        }
+        if (config.name) {
+            await this.writeInTextField(config.name, this.textFieldNames.checkboxTilesName);
+        }
+        if (config.options) {
+            const optionsString = config.options.join(',');
+            await this.writeInTextField(optionsString, this.textFieldNames.checkboxTilesOptions);
         }
     }
 

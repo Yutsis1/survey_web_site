@@ -2,6 +2,78 @@ import { describe, expect, it } from 'vitest'
 import { createNewQuestion } from './questions-factory'
 
 describe('createNewQuestion', () => {
+  it('creates a non-shrinkable TextInput layout', () => {
+    const question = createNewQuestion(
+      'TextInput',
+      {
+        questionText: 'Your name',
+        textInput: {
+          label: 'Name',
+          placeholder: 'Type here',
+        },
+      },
+      0
+    )
+
+    expect(question.layout).toMatchObject({
+      w: 3,
+      h: 3,
+      minW: 3,
+      minH: 3,
+    })
+  })
+
+  it('creates a non-shrinkable RadioBar layout', () => {
+    const question = createNewQuestion(
+      'RadioBar',
+      {
+        questionText: 'Pick one',
+        radioBar: {
+          name: 'choices',
+          buttons: ['A', 'B'],
+        },
+      },
+      1
+    )
+
+    expect(question.layout).toMatchObject({
+      w: 3,
+      h: 3,
+      minW: 3,
+      minH: 3,
+    })
+  })
+
+  it('creates a non-shrinkable CheckboxTiles layout with configured options', () => {
+    const question = createNewQuestion(
+      'CheckboxTiles',
+      {
+        questionText: 'Pick all that apply',
+        checkboxTiles: {
+          name: 'multi-select',
+          buttons: ['A', 'B', 'C'],
+        },
+      },
+      1
+    )
+
+    expect(question.component).toBe('CheckboxTiles')
+    expect(question.layout).toMatchObject({
+      w: 3,
+      h: 3,
+      minW: 3,
+      minH: 3,
+    })
+    expect(question.option.optionProps).toMatchObject({
+      name: 'multi-select',
+      buttons: [
+        { label: 'A', value: 'A' },
+        { label: 'B', value: 'B' },
+        { label: 'C', value: 'C' },
+      ],
+    })
+  })
+
   it('creates a dropdown question with configured options and selected option', () => {
     const question = createNewQuestion(
       'DropDown',

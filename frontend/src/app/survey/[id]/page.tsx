@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 
-type AnswerValue = string | boolean
+type AnswerValue = string | boolean | string[]
 
 interface SurveyData {
   id: string
@@ -53,6 +53,11 @@ export default function SurveyResponsePage() {
             initialAnswers[question.id] = String(optionProps.value ?? "")
           } else if (question.component === "RadioBar") {
             initialAnswers[question.id] = String(optionProps.selectedValue ?? "")
+          } else if (question.component === "CheckboxTiles") {
+            initialAnswers[question.id] = Array.isArray(optionProps.selectedValues)
+              ? optionProps.selectedValues
+                  .map((value) => String(value))
+              : []
           } else if (question.component === "DropDown") {
             initialAnswers[question.id] = String(optionProps.selectedOption ?? "")
           }
@@ -73,6 +78,7 @@ export default function SurveyResponsePage() {
   const answeredCount = useMemo(() => {
     return Object.values(answers).filter((value) => {
       if (typeof value === "boolean") return true
+      if (Array.isArray(value)) return value.length > 0
       return String(value).trim().length > 0
     }).length
   }, [answers])
@@ -111,6 +117,18 @@ export default function SurveyResponsePage() {
           selectedValue: String(answers[question.id] ?? ""),
           onChange: (value: string) =>
             setAnswers((prev) => ({ ...prev, [question.id]: value })),
+        },
+      }
+    }
+
+    if (question.component === "CheckboxTiles") {
+      return {
+        optionProps: {
+          ...optionProps,
+          name: `${optionProps.name ?? 'checkbox-tiles'}-${question.id}`,
+          selectedValues: Array.isArray(answers[question.id]) ? answers[question.id] : [],
+          onChange: (values: string[]) =>
+            setAnswers((prev) => ({ ...prev, [question.id]: values })),
         },
       }
     }

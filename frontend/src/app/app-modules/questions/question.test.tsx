@@ -77,6 +77,37 @@ describe('Question Component', () => {
             expect(component.getByText('lol')).toBeInTheDocument()
         })
     })
+    describe('CheckboxTiles', () => {
+        it('allows selecting multiple options', () => {
+            const onChange = vi.fn()
+            const props: QuestionProps<'CheckboxTiles'> = {
+                questionText: 'Pick several',
+                component: 'CheckboxTiles',
+                option: {
+                    optionProps: {
+                        buttons: [
+                            { label: 'A', value: 'a' },
+                            { label: 'B', value: 'b' },
+                            { label: 'C', value: 'c' },
+                        ],
+                        name: 'tiles',
+                        onChange,
+                    },
+                },
+                showQuestionText: true,
+            }
+
+            const { getByRole } = render(<Question {...props} />)
+
+            const checkboxA = getByRole('checkbox', { name: 'A' })
+            const checkboxB = getByRole('checkbox', { name: 'B' })
+            fireEvent.click(checkboxA)
+            fireEvent.click(checkboxB)
+
+            expect(onChange).toHaveBeenNthCalledWith(1, ['a'])
+            expect(onChange).toHaveBeenNthCalledWith(2, ['a', 'b'])
+        })
+    })
     describe('TextInput', () => {
         const props: QuestionProps<'TextInput'> = {
             questionText: 'KEK',

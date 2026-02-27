@@ -1,5 +1,5 @@
 import { DynamicComponentRenderer } from "@/components/app/dynamic-component-renderer"
-import { ToggleSwitchProps } from "@/components/app/checkbox/checkbox"
+import { ToggleSwitchProps } from "@/components/app/checkbox/switch"
 import { DropDownProps } from "@/components/app/dropDown/dropDown"
 import { TextFieldProps } from "@/components/app/text-field/text-field"
 import { RadioBarProps } from "@/components/app/radios/radio-bar"
@@ -20,6 +20,11 @@ interface RadioBarState {
   buttons: string[]
 }
 
+interface CheckboxTilesState {
+  name: string
+  buttons: string[]
+}
+
 interface DropDownState {
   options: string[]
   selectedOption: string
@@ -32,6 +37,7 @@ type Builders = {
   checkbox: { value: CheckboxState; set: React.Dispatch<React.SetStateAction<CheckboxState>> }
   textInput: { value: TextInputState; set: React.Dispatch<React.SetStateAction<TextInputState>> }
   radioBar: { value: RadioBarState; set: React.Dispatch<React.SetStateAction<RadioBarState>> }
+  checkboxTiles: { value: CheckboxTilesState; set: React.Dispatch<React.SetStateAction<CheckboxTilesState>> }
   dropDown: { value: DropDownState; set: React.Dispatch<React.SetStateAction<DropDownState>> }
 }
 
@@ -40,7 +46,7 @@ interface PopupConfig {
   questionText: string
 }
 
-const supportedQuestionTypes = ["TextInput", "Checkbox", "RadioBar", "DropDown"]
+const supportedQuestionTypes = ["TextInput", "Checkbox", "RadioBar", "CheckboxTiles", "DropDown"]
 
 export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
   const typeSelector = (
@@ -222,6 +228,66 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
           </div>,
         ],
         questionText: "Configure Radio Bar Question",
+      }
+    case "CheckboxTiles":
+      return {
+        components: [
+          typeSelector,
+          questionTextField,
+          <DynamicComponentRenderer
+            key="checkbox-tiles-group-name"
+            component="TextInput"
+            option={{
+              optionProps: {
+                label: "Group name",
+                placeholder: "Enter group name...",
+                onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+                  b.checkboxTiles.set((prev) => ({ ...prev, name: e.target.value })),
+                name: "checkboxTilesGroupName",
+              } as TextFieldProps,
+            }}
+            showQuestionText={false}
+          />,
+          <div key="checkbox-tiles-options-list" className="space-y-2">
+            <label className="block text-sm font-medium text-foreground">Options</label>
+            <div className="space-y-2">
+              {b.checkboxTiles.value.buttons.map((button, index) => (
+                <div key={index} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={button}
+                    onChange={(e) => {
+                      const updated = [...b.checkboxTiles.value.buttons]
+                      updated[index] = e.target.value
+                      b.checkboxTiles.set((prev) => ({ ...prev, buttons: updated }))
+                    }}
+                    placeholder="Enter option..."
+                    className="flex-1 px-3 py-2 border border-border rounded-md shadow-sm bg-input text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                  />
+                  <button
+                    onClick={() => {
+                      const updated = b.checkboxTiles.value.buttons.filter((_, i) => i !== index)
+                      b.checkboxTiles.set((prev) => ({ ...prev, buttons: updated }))
+                    }}
+                    className="px-3 py-2 text-muted-foreground hover:text-destructive font-semibold text-lg transition-colors"
+                    title="Delete option"
+                  >
+                    x
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() =>
+                b.checkboxTiles.set((prev) => ({ ...prev, buttons: [...prev.buttons, ""] }))
+              }
+              className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium transition-colors"
+            >
+              + Add extra option
+            </button>
+          </div>,
+        ],
+        questionText: "Configure Checkbox Tiles Question",
       }
     case "DropDown":
       return {

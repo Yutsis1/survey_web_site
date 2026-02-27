@@ -30,6 +30,7 @@ describe('PopUp Question Builder Integration', () => {
             checkbox: builder.checkbox,
             textInput: builder.textInput,
             radioBar: builder.radioBar,
+            checkboxTiles: builder.checkboxTiles,
             dropDown: builder.dropDown,
         })
 
@@ -58,6 +59,7 @@ describe('PopUp Question Builder Integration', () => {
                 checkbox: result.current.checkbox,
                 textInput: result.current.textInput,
                 radioBar: result.current.radioBar,
+                checkboxTiles: result.current.checkboxTiles,
                 dropDown: result.current.dropDown,
             })
 
@@ -79,6 +81,7 @@ describe('PopUp Question Builder Integration', () => {
             expect(within(typeSelector).getByText('TextInput')).toBeInTheDocument()
             expect(within(typeSelector).getByText('Checkbox')).toBeInTheDocument()
             expect(within(typeSelector).getByText('RadioBar')).toBeInTheDocument()
+            expect(within(typeSelector).getByText('CheckboxTiles')).toBeInTheDocument()
             expect(within(typeSelector).getByText('DropDown')).toBeInTheDocument()
         })
 
@@ -110,6 +113,7 @@ describe('PopUp Question Builder Integration', () => {
                 checkbox: result.current.checkbox,
                 textInput: result.current.textInput,
                 radioBar: result.current.radioBar,
+                checkboxTiles: result.current.checkboxTiles,
                 dropDown: result.current.dropDown,
             })
 
@@ -157,6 +161,7 @@ describe('PopUp Question Builder Integration', () => {
                 checkbox: result.current.checkbox,
                 textInput: result.current.textInput,
                 radioBar: result.current.radioBar,
+                checkboxTiles: result.current.checkboxTiles,
                 dropDown: result.current.dropDown,
             })
 
@@ -209,6 +214,7 @@ describe('PopUp Question Builder Integration', () => {
                 checkbox: result.current.checkbox,
                 textInput: result.current.textInput,
                 radioBar: result.current.radioBar,
+                checkboxTiles: result.current.checkboxTiles,
                 dropDown: result.current.dropDown,
             })
 
@@ -242,6 +248,7 @@ describe('PopUp Question Builder Integration', () => {
                 checkbox: result.current.checkbox,
                 textInput: result.current.textInput,
                 radioBar: result.current.radioBar,
+                checkboxTiles: result.current.checkboxTiles,
                 dropDown: result.current.dropDown,
             })
 
@@ -276,6 +283,7 @@ describe('PopUp Question Builder Integration', () => {
                 checkbox: result.current.checkbox,
                 textInput: result.current.textInput,
                 radioBar: result.current.radioBar,
+                checkboxTiles: result.current.checkboxTiles,
                 dropDown: result.current.dropDown,
             })
 
@@ -322,6 +330,7 @@ describe('PopUp Question Builder Integration', () => {
                 checkbox: result.current.checkbox,
                 textInput: result.current.textInput,
                 radioBar: result.current.radioBar,
+                checkboxTiles: result.current.checkboxTiles,
                 dropDown: result.current.dropDown,
             })
 
@@ -353,6 +362,57 @@ describe('PopUp Question Builder Integration', () => {
         })
     })
 
+    describe('CheckboxTiles Question Configuration', () => {
+        it('renders CheckboxTiles configuration fields', () => {
+            const { result } = renderHook(() => useQuestionBuilder())
+
+            act(() => {
+                result.current.setSelectedType('CheckboxTiles')
+            })
+
+            const popup = getPopupComponentsAndOptions({
+                selectedType: result.current.selectedType,
+                setSelectedType: result.current.setSelectedType,
+                setQuestionText: result.current.setQuestionText,
+                checkbox: result.current.checkbox,
+                textInput: result.current.textInput,
+                radioBar: result.current.radioBar,
+                checkboxTiles: result.current.checkboxTiles,
+                dropDown: result.current.dropDown,
+            })
+
+            const { getByLabelText, getByText } = render(
+                <PopUp
+                    isOpen={true}
+                    onClose={mockOnClose}
+                    onApply={mockOnApply}
+                    popUpTitle={popup.questionText}
+                >
+                    {popup.components}
+                </PopUp>
+            )
+
+            expect(getByLabelText('Group name')).toBeInTheDocument()
+            expect(getByText('Options')).toBeInTheDocument()
+            expect(getByText('+ Add extra option')).toBeInTheDocument()
+        })
+
+        it('updates CheckboxTiles options state', () => {
+            const { result } = renderHook(() => useQuestionBuilder())
+
+            act(() => {
+                result.current.setSelectedType('CheckboxTiles')
+                result.current.checkboxTiles.set({
+                    name: 'skills',
+                    buttons: ['React', 'TypeScript', 'Vitest'],
+                })
+            })
+
+            expect(result.current.checkboxTiles.value.name).toBe('skills')
+            expect(result.current.checkboxTiles.value.buttons).toEqual(['React', 'TypeScript', 'Vitest'])
+        })
+    })
+
     describe('DropDown Question Configuration', () => {
         it('renders DropDown configuration fields', () => {
             const { result } = renderHook(() => useQuestionBuilder())
@@ -368,6 +428,7 @@ describe('PopUp Question Builder Integration', () => {
                 checkbox: result.current.checkbox,
                 textInput: result.current.textInput,
                 radioBar: result.current.radioBar,
+                checkboxTiles: result.current.checkboxTiles,
                 dropDown: result.current.dropDown,
             })
 
@@ -401,6 +462,7 @@ describe('PopUp Question Builder Integration', () => {
                 checkbox: result.current.checkbox,
                 textInput: result.current.textInput,
                 radioBar: result.current.radioBar,
+                checkboxTiles: result.current.checkboxTiles,
                 dropDown: result.current.dropDown,
             })
 
@@ -521,3 +583,4 @@ describe('PopUp Question Builder Integration', () => {
         })
     })
 })
+

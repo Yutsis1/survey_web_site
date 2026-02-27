@@ -32,6 +32,18 @@ class RadioBarProps(BaseModel):
     test_id: Optional[str] = None
 
 
+class CheckboxTileProps(BaseModel):
+    label: str
+    value: str
+
+
+class CheckboxTilesProps(BaseModel):
+    buttons: List[CheckboxTileProps]
+    name: Optional[str] = None
+    selectedValues: Optional[List[str]] = None
+    test_id: Optional[str] = None
+
+
 class DropDownOption(BaseModel):
     label: str
     value: str
@@ -49,7 +61,13 @@ class DropDownProps(BaseModel):
 
 # Option wrapper to match frontend Option<T> interface
 class Option(BaseModel):
-    optionProps: Union[ToggleSwitchProps, TextFieldProps, RadioBarProps, DropDownProps]
+    optionProps: Union[
+        ToggleSwitchProps,
+        TextFieldProps,
+        RadioBarProps,
+        CheckboxTilesProps,
+        DropDownProps,
+    ]
 
 
 class QuestionItem(BaseModel):
