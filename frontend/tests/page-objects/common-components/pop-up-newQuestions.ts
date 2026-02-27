@@ -125,9 +125,28 @@ export class PopupNewQuestionComponent extends PopupComponent {
         if (config.groupName) {
             await this.writeInTextField(config.groupName, this.textFieldNames.groupName);
         }
-        if (config.options) {
-            const optionsString = config.options.join(',');
-            await this.writeInTextField(optionsString, this.textFieldNames.toggleOptions);
+        if (config.options && config.options.length > 0) {
+            const optionsContainer = this.popupContent
+                .locator('label:has-text("Options")')
+                .last()
+                .locator('..');
+
+            const firstInput = optionsContainer.locator('input[type="text"]').first();
+            await firstInput.fill(config.options[0]);
+
+            for (let i = 1; i < config.options.length; i++) {
+                const inputs = optionsContainer.locator('input[type="text"]');
+                const currentCount = await inputs.count();
+
+                if (i < currentCount) {
+                    await inputs.nth(i).fill(config.options[i]);
+                } else {
+                    const addButton = optionsContainer.locator('button:has-text("+ Add extra option")');
+                    await addButton.click();
+                    const updatedInputs = optionsContainer.locator('input[type="text"]');
+                    await updatedInputs.nth(i).fill(config.options[i]);
+                }
+            }
         }
     }
 
