@@ -182,25 +182,44 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
             }}
             showQuestionText={false}
           />,
-          <DynamicComponentRenderer
-            key="options-list"
-            component="TextInput"
-            option={{
-              optionProps: {
-                label: "Options (comma-separated)",
-                placeholder: "Example: Red,Green,Blue",
-                onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                  const parsed = String(e.target.value)
-                    .split(",")
-                    .map((t) => t.trim())
-                    .filter(Boolean)
-                  b.radioBar.set((prev) => ({ ...prev, buttons: parsed }))
-                },
-                name: "optionsList",
-              } as TextFieldProps,
-            }}
-            showQuestionText={false}
-          />,
+          <div key="options-list" className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Options</label>
+            <div className="space-y-2">
+              {b.radioBar.value.buttons.map((button, index) => (
+                <div key={index} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={button}
+                    onChange={(e) => {
+                      const updated = [...b.radioBar.value.buttons]
+                      updated[index] = e.target.value
+                      b.radioBar.set((prev) => ({ ...prev, buttons: updated }))
+                    }}
+                    placeholder="Enter option..."
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <button
+                    onClick={() => {
+                      const updated = b.radioBar.value.buttons.filter((_, i) => i !== index)
+                      b.radioBar.set((prev) => ({ ...prev, buttons: updated }))
+                    }}
+                    className="px-3 py-2 text-gray-500 hover:text-red-600 font-semibold text-lg"
+                    title="Delete option"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() =>
+                b.radioBar.set((prev) => ({ ...prev, buttons: [...prev.buttons, ""] }))
+              }
+              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm font-medium"
+            >
+              + Add extra option
+            </button>
+          </div>,
         ],
         questionText: "Configure Radio Bar Question",
       }
@@ -209,43 +228,71 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
         components: [
           typeSelector,
           questionTextField,
-          <DynamicComponentRenderer
-            key="dropdown-options-list"
-            component="TextInput"
-            option={{
-              optionProps: {
-                label: "Options (comma-separated)",
-                placeholder: "Example: Small,Medium,Large",
-                onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                  const parsed = String(e.target.value)
-                    .split(",")
-                    .map((t) => t.trim())
-                    .filter(Boolean)
-                  b.dropDown.set((prev) => ({
-                    ...prev,
-                    options: parsed,
-                    selectedOption: parsed.includes(prev.selectedOption) ? prev.selectedOption : (parsed[0] ?? ""),
-                  }))
-                },
-                name: "dropDownOptionsList",
-              } as TextFieldProps,
-            }}
-            showQuestionText={false}
-          />,
+          <div key="dropdown-options-list" className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Options</label>
+            <div className="space-y-2">
+              {b.dropDown.value.options.map((option, index) => (
+                <div key={index} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={option}
+                    onChange={(e) => {
+                      const updated = [...b.dropDown.value.options]
+                      updated[index] = e.target.value
+                      b.dropDown.set((prev) => ({
+                        ...prev,
+                        options: updated,
+                        selectedOption: updated.includes(prev.selectedOption) ? prev.selectedOption : (updated[0] ?? ""),
+                      }))
+                    }}
+                    placeholder="Enter option..."
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <button
+                    onClick={() => {
+                      const updated = b.dropDown.value.options.filter((_, i) => i !== index)
+                      b.dropDown.set((prev) => ({
+                        ...prev,
+                        options: updated,
+                        selectedOption: updated.includes(prev.selectedOption) ? prev.selectedOption : (updated[0] ?? ""),
+                      }))
+                    }}
+                    className="px-3 py-2 text-gray-500 hover:text-red-600 font-semibold text-lg"
+                    title="Delete option"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() =>
+                b.dropDown.set((prev) => ({
+                  ...prev,
+                  options: [...prev.options, ""],
+                }))
+              }
+              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm font-medium"
+            >
+              + Add extra option
+            </button>
+          </div>,
           <DynamicComponentRenderer
             key="dropdown-default-value"
             component="DropDown"
             option={{
               optionProps: {
                 label: "Default selected value",
-                options: b.dropDown.value.options.map((option) => ({ label: option, value: option })),
+                options: b.dropDown.value.options
+                  .filter((option) => option.trim() !== "")
+                  .map((option) => ({ label: option, value: option })),
                 selectedOption: b.dropDown.value.selectedOption,
                 onSelect: (selectedOption: string) =>
                   b.dropDown.set((prev) => ({ ...prev, selectedOption })),
                 id: "drop-down-default-option",
                 name: "dropDownDefaultOption",
                 test_id: "drop-down-default-option",
-                disabled: b.dropDown.value.options.length === 0,
+                disabled: b.dropDown.value.options.filter((o) => o.trim() !== "").length === 0,
               } as DropDownProps,
             }}
             showQuestionText={false}
