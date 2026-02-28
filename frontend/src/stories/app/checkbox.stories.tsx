@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { fn } from 'storybook/test';
 
-import { Checkbox } from '@/components/app/checkbox/checkbox';
+import { SwitchComponent } from '@/components/app/checkbox/switch';
 
 const meta = {
-  title: 'Components/Checkbox',
-  component: Checkbox,
+  title: 'Components/Switch',
+  component: SwitchComponent,
   tags: ['autodocs'],
   args: {
     activeLabel: 'Active',
@@ -13,7 +13,7 @@ const meta = {
     checked: false,
     onChange: fn(),
   },
-} satisfies Meta<typeof Checkbox>;
+} satisfies Meta<typeof SwitchComponent>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

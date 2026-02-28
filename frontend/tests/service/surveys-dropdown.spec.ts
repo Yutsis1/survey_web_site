@@ -27,7 +27,8 @@ test.describe('Survey Builder Dropdown Service Tests', () => {
     const questionCount = await surveyCreatingPage.getQuestionCount()
     expect(questionCount).toBe(1)
 
-    const questionCard = surveyCreatingPage.page.locator('.grid-item').first()
+    const questionCard = surveyCreatingPage.page.locator('.grid-item', { hasText: 'Pick your size' }).first()
+    await expect(questionCard).toBeVisible()
     const nativeSelect = questionCard.locator('select').first()
 
     await expect(nativeSelect).toHaveCount(1)

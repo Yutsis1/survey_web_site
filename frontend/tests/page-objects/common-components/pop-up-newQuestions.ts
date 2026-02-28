@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 import { PopupComponent } from './pop-up';
 
 export class PopupNewQuestionComponent extends PopupComponent {
@@ -7,9 +7,10 @@ export class PopupNewQuestionComponent extends PopupComponent {
     // put the name 
     readonly questionTypes = {
         textInput: "TextInput",
-        checkbox: "Checkbox",
+        switch: "Switch",
         radioBar: "RadioBar",
-        dropDown: "DropDown"
+        dropDown: "DropDown",
+        checkboxTiles: "CheckboxTiles"
     };
 
     readonly textFieldNames = {
@@ -21,7 +22,9 @@ export class PopupNewQuestionComponent extends PopupComponent {
         groupName: 'groupName',
         toggleOptions: 'optionsList',
         dropDownOptions: 'dropDownOptionsList',
-        dropDownDefaultOption: 'dropDownDefaultOption'
+        dropDownDefaultOption: 'dropDownDefaultOption',
+        checkboxTilesName: 'checkboxTilesGroupName',
+        checkboxTilesOptions: 'checkboxTilesOptionsList'
     };
 
     constructor(page: Page, baseLocator?: Locator) {
@@ -45,7 +48,7 @@ export class PopupNewQuestionComponent extends PopupComponent {
     get toggleOptions() {
         return this.popupContent.locator(`'input[name="${this.textFieldNames.toggleOptions}"]'`);
     }
-    get checkbox() {
+    get switch() {
         // Updated to use switch role instead of label with input
         return this.popupContent.getByRole('switch');
     }
@@ -58,14 +61,14 @@ export class PopupNewQuestionComponent extends PopupComponent {
         return await this.popupContent.locator(`input[name="${textFieldName}"]`).fill(value);
     }
 
-    // Checkbox configuration methods
-    async configureCheckbox(config: {
+    // Switch configuration methods
+    async configureSwitch(config: {
         questionText?: string;
         activeLabel?: string;
         inactiveLabel?: string;
         defaultState?: boolean;
     }) {
-        await this.selectRadioButton(this.questionTypes.checkbox);
+        await this.selectRadioButton(this.questionTypes.switch);
 
         if (config.questionText) {
             await this.writeInTextField(config.questionText, this.textFieldNames.question);
@@ -84,7 +87,7 @@ export class PopupNewQuestionComponent extends PopupComponent {
             
             // Only click if we need to change the state
             if (config.defaultState !== currentState) {
-                await this.checkbox.click();
+                await this.switch.click();
             }
         }
     }
@@ -122,9 +125,28 @@ export class PopupNewQuestionComponent extends PopupComponent {
         if (config.groupName) {
             await this.writeInTextField(config.groupName, this.textFieldNames.groupName);
         }
-        if (config.options) {
-            const optionsString = config.options.join(',');
-            await this.writeInTextField(optionsString, this.textFieldNames.toggleOptions);
+        if (config.options && config.options.length > 0) {
+            const optionsContainer = this.popupContent
+                .locator('label:has-text("Options")')
+                .last()
+                .locator('..');
+
+            const firstInput = optionsContainer.locator('input[type="text"]').first();
+            await firstInput.fill(config.options[0]);
+
+            for (let i = 1; i < config.options.length; i++) {
+                const inputs = optionsContainer.locator('input[type="text"]');
+                const currentCount = await inputs.count();
+
+                if (i < currentCount) {
+                    await inputs.nth(i).fill(config.options[i]);
+                } else {
+                    const addButton = optionsContainer.locator('button:has-text("+ Add extra option")');
+                    await addButton.click();
+                    const updatedInputs = optionsContainer.locator('input[type="text"]');
+                    await updatedInputs.nth(i).fill(config.options[i]);
+                }
+            }
         }
     }
 
@@ -138,14 +160,75 @@ export class PopupNewQuestionComponent extends PopupComponent {
         if (config.questionText) {
             await this.writeInTextField(config.questionText, this.textFieldNames.question);
         }
-        if (config.options) {
-            const optionsString = config.options.join(',');
-            await this.writeInTextField(optionsString, this.textFieldNames.dropDownOptions);
+        if (config.options && config.options.length > 0) {
+            // Find the Options section - the first one is for RadioBar, so get the second one for DropDown
+            const allOptionsLabels = this.popupContent.locator('label:has-text("Options")');
+            // Get the parent container of the last "Options" label (which is DropDown if we just selected it)
+            const optionsContainer = allOptionsLabels.last().locator('..');
+            
+            // Fill first option
+            const firstInput = optionsContainer.locator('input[type="text"]').first();
+            await firstInput.fill(config.options[0]);
+
+            // Fill additional options by clicking add button and filling new inputs
+            for (let i = 1; i < config.options.length; i++) {
+                const addButton = optionsContainer.locator('button:has-text("+ Add extra option")');
+                await addButton.click();
+                const inputs = optionsContainer.locator('input[type="text"]');
+                await inputs.nth(i).fill(config.options[i]);
+            }
         }
         if (config.defaultOption) {
-            await this.popupContent
-                .locator(`select[name="${this.textFieldNames.dropDownDefaultOption}"]`)
-                .selectOption({ value: config.defaultOption });
+            const defaultSelect = this.popupContent.locator(
+                `select[name="${this.textFieldNames.dropDownDefaultOption}"]`
+            );
+            await expect(defaultSelect.locator(`option[value="${config.defaultOption}"]`)).toHaveCount(1);
+            await defaultSelect.selectOption({ value: config.defaultOption });
+        }
+    }
+
+    // CheckboxTiles configuration methods
+    async configureCheckboxTiles(config: {
+        questionText?: string;
+        name?: string;
+        options?: string[];
+    }) {
+        await this.selectRadioButton(this.questionTypes.checkboxTiles);
+
+        if (config.questionText) {
+            await this.writeInTextField(config.questionText, this.textFieldNames.question);
+        }
+        if (config.name) {
+            await this.writeInTextField(config.name, this.textFieldNames.checkboxTilesName);
+        }
+        if (config.options && config.options.length > 0) {
+            // Find the Options section - using the last "Options" label for CheckboxTiles
+            const optionsContainer = this.popupContent
+                .locator('label:has-text("Options")')
+                .last()
+                .locator('..');
+            
+            // Fill first option
+            const firstInput = optionsContainer.locator('input[type="text"]').first();
+            await firstInput.fill(config.options[0]);
+
+            // Fill or add additional options
+            for (let i = 1; i < config.options.length; i++) {
+                const inputs = optionsContainer.locator('input[type="text"]');
+                const currentCount = await inputs.count();
+                
+                if (i < currentCount) {
+                    // Input already exists, just fill it
+                    await inputs.nth(i).fill(config.options[i]);
+                } else {
+                    // Need to add a new input by clicking the add button
+                    const addButton = optionsContainer.locator('button:has-text("+ Add extra option")');
+                    await addButton.click();
+                    // Refetch and fill the new input
+                    const updatedInputs = optionsContainer.locator('input[type="text"]');
+                    await updatedInputs.nth(i).fill(config.options[i]);
+                }
+            }
         }
     }
 

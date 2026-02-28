@@ -14,7 +14,7 @@ export interface ToggleSwitchProps {
   test_id?: string;
 }
 
-const Checkbox: React.FC<ToggleSwitchProps> = ({
+const SwitchComponent: React.FC<ToggleSwitchProps> = ({
   activeLabel = "Active",
   inactiveLabel = "Inactive",
   checked,
@@ -67,4 +67,4 @@ const Checkbox: React.FC<ToggleSwitchProps> = ({
   );
 };
 
-export { Checkbox };
+export { SwitchComponent  };

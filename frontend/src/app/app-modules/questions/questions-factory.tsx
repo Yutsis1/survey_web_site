@@ -3,7 +3,37 @@ import type { Layout } from 'react-grid-layout'
 import { CreateConfig, QuestionItem } from './question-types'
 
 const defaultQuestionOptions = ['TextInput', 'Checkbox', 'RadioBar']
+const defaultCheckboxTileOptions = ['Option 1', 'Option 2']
 const defaultDropDownOptions = ['Option 1', 'Option 2']
+type QuestionLayoutPreset = Pick<Layout, 'w' | 'h' | 'minW' | 'minH'>
+const GRID_COLS = 12
+const GRID_SLOT_WIDTH = 3
+const GRID_SLOT_HEIGHT = 3
+
+const DEFAULT_LAYOUT_PRESET: QuestionLayoutPreset = {
+  w: 2,
+  h: 2,
+  minW: undefined,
+  minH: undefined,
+}
+
+const NON_SHRINKABLE_LAYOUT_PRESET: QuestionLayoutPreset = {
+  w: 3,
+  h: 3,
+  minW: 3,
+  minH: 3,
+}
+
+const NON_SHRINKABLE_QUESTION_TYPES = new Set<QuestionItem['component']>(['TextInput', 'RadioBar', 'CheckboxTiles'])
+
+function createQuestionLayout(id: string, idx: number, preset: QuestionLayoutPreset): Layout {
+  return {
+    i: id,
+    x: (idx * GRID_SLOT_WIDTH) % GRID_COLS,
+    y: Math.floor((idx * GRID_SLOT_WIDTH) / GRID_COLS) * GRID_SLOT_HEIGHT,
+    ...preset,
+  }
+}
 
 export function createNewQuestion(
   questionType: QuestionItem['component'],
@@ -11,20 +41,23 @@ export function createNewQuestion(
   idx: number
 ): QuestionItem {
   const id = `question-${Date.now()}-${idx}`
-  const layout: Layout = { i: id, x: (idx * 2) % 12, y: Math.floor((idx * 2) / 12), w: 2, h: 2 }
+  const layoutPreset = NON_SHRINKABLE_QUESTION_TYPES.has(questionType)
+    ? NON_SHRINKABLE_LAYOUT_PRESET
+    : DEFAULT_LAYOUT_PRESET
+  const layout = createQuestionLayout(id, idx, layoutPreset)
 
   switch (questionType) {
-    case 'Checkbox':
+    case 'Switch':
       return {
         id,
         questionText: config.questionText || `New ${questionType} Question`,
-        component: 'Checkbox',
+        component: 'Switch',
         option: {
           optionProps: {
-            activeLabel: config.checkbox?.activeLabel ?? 'ON',
-            inactiveLabel: config.checkbox?.inactiveLabel ?? 'OFF',
-            checked: !!config.checkbox?.checked,
-            onChange: (checked: boolean) => console.log('Checkbox changed:', checked),
+            activeLabel: config.switch?.activeLabel ?? 'ON',
+            inactiveLabel: config.switch?.inactiveLabel ?? 'OFF',
+            checked: !!config.switch?.checked,
+            onChange: (checked: boolean) => console.log('Switch changed:', checked),
           },
         },
         layout,
@@ -41,6 +74,22 @@ export function createNewQuestion(
               .map(label => ({ label, value: label })),
             test_id: 'radio-bar-question-type',
             onChange: (v: string) => console.log('Radio changed:', v),
+          },
+        },
+        layout,
+      }
+    case 'CheckboxTiles':
+      return {
+        id,
+        questionText: config.questionText || `New ${questionType} Question`,
+        component: 'CheckboxTiles',
+        option: {
+          optionProps: {
+            name: config.checkboxTiles?.name ?? 'Select one or more options',
+            buttons: (config.checkboxTiles?.buttons?.length ? config.checkboxTiles.buttons : defaultCheckboxTileOptions)
+              .map((label) => ({ label, value: label })),
+            test_id: 'checkbox-tiles-question-type',
+            onChange: (values: string[]) => console.log('Checkbox tiles changed:', values),
           },
         },
         layout,

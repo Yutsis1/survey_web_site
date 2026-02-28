@@ -73,4 +73,64 @@ describe('PopUp Component', () => {
 
         expect(getByTestId('apply-button')).toBeDisabled()
     })
+
+    it('renders children content inside the popup', () => {
+        const { getByText } = render(
+            <PopUp {...defaultProps}>
+                <div>Custom Content</div>
+                <div>Another Element</div>
+            </PopUp>
+        )
+
+        expect(getByText('Custom Content')).toBeInTheDocument()
+        expect(getByText('Another Element')).toBeInTheDocument()
+    })
+
+    it('renders without description when not provided', () => {
+        const { queryByText, getByText } = render(
+            <PopUp
+                {...defaultProps}
+                popUpDescription={undefined}
+            />
+        )
+
+        expect(getByText('Test Popup')).toBeInTheDocument()
+        expect(queryByText('Test Description')).not.toBeInTheDocument()
+    })
+
+    it('uses onClose when onCancel is not provided', () => {
+        const { getByTestId } = render(
+            <PopUp
+                isOpen={true}
+                onClose={mockOnClose}
+                onApply={mockOnApply}
+                popUpTitle="Test"
+            />
+        )
+
+        fireEvent.click(getByTestId('cancel-button'))
+        expect(mockOnClose).toHaveBeenCalledTimes(1)
+    })
+
+    it('applies correct CSS classes to dialog content', () => {
+        const { container } = render(<PopUp {...defaultProps} />)
+
+        const dialogContent = container.querySelector('.popup-content')
+        expect(dialogContent).toBeInTheDocument()
+        expect(dialogContent).toHaveClass('border-border')
+        expect(dialogContent).toHaveClass('bg-card')
+    })
+
+    it('applies scrollable container class to children wrapper', () => {
+        const { container } = render(
+            <PopUp {...defaultProps}>
+                <div>Content</div>
+            </PopUp>
+        )
+
+        const contentContainer = container.querySelector('.popup-container')
+        expect(contentContainer).toBeInTheDocument()
+        expect(contentContainer).toHaveClass('max-h-[55vh]')
+        expect(contentContainer).toHaveClass('overflow-auto')
+    })
 })

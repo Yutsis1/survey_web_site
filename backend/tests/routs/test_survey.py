@@ -296,6 +296,54 @@ async def test_create_survey_preserves_dropdown_option_props(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_create_survey_preserves_checkbox_tiles_option_props(monkeypatch):
+    """Test checkbox tiles optionProps are preserved during survey creation."""
+    inserted_id = ObjectId()
+
+    class FakeInsertResult:
+        def __init__(self, result_id):
+            self.inserted_id = result_id
+
+    async def fake_insert_one(document):
+        question = document.get("questions", [])[0]
+        option_props = question.get("option", {}).get("optionProps", {})
+        assert option_props.get("name") == "skills"
+        assert option_props.get("buttons") == [
+            {"label": "React", "value": "React"},
+            {"label": "TypeScript", "value": "TypeScript"},
+        ]
+        assert option_props.get("selectedValues") == ["React"]
+        return FakeInsertResult(inserted_id)
+
+    monkeypatch.setattr(surveys_collection, "insert_one", fake_insert_one)
+
+    payload = {
+        "title": "Checkbox Tiles Survey",
+        "questions": [
+            {
+                "id": "q1",
+                "questionText": "Select your skills",
+                "component": "CheckboxTiles",
+                "option": {
+                    "optionProps": {
+                        "name": "skills",
+                        "buttons": [
+                            {"label": "React", "value": "React"},
+                            {"label": "TypeScript", "value": "TypeScript"},
+                        ],
+                        "selectedValues": ["React"],
+                    }
+                },
+            }
+        ],
+    }
+
+    resp = client.post("/surveys/", json=payload)
+    assert resp.status_code == 200
+    assert resp.json() == {"id": str(inserted_id)}
+
+
+@pytest.mark.asyncio
 async def test_update_survey_success(monkeypatch):
     """Test successfully updating a survey owned by the current user."""
     object_id = ObjectId()
@@ -373,6 +421,100 @@ async def test_update_survey_preserves_dropdown_option_props(monkeypatch):
     resp = client.put(f"/surveys/{str(object_id)}", json=payload)
     assert resp.status_code == 200
     assert resp.json() == {"id": str(object_id)}
+
+
+@pytest.mark.asyncio
+async def test_update_survey_preserves_checkbox_tiles_option_props(monkeypatch):
+    """Test checkbox tiles optionProps are preserved during survey update."""
+    object_id = ObjectId()
+
+    class FakeUpdateResult:
+        matched_count = 1
+
+    async def fake_update_one(query, update):
+        assert query.get("_id") == object_id
+        question = update.get("$set", {}).get("questions", [])[0]
+        option_props = question.get("option", {}).get("optionProps", {})
+        assert option_props.get("name") == "skills"
+        assert option_props.get("buttons") == [
+            {"label": "React", "value": "React"},
+            {"label": "TypeScript", "value": "TypeScript"},
+        ]
+        assert option_props.get("selectedValues") == ["TypeScript"]
+        return FakeUpdateResult()
+
+    monkeypatch.setattr(surveys_collection, "update_one", fake_update_one)
+
+    payload = {
+        "title": "Updated Checkbox Tiles Survey",
+        "questions": [
+            {
+                "id": "q1",
+                "questionText": "Select your skills",
+                "component": "CheckboxTiles",
+                "option": {
+                    "optionProps": {
+                        "name": "skills",
+                        "buttons": [
+                            {"label": "React", "value": "React"},
+                            {"label": "TypeScript", "value": "TypeScript"},
+                        ],
+                        "selectedValues": ["TypeScript"],
+                    }
+                },
+            }
+        ],
+    }
+
+    resp = client.put(f"/surveys/{str(object_id)}", json=payload)
+    assert resp.status_code == 200
+    assert resp.json() == {"id": str(object_id)}
+
+
+@pytest.mark.asyncio
+async def test_get_survey_preserves_checkbox_tiles_option_props(monkeypatch):
+    """Test checkbox tiles optionProps are preserved during survey retrieval."""
+    object_id = ObjectId()
+    fake_doc = {
+        "_id": object_id,
+        "title": "Checkbox Tiles Survey",
+        "questions": [
+            {
+                "id": "q1",
+                "questionText": "Select your skills",
+                "component": "CheckboxTiles",
+                "option": {
+                    "optionProps": {
+                        "name": "skills",
+                        "buttons": [
+                            {"label": "React", "value": "React"},
+                            {"label": "TypeScript", "value": "TypeScript"},
+                        ],
+                        "selectedValues": ["React"],
+                        "test_id": "skills-tiles",
+                    }
+                },
+            }
+        ],
+        "created_by_id": str(fake_user.id),
+        "created_by_email": fake_user.email,
+        "is_public": False,
+    }
+
+    async def fake_find_one(query):
+        if query.get("_id") == object_id and query.get("created_by_id") == str(fake_user.id):
+            return fake_doc
+        return None
+
+    monkeypatch.setattr(surveys_collection, "find_one", fake_find_one)
+
+    resp = client.get(f"/surveys/{str(object_id)}")
+    assert resp.status_code == 200
+    data = resp.json()
+    option_props = data["questions"][0]["option"]["optionProps"]
+    assert option_props["name"] == "skills"
+    assert option_props["selectedValues"] == ["React"]
+    assert option_props["test_id"] == "skills-tiles"
 
 
 @pytest.mark.asyncio

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Link as LinkIcon, LayoutGrid, Sparkles } from 'lucide-react'
+import type { Layout, Layouts } from 'react-grid-layout'
 
 import { useAuth } from '../contexts/auth-context'
 import { Sidebar } from '../app-modules/sidebar/sidebar'
@@ -28,7 +29,14 @@ interface SurveyBuilderClientProps {
   initialSurveyId?: string
 }
 
-type RGLItem = { i: string; x: number; y: number; w: number; h: number }
+const NON_SHRINKABLE_LAYOUT = {
+  w: 3,
+  h: 3,
+  minW: 3,
+  minH: 3,
+} as const
+
+const NON_SHRINKABLE_COMPONENTS = new Set<QuestionItem['component']>(['TextInput', 'RadioBar', 'CheckboxTiles'])
 
 export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProps) {
   const { isAuthenticated, isLoading, logout } = useAuth()
@@ -55,14 +63,58 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
   const layoutsApi = useLayouts()
   const builder = useQuestionBuilder()
 
-  const generateLayouts = useCallback((items: { id: string }[], cols = 12, w = 3, h = 2) => {
-    const base: RGLItem[] = items.map((q, idx) => {
+  const normalizeLayoutItem = useCallback(
+    (layoutItem: Layout): Layout => {
+      const question = questions.find((q) => q.id === layoutItem.i)
+      const shouldClampByQuestion = !!question && NON_SHRINKABLE_COMPONENTS.has(question.component)
+      const shouldClampByExistingMin =
+        layoutItem.minW === NON_SHRINKABLE_LAYOUT.minW && layoutItem.minH === NON_SHRINKABLE_LAYOUT.minH
+
+      if (!shouldClampByQuestion && !shouldClampByExistingMin) {
+        return layoutItem
+      }
+
+      return {
+        ...layoutItem,
+        minW: NON_SHRINKABLE_LAYOUT.minW,
+        minH: NON_SHRINKABLE_LAYOUT.minH,
+        w: Math.max(layoutItem.w, NON_SHRINKABLE_LAYOUT.minW),
+        h: Math.max(layoutItem.h, NON_SHRINKABLE_LAYOUT.minH),
+      }
+    },
+    [questions]
+  )
+
+  const normalizeLayouts = useCallback(
+    (inputLayouts: Layouts): Layouts =>
+      Object.fromEntries(
+        Object.entries(inputLayouts).map(([breakpoint, breakpointLayouts]) => [
+          breakpoint,
+          (breakpointLayouts ?? []).map(normalizeLayoutItem),
+        ])
+      ) as Layouts,
+    [normalizeLayoutItem]
+  )
+
+  const generateLayouts = useCallback((items: QuestionItem[], cols = 12, w = 3, h = 2): Layouts => {
+    const rowHeight = Math.max(h, NON_SHRINKABLE_LAYOUT.h)
+    const base: Layout[] = items.map((q, idx) => {
       const col = (idx * w) % cols
-      const row = Math.floor((idx * w) / cols) * h
-      return { i: String(q.id), x: col, y: row, w, h }
+      const row = Math.floor((idx * w) / cols) * rowHeight
+      const isNonShrinkable = NON_SHRINKABLE_COMPONENTS.has(q.component)
+
+      return {
+        i: String(q.id),
+        x: col,
+        y: row,
+        w: isNonShrinkable ? NON_SHRINKABLE_LAYOUT.w : w,
+        h: isNonShrinkable ? NON_SHRINKABLE_LAYOUT.h : h,
+        minW: isNonShrinkable ? NON_SHRINKABLE_LAYOUT.minW : undefined,
+        minH: isNonShrinkable ? NON_SHRINKABLE_LAYOUT.minH : undefined,
+      }
     })
 
-    return { lg: base, md: base, sm: base, xs: base, xxs: base } as const
+    return { lg: base, md: base, sm: base, xs: base, xxs: base }
   }, [])
 
   useEffect(() => {
@@ -106,7 +158,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
         setQuestions(survey.questions)
         setSurveyTitle(survey.title?.trim() ?? '')
         setActiveSurveyId(survey.id)
-        layoutsApi.setLayouts(generateLayouts(survey.questions))
+        layoutsApi.setLayouts(normalizeLayouts(generateLayouts(survey.questions)))
       })
       .catch((error) => {
         console.error(error)
@@ -115,7 +167,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
       .finally(() => {
         setLoadingSelectedSurvey(false)
       })
-  }, [generateLayouts, initialSurveyId, isAuthenticated, isLoading, layoutsApi])
+  }, [generateLayouts, initialSurveyId, isAuthenticated, isLoading, layoutsApi, normalizeLayouts])
 
   if (isLoading) {
     return (
@@ -140,14 +192,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
       questions.length
     )
 
-    const cols = 12
-    const w = 3
-    const h = 2
-    const idx = questions.length
-    const col = (idx * w) % cols
-    const row = Math.floor((idx * w) / cols) * h
-
-    layoutsApi.append({ i: String(item.id), x: col, y: row, w, h })
+    layoutsApi.append(item.layout)
 
     setQuestions((prev) => [...prev, item])
     setIsPopUpCreationOpen(false)
@@ -229,7 +274,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
       setQuestions(survey.questions)
       setSurveyTitle(survey.title?.trim() ?? '')
       setActiveSurveyId(survey.id)
-      const layouts = generateLayouts(survey.questions)
+      const layouts = normalizeLayouts(generateLayouts(survey.questions))
       layoutsApi.setLayouts(layouts)
       handleCloseLoadSurveyPopup()
     } catch (error) {
@@ -253,9 +298,10 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
     selectedType: builder.selectedType,
     setSelectedType: builder.setSelectedType,
     setQuestionText: builder.setQuestionText,
-    checkbox: builder.checkbox,
+    switch: builder.switch,
     textInput: builder.textInput,
     radioBar: builder.radioBar,
+    checkboxTiles: builder.checkboxTiles,
     dropDown: builder.dropDown,
   })
 
@@ -271,7 +317,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
   const removeQuestion = (id: string) => {
     setQuestions((prev) => {
       const next = prev.filter((it) => it.id !== id)
-      const layouts = generateLayouts(next)
+      const layouts = normalizeLayouts(generateLayouts(next))
       layoutsApi.setLayouts(layouts)
       return next
     })
@@ -389,7 +435,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
             <ResponsiveGridLayout
               className="layout"
               layouts={layoutsApi.layouts}
-              onLayoutChange={(_, l) => layoutsApi.setLayouts(l)}
+              onLayoutChange={(_, l) => layoutsApi.setLayouts(normalizeLayouts(l))}
               onDragStart={(...args: unknown[]) => {
                 const item = args.find((a) => {
                   return typeof a === 'object' && a !== null && 'i' in (a as Record<string, unknown>)
@@ -410,9 +456,9 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
                 setIsDragging(false)
                 setDraggingId(null)
                 setIsOverTrash(false)
-                layoutsApi.setLayouts(layouts)
+                layoutsApi.setLayouts(normalizeLayouts(layouts))
               }}
-              onResizeStop={(_, l) => layoutsApi.setLayouts(l)}
+              onResizeStop={(_, l) => layoutsApi.setLayouts(normalizeLayouts(l))}
             >
               {questions.map((q) => (
                 <Card
