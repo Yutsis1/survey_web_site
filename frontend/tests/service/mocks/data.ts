@@ -6,7 +6,7 @@ export type MockSurvey = {
   questions: Array<{
     id: string
     questionText: string
-    component: 'TextInput' | 'Checkbox' | 'RadioBar' | 'DropDown' | 'CheckboxTiles'
+    component: 'TextInput' | 'Switch' | 'RadioBar' | 'DropDown' | 'CheckboxTiles'
     option: { optionProps: Record<string, unknown> }
     layout: { i: string; x: number; y: number; w: number; h: number }
   }>
@@ -52,7 +52,7 @@ export const mockSurveys: MockSurvey[] = [
       {
         id: 'question-toggle',
         questionText: 'Enable the feature',
-        component: 'Checkbox',
+        component: 'Switch',
         option: {
           optionProps: {
             activeLabel: 'Enabled',
