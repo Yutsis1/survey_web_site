@@ -65,7 +65,7 @@ test.describe('Home Page Integration Tests', () => {
     await test.step('Configure switch question', async () => {
       await surveyCreatingPage.clickNewQuestion()
       await expect(surveyCreatingPage.newQuestionPopup.popupContent).toBeVisible()
-      await surveyCreatingPage.newQuestionPopup.configureCheckbox({
+      await surveyCreatingPage.newQuestionPopup.configureSwitch({
         questionText: 'Sample Switch Question',
         activeLabel: 'Yes',
         inactiveLabel: 'No',
@@ -89,9 +89,21 @@ test.describe('Home Page Integration Tests', () => {
       await expect(surveyCreatingPage.newQuestionPopup.popupContent).not.toBeVisible()
     })
 
+    await test.step('Configure dropdown question', async () => {
+      await surveyCreatingPage.clickNewQuestion()
+      await expect(surveyCreatingPage.newQuestionPopup.popupContent).toBeVisible()
+      await surveyCreatingPage.newQuestionPopup.configureDropDown({
+        questionText: 'Sample Dropdown Question',
+        options: ['Option 1', 'Option 2', 'Option 3'],
+      })
+      await surveyCreatingPage.applyPopup()
+      // Wait for popup to close before proceeding
+      await expect(surveyCreatingPage.newQuestionPopup.popupContent).not.toBeVisible()
+    })
+
     // Verify all questions were created
     const questionCount = await surveyCreatingPage.getQuestionCount()
-    expect(questionCount).toBe(4)
+    expect(questionCount).toBe(5)
 
     await test.step('Save the survey', async () => {
       await surveyCreatingPage.saveSurvey('Test Survey')

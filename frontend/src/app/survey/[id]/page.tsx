@@ -47,7 +47,7 @@ export default function SurveyResponsePage() {
         data.questions.forEach((question) => {
           const optionProps = question.option?.optionProps as Record<string, unknown> | undefined
           if (!optionProps) return
-          if (question.component === "Checkbox") {
+          if (question.component === "Switch") {
             initialAnswers[question.id] = Boolean(optionProps.checked)
           } else if (question.component === "TextInput") {
             initialAnswers[question.id] = String(optionProps.value ?? "")
@@ -98,7 +98,7 @@ export default function SurveyResponsePage() {
       }
     }
 
-    if (question.component === "Checkbox") {
+    if (question.component === "Switch") {
       return {
         optionProps: {
           ...optionProps,

@@ -67,5 +67,4 @@ const SwitchComponent: React.FC<ToggleSwitchProps> = ({
   );
 };
 
-// checkbox is legasy name, we keep it for backward compatibility
-export { SwitchComponent as Checkbox };
+export { SwitchComponent  };

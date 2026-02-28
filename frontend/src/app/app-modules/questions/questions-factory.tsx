@@ -47,17 +47,17 @@ export function createNewQuestion(
   const layout = createQuestionLayout(id, idx, layoutPreset)
 
   switch (questionType) {
-    case 'Checkbox':
+    case 'Switch':
       return {
         id,
         questionText: config.questionText || `New ${questionType} Question`,
-        component: 'Checkbox',
+        component: 'Switch',
         option: {
           optionProps: {
-            activeLabel: config.checkbox?.activeLabel ?? 'ON',
-            inactiveLabel: config.checkbox?.inactiveLabel ?? 'OFF',
-            checked: !!config.checkbox?.checked,
-            onChange: (checked: boolean) => console.log('Checkbox changed:', checked),
+            activeLabel: config.switch?.activeLabel ?? 'ON',
+            inactiveLabel: config.switch?.inactiveLabel ?? 'OFF',
+            checked: !!config.switch?.checked,
+            onChange: (checked: boolean) => console.log('Switch changed:', checked),
           },
         },
         layout,

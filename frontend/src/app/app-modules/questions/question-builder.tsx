@@ -6,7 +6,7 @@ import { CreateConfig } from './question-types'
 export function useQuestionBuilder() {
   const [selectedType, setSelectedType] = useState<string>('')  
   const [questionText, setQuestionText] = useState<string>(DEFAULTS.questionText)
-  const [checkbox, setCheckbox] = useState(DEFAULTS.checkbox)
+  const [switchControl, setSwitchControl] = useState(DEFAULTS.switch)
   const [checkboxTiles, setCheckboxTiles] = useState(DEFAULTS.checkboxTiles)
   const [textInput, setTextInput] = useState(DEFAULTS.textInput)
   const [radioBar, setRadioBar] = useState(DEFAULTS.radioBar)
@@ -14,7 +14,7 @@ export function useQuestionBuilder() {
 
   const buildConfig = (): CreateConfig => ({
     questionText,
-    checkbox,
+    switch: switchControl,
     checkboxTiles,
     textInput,
     radioBar,
@@ -24,7 +24,7 @@ export function useQuestionBuilder() {
   const reset = () => {
     setSelectedType('')
     setQuestionText(DEFAULTS.questionText)
-    setCheckbox(DEFAULTS.checkbox)
+    setSwitchControl(DEFAULTS.switch)
     setCheckboxTiles(DEFAULTS.checkboxTiles)
     setTextInput(DEFAULTS.textInput)
     setRadioBar(DEFAULTS.radioBar)
@@ -34,7 +34,7 @@ export function useQuestionBuilder() {
   return {
     selectedType, setSelectedType,
     questionText, setQuestionText,
-    checkbox: { value: checkbox, set: setCheckbox },
+    switch: { value: switchControl, set: setSwitchControl },
     checkboxTiles: { value: checkboxTiles, set: setCheckboxTiles },
     textInput: { value: textInput, set: setTextInput },
     radioBar: { value: radioBar, set: setRadioBar },

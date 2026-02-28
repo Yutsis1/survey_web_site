@@ -7,7 +7,7 @@ export class PopupNewQuestionComponent extends PopupComponent {
     // put the name 
     readonly questionTypes = {
         textInput: "TextInput",
-        checkbox: "Checkbox",
+        switch: "Switch",
         radioBar: "RadioBar",
         dropDown: "DropDown",
         checkboxTiles: "CheckboxTiles"
@@ -48,7 +48,7 @@ export class PopupNewQuestionComponent extends PopupComponent {
     get toggleOptions() {
         return this.popupContent.locator(`'input[name="${this.textFieldNames.toggleOptions}"]'`);
     }
-    get checkbox() {
+    get switch() {
         // Updated to use switch role instead of label with input
         return this.popupContent.getByRole('switch');
     }
@@ -61,14 +61,14 @@ export class PopupNewQuestionComponent extends PopupComponent {
         return await this.popupContent.locator(`input[name="${textFieldName}"]`).fill(value);
     }
 
-    // Checkbox configuration methods
-    async configureCheckbox(config: {
+    // Switch configuration methods
+    async configureSwitch(config: {
         questionText?: string;
         activeLabel?: string;
         inactiveLabel?: string;
         defaultState?: boolean;
     }) {
-        await this.selectRadioButton(this.questionTypes.checkbox);
+        await this.selectRadioButton(this.questionTypes.switch);
 
         if (config.questionText) {
             await this.writeInTextField(config.questionText, this.textFieldNames.question);
@@ -87,7 +87,7 @@ export class PopupNewQuestionComponent extends PopupComponent {
             
             // Only click if we need to change the state
             if (config.defaultState !== currentState) {
-                await this.checkbox.click();
+                await this.switch.click();
             }
         }
     }

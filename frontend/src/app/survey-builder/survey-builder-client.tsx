@@ -298,7 +298,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
     selectedType: builder.selectedType,
     setSelectedType: builder.setSelectedType,
     setQuestionText: builder.setQuestionText,
-    checkbox: builder.checkbox,
+    switch: builder.switch,
     textInput: builder.textInput,
     radioBar: builder.radioBar,
     checkboxTiles: builder.checkboxTiles,

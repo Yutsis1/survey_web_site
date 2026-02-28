@@ -4,7 +4,7 @@ import { DropDownProps } from "@/components/app/dropDown/dropDown"
 import { TextFieldProps } from "@/components/app/text-field/text-field"
 import { RadioBarProps } from "@/components/app/radios/radio-bar"
 
-interface CheckboxState {
+interface SwitchComponentState {
   activeLabel: string
   inactiveLabel: string
   checked: boolean
@@ -34,7 +34,7 @@ type Builders = {
   selectedType: string
   setSelectedType: (v: string) => void
   setQuestionText: (v: string) => void
-  checkbox: { value: CheckboxState; set: React.Dispatch<React.SetStateAction<CheckboxState>> }
+  switch: { value: SwitchComponentState; set: React.Dispatch<React.SetStateAction<SwitchComponentState>> }
   textInput: { value: TextInputState; set: React.Dispatch<React.SetStateAction<TextInputState>> }
   radioBar: { value: RadioBarState; set: React.Dispatch<React.SetStateAction<RadioBarState>> }
   checkboxTiles: { value: CheckboxTilesState; set: React.Dispatch<React.SetStateAction<CheckboxTilesState>> }
@@ -46,7 +46,7 @@ interface PopupConfig {
   questionText: string
 }
 
-const supportedQuestionTypes = ["TextInput", "Checkbox", "RadioBar", "CheckboxTiles", "DropDown"]
+const supportedQuestionTypes = ["TextInput", "Switch", "RadioBar", "CheckboxTiles", "DropDown"]
 
 export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
   const typeSelector = (
@@ -83,7 +83,7 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
   )
 
   switch (b.selectedType) {
-    case "Checkbox":
+    case "Switch":
       return {
         components: [
           typeSelector,
@@ -96,7 +96,7 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
                 label: "Active label",
                 placeholder: "Enter active label...",
                 onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-                  b.checkbox.set((prev) => ({ ...prev, activeLabel: e.target.value })),
+                  b.switch.set((prev) => ({ ...prev, activeLabel: e.target.value })),
                 name: "activeLabel",
               } as TextFieldProps,
             }}
@@ -110,7 +110,7 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
                 label: "Inactive label",
                 placeholder: "Enter inactive label...",
                 onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-                  b.checkbox.set((prev) => ({ ...prev, inactiveLabel: e.target.value })),
+                  b.switch.set((prev) => ({ ...prev, inactiveLabel: e.target.value })),
                 name: "inactiveLabel",
               } as TextFieldProps,
             }}
@@ -118,20 +118,20 @@ export function getPopupComponentsAndOptions(b: Builders): PopupConfig {
           />,
           <DynamicComponentRenderer
             key="default-state"
-            component="Checkbox"
+            component="Switch"
             option={{
               optionProps: {
                 activeLabel: "Default ON",
                 inactiveLabel: "Default OFF",
-                checked: b.checkbox.value?.checked ?? false,
-                onChange: (checked: boolean) => b.checkbox.set((prev) => ({ ...prev, checked })),
+                checked: b.switch?.value?.checked ?? false,
+                onChange: (checked: boolean) => b.switch.set((prev) => ({ ...prev, checked })),
                 name: "defaultState",
               } as ToggleSwitchProps,
             }}
             questionText="Default state"
           />,
         ],
-        questionText: "Configure Checkbox Question",
+        questionText: "Configure Switch Question",
       }
     case "TextInput":
       return {
