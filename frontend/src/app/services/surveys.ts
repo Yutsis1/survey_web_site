@@ -1,10 +1,14 @@
 import { QuestionItem } from '@/app/app-modules/questions/question-types'
+import type { Layouts } from 'react-grid-layout'
 import { apiClient } from './api-client'
 
+export type SurveyStatus = 'draft' | 'published'
 
 export interface SurveyPayload {
   title: string
+  status: SurveyStatus
   questions: QuestionItem[]
+  layouts: Layouts
 }
 
 export interface SurveyResponse extends SurveyPayload {
@@ -14,10 +18,11 @@ export interface SurveyResponse extends SurveyPayload {
 export interface SurveyOption {
   id: string
   title: string
+  status: SurveyStatus
 }
 
 interface SurveyListResponse {
-  surveys: Array<Pick<SurveyResponse, 'id' | 'title'>>
+  surveys: Array<Pick<SurveyResponse, 'id' | 'title' | 'status'>>
 }
 
 
@@ -54,5 +59,6 @@ export async function fetchSurveyOptions(): Promise<SurveyOption[]> {
   return (fallbackPayload.surveys ?? []).map((survey) => ({
     id: survey.id,
     title: survey.title ?? 'Untitled Survey',
+    status: survey.status ?? 'draft',
   }))
 }

@@ -32,6 +32,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Separator } from "@/components/ui/separator"
+
+function formatAnswerValue(value: string | boolean | string[]) {
+  if (Array.isArray(value)) return value.join(", ")
+  if (typeof value === "boolean") return value ? "Yes" : "No"
+  return value
+}
 
 function SummaryCard({
   title,
@@ -158,9 +165,9 @@ export default function DashboardPage() {
               testId="summary-card-avg-completion-rate"
             />
             <SummaryCard
-              title="Active Surveys"
+              title="Published Surveys"
               value={String(data.summary.activeSurveys)}
-              description="Surveys with at least one response."
+              description="Surveys visible to responders."
               testId="summary-card-active-surveys"
             />
           </div>
@@ -190,7 +197,7 @@ export default function DashboardPage() {
                     >
                       <TableCell className="font-medium">{survey.title}</TableCell>
                       <TableCell>
-                        <Badge variant={survey.status === "active" ? "success" : "outline"} data-testid="survey-status-badge">
+                        <Badge variant={survey.status === "published" ? "success" : "outline"} data-testid="survey-status-badge">
                           {survey.status}
                         </Badge>
                       </TableCell>
@@ -227,7 +234,7 @@ export default function DashboardPage() {
                             asChild
                             onClick={(event: MouseEvent<HTMLElement>) => event.stopPropagation()}
                           >
-                            <Link href={`/survey/${survey.surveyId}`} target="_blank">
+                            <Link href={`/survey/${survey.surveyId}?preview=1`} target="_blank">
                               <ExternalLink className="h-3.5 w-3.5" />
                               View
                             </Link>
@@ -287,6 +294,44 @@ export default function DashboardPage() {
                   <p className="text-xs text-muted-foreground">
                     Average completion based on answered questions per response.
                   </p>
+                </CardContent>
+              </Card>
+
+              <Card className="xl:col-span-3" data-testid="latest-response-preview">
+                <CardHeader>
+                  <CardTitle>Latest Response Preview</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {selectedSurvey.latestResponse ? (
+                    <>
+                      <div className="text-xs text-muted-foreground">
+                        Response ID: {selectedSurvey.latestResponse.id}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Submitted: {new Date(selectedSurvey.latestResponse.submittedAt ?? "").toLocaleString()}
+                      </div>
+                      <Separator />
+                      <div className="space-y-3">
+                        {selectedSurvey.latestResponse.answers.map((answer) => {
+                          const question = selectedSurvey.questionBreakdown.find(
+                            (item) => item.questionId === answer.questionId
+                          )
+                          return (
+                            <div key={answer.questionId} className="rounded-md border border-border p-3">
+                              <div className="text-sm font-medium">
+                                {question?.questionText ?? answer.questionId}
+                              </div>
+                              <div className="text-sm text-muted-foreground" data-testid={`latest-answer-${answer.questionId}`}>
+                                {formatAnswerValue(answer.value)}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No responses yet.</p>
+                  )}
                 </CardContent>
               </Card>
 

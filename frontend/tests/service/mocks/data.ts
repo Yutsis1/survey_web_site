@@ -1,8 +1,9 @@
-export type MockSurveyOption = { id: string; title: string }
+export type MockSurveyOption = { id: string; title: string; status: 'draft' | 'published' }
 
 export type MockSurvey = {
   id: string
   title: string
+  status: 'draft' | 'published'
   questions: Array<{
     id: string
     questionText: string
@@ -10,6 +11,13 @@ export type MockSurvey = {
     option: { optionProps: Record<string, unknown> }
     layout: { i: string; x: number; y: number; w: number; h: number }
   }>
+  layouts: {
+    lg: Array<{ i: string; x: number; y: number; w: number; h: number }>
+    md: Array<{ i: string; x: number; y: number; w: number; h: number }>
+    sm: Array<{ i: string; x: number; y: number; w: number; h: number }>
+    xs: Array<{ i: string; x: number; y: number; w: number; h: number }>
+    xxs: Array<{ i: string; x: number; y: number; w: number; h: number }>
+  }
 }
 
 export type MockAuthResponse = {
@@ -25,6 +33,7 @@ export const mockSurveys: MockSurvey[] = [
   {
     id: 'survey-radio',
     title: 'RadioBar Survey',
+    status: 'published',
     questions: [
       {
         id: 'question-radio',
@@ -44,10 +53,18 @@ export const mockSurveys: MockSurvey[] = [
         layout: { i: 'question-radio', x: 0, y: 0, w: 2, h: 2 },
       },
     ],
+    layouts: {
+      lg: [{ i: 'question-radio', x: 4, y: 3, w: 4, h: 2 }],
+      md: [{ i: 'question-radio', x: 2, y: 3, w: 4, h: 2 }],
+      sm: [{ i: 'question-radio', x: 0, y: 3, w: 4, h: 2 }],
+      xs: [{ i: 'question-radio', x: 0, y: 3, w: 4, h: 2 }],
+      xxs: [{ i: 'question-radio', x: 0, y: 3, w: 2, h: 2 }],
+    },
   },
   {
     id: 'survey-toggle',
     title: 'Toggle Survey',
+    status: 'draft',
     questions: [
       {
         id: 'question-toggle',
@@ -64,10 +81,18 @@ export const mockSurveys: MockSurvey[] = [
         layout: { i: 'question-toggle', x: 0, y: 0, w: 2, h: 2 },
       },
     ],
+    layouts: {
+      lg: [{ i: 'question-toggle', x: 0, y: 0, w: 2, h: 2 }],
+      md: [{ i: 'question-toggle', x: 0, y: 0, w: 2, h: 2 }],
+      sm: [{ i: 'question-toggle', x: 0, y: 0, w: 2, h: 2 }],
+      xs: [{ i: 'question-toggle', x: 0, y: 0, w: 2, h: 2 }],
+      xxs: [{ i: 'question-toggle', x: 0, y: 0, w: 2, h: 2 }],
+    },
   },
   {
     id: 'survey-text',
     title: 'Text Survey',
+    status: 'draft',
     questions: [
       {
         id: 'question-text',
@@ -83,10 +108,18 @@ export const mockSurveys: MockSurvey[] = [
         layout: { i: 'question-text', x: 0, y: 0, w: 2, h: 2 },
       },
     ],
+    layouts: {
+      lg: [{ i: 'question-text', x: 0, y: 0, w: 3, h: 3 }],
+      md: [{ i: 'question-text', x: 0, y: 0, w: 3, h: 3 }],
+      sm: [{ i: 'question-text', x: 0, y: 0, w: 3, h: 3 }],
+      xs: [{ i: 'question-text', x: 0, y: 0, w: 3, h: 3 }],
+      xxs: [{ i: 'question-text', x: 0, y: 0, w: 2, h: 3 }],
+    },
   },
   {
     id: 'survey-dropdown',
     title: 'Dropdown Survey',
+    status: 'published',
     questions: [
       {
         id: 'question-dropdown',
@@ -107,10 +140,18 @@ export const mockSurveys: MockSurvey[] = [
         layout: { i: 'question-dropdown', x: 0, y: 0, w: 2, h: 2 },
       },
     ],
+    layouts: {
+      lg: [{ i: 'question-dropdown', x: 0, y: 1, w: 3, h: 2 }],
+      md: [{ i: 'question-dropdown', x: 0, y: 1, w: 3, h: 2 }],
+      sm: [{ i: 'question-dropdown', x: 0, y: 1, w: 3, h: 2 }],
+      xs: [{ i: 'question-dropdown', x: 0, y: 1, w: 3, h: 2 }],
+      xxs: [{ i: 'question-dropdown', x: 0, y: 1, w: 2, h: 2 }],
+    },
   },
   {
     id: 'survey-checkbox-tiles',
     title: 'Checkbox Tiles Survey',
+    status: 'draft',
     questions: [
       {
         id: 'question-checkbox-tiles',
@@ -132,6 +173,13 @@ export const mockSurveys: MockSurvey[] = [
         layout: { i: 'question-checkbox-tiles', x: 0, y: 0, w: 2, h: 3 },
       },
     ],
+    layouts: {
+      lg: [{ i: 'question-checkbox-tiles', x: 6, y: 0, w: 4, h: 3 }],
+      md: [{ i: 'question-checkbox-tiles', x: 4, y: 0, w: 4, h: 3 }],
+      sm: [{ i: 'question-checkbox-tiles', x: 0, y: 0, w: 4, h: 3 }],
+      xs: [{ i: 'question-checkbox-tiles', x: 0, y: 0, w: 4, h: 3 }],
+      xxs: [{ i: 'question-checkbox-tiles', x: 0, y: 0, w: 2, h: 3 }],
+    },
   },
 ]
 
@@ -142,7 +190,7 @@ export function getMockSurveyById(id: string): MockSurvey | undefined {
 }
 
 export function toOptions(surveys: MockSurvey[]): MockSurveyOption[] {
-  return surveys.map((survey) => ({ id: survey.id, title: survey.title }))
+  return surveys.map((survey) => ({ id: survey.id, title: survey.title, status: survey.status }))
 }
 
 export function createMockAuthResponse(): MockAuthResponse {

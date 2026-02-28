@@ -1,5 +1,5 @@
 import { fetchSurvey, fetchSurveyOptions } from "./surveys"
-import { fetchSurveyResponses, StoredSurveyResponse } from "./survey-responses"
+import { fetchLatestSurveyResponse, StoredSurveyResponse } from "./survey-responses"
 
 export interface DashboardSummary {
   totalSurveys: number
@@ -23,11 +23,12 @@ export interface DashboardSurveyAnalytics {
   surveyId: string
   title: string
   createdDate: string
-  status: "active" | "draft"
+  status: "published" | "draft"
   responsesCount: number
   completionRate: number
   trend: SurveyChartPoint[]
   questionBreakdown: QuestionBreakdown[]
+  latestResponse: StoredSurveyResponse | null
 }
 
 export interface DashboardData {
@@ -87,13 +88,14 @@ export async function fetchDashboardData(): Promise<DashboardData> {
 
   const surveys = await Promise.all(
     options.map(async (surveyOption) => {
-      const [survey, responses] = await Promise.all([
+      const [survey, latestResponse] = await Promise.all([
         fetchSurvey(surveyOption.id),
-        fetchSurveyResponses(surveyOption.id),
+        fetchLatestSurveyResponse(surveyOption.id),
       ])
+      const responses = latestResponse ? [latestResponse] : []
 
       const completionRate = computeCompletionRate(responses, survey.questions.length)
-      const status: "active" | "draft" = responses.length > 0 ? "active" : "draft"
+      const status: "published" | "draft" = survey.status
 
       return {
         surveyId: survey.id,
@@ -104,13 +106,14 @@ export async function fetchDashboardData(): Promise<DashboardData> {
         completionRate,
         trend: buildTrend(responses),
         questionBreakdown: buildQuestionBreakdown(responses, survey.questions),
+        latestResponse,
       } satisfies DashboardSurveyAnalytics
     })
   )
 
   const totalSurveys = surveys.length
   const totalResponses = surveys.reduce((sum, survey) => sum + survey.responsesCount, 0)
-  const activeSurveys = surveys.filter((survey) => survey.status === "active").length
+  const activeSurveys = surveys.filter((survey) => survey.status === "published").length
   const avgCompletionRate = surveys.length
     ? round(surveys.reduce((sum, survey) => sum + survey.completionRate, 0) / surveys.length)
     : 0

@@ -1,7 +1,9 @@
 from backend.routers.auth.auth import get_current_user
+from backend.db.sql.sql_driver import get_async_db
 from backend.routers.surveys import router
 import uuid
 import pytest
+from datetime import datetime, timezone, timedelta
 from fastapi.testclient import TestClient
 from types import SimpleNamespace
 from bson import ObjectId
@@ -40,8 +42,45 @@ class FakeAsyncCursor:
         return generator()
 
 
+class FakeExecuteResult:
+    def __init__(self, item):
+        self._item = item
+
+    def scalars(self):
+        return self
+
+    def first(self):
+        return self._item
+
+
+class FakeAsyncDbSession:
+    def __init__(self, execute_item=None):
+        self.execute_item = execute_item
+        self.added = []
+
+    def add(self, item):
+        self.added.append(item)
+
+    async def commit(self):
+        return None
+
+    async def refresh(self, item):
+        if getattr(item, "id", None) is None:
+            item.id = uuid.uuid4()
+
+    async def execute(self, query):
+        return FakeExecuteResult(self.execute_item)
+
+
 # Override the FastAPI dependency
 app.dependency_overrides[get_current_user] = fake_get_current_user
+
+
+def set_db_override(session):
+    async def fake_get_db():
+        yield session
+
+    app.dependency_overrides[get_async_db] = fake_get_db
 
 
 @pytest.mark.asyncio
@@ -60,7 +99,7 @@ async def test_get_survey_success(monkeypatch):
         ],
         "created_by_id": str(fake_user.id),
         "created_by_email": fake_user.email,
-        "is_public": False,
+        "status": "draft",
     }
 
     async def fake_find_one(query):
@@ -145,7 +184,7 @@ async def test_get_survey_with_all_fields(monkeypatch):
         ],
         "created_by_id": str(fake_user.id),
         "created_by_email": fake_user.email,
-        "is_public": True,
+        "status": "published",
     }
 
     async def fake_find_one(query):
@@ -161,7 +200,7 @@ async def test_get_survey_with_all_fields(monkeypatch):
     assert data["id"] == str(object_id)
     assert data["title"] == "Detailed Survey"
     assert len(data["questions"]) == 2
-    assert data["is_public"] is True
+    assert data["status"] == "published"
 
 
 @pytest.mark.asyncio
@@ -176,7 +215,7 @@ async def test_list_surveys_success(monkeypatch):
             "questions": [],
             "created_by_id": str(fake_user.id),
             "created_by_email": fake_user.email,
-            "is_public": False,
+            "status": "draft",
         },
         {
             "_id": object_id_2,
@@ -184,7 +223,7 @@ async def test_list_surveys_success(monkeypatch):
             "questions": [],
             "created_by_id": str(fake_user.id),
             "created_by_email": fake_user.email,
-            "is_public": True,
+            "status": "published",
         },
     ]
 
@@ -355,12 +394,15 @@ async def test_update_survey_success(monkeypatch):
         assert query.get("_id") == object_id
         assert query.get("created_by_id") == str(fake_user.id)
         assert update.get("$set", {}).get("title") == "Updated Survey"
+        assert update.get("$set", {}).get("status") == "published"
+        assert update.get("$set", {}).get("layouts", {}).get("lg", [])[0]["i"] == "q1"
         return FakeUpdateResult()
 
     monkeypatch.setattr(surveys_collection, "update_one", fake_update_one)
 
     payload = {
         "title": "Updated Survey",
+        "status": "published",
         "questions": [
             {
                 "id": "q1",
@@ -368,6 +410,13 @@ async def test_update_survey_success(monkeypatch):
                 "component": "TextInput",
             }
         ],
+        "layouts": {
+            "lg": [{"i": "q1", "x": 0, "y": 0, "w": 3, "h": 3}],
+            "md": [{"i": "q1", "x": 0, "y": 0, "w": 3, "h": 3}],
+            "sm": [{"i": "q1", "x": 0, "y": 0, "w": 3, "h": 3}],
+            "xs": [{"i": "q1", "x": 0, "y": 0, "w": 3, "h": 3}],
+            "xxs": [{"i": "q1", "x": 0, "y": 0, "w": 2, "h": 3}],
+        },
     }
 
     resp = client.put(f"/surveys/{str(object_id)}", json=payload)
@@ -498,7 +547,7 @@ async def test_get_survey_preserves_checkbox_tiles_option_props(monkeypatch):
         ],
         "created_by_id": str(fake_user.id),
         "created_by_email": fake_user.email,
-        "is_public": False,
+        "status": "draft",
     }
 
     async def fake_find_one(query):
@@ -657,3 +706,191 @@ async def test_delete_survey_invalid_id_format(monkeypatch):
     resp = client.delete("/surveys/invalid-id-format")
     assert resp.status_code == 400
     assert resp.json().get("detail") == "Invalid survey ID format"
+
+
+@pytest.mark.asyncio
+async def test_get_public_survey_only_for_published(monkeypatch):
+    object_id = ObjectId()
+
+    published_doc = {
+        "_id": object_id,
+        "title": "Public Survey",
+        "status": "published",
+        "questions": [],
+        "layouts": {"lg": [], "md": [], "sm": [], "xs": [], "xxs": []},
+    }
+
+    async def fake_find_one(query):
+        if query.get("_id") == object_id:
+            return published_doc
+        return None
+
+    monkeypatch.setattr(surveys_collection, "find_one", fake_find_one)
+
+    ok_resp = client.get(f"/surveys/public/{str(object_id)}")
+    assert ok_resp.status_code == 200
+    assert ok_resp.json()["status"] == "published"
+
+    draft_id = ObjectId()
+    draft_doc = {
+        "_id": draft_id,
+        "title": "Draft Survey",
+        "status": "draft",
+        "questions": [],
+        "layouts": {"lg": [], "md": [], "sm": [], "xs": [], "xxs": []},
+    }
+
+    async def fake_find_one_draft(query):
+        if query.get("_id") == draft_id:
+            return draft_doc
+        return None
+
+    monkeypatch.setattr(surveys_collection, "find_one", fake_find_one_draft)
+    denied_resp = client.get(f"/surveys/public/{str(draft_id)}")
+    assert denied_resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_submit_response_published_survey(monkeypatch):
+    object_id = ObjectId()
+    fake_doc = {
+        "_id": object_id,
+        "title": "Published Survey",
+        "status": "published",
+        "created_by_id": str(fake_user.id),
+        "questions": [],
+    }
+
+    async def fake_find_one(query):
+        if query.get("_id") == object_id:
+            return fake_doc
+        return None
+
+    monkeypatch.setattr(surveys_collection, "find_one", fake_find_one)
+    fake_session = FakeAsyncDbSession()
+    set_db_override(fake_session)
+
+    payload = {
+        "surveyId": str(object_id),
+        "answers": [
+            {
+                "questionId": "q1",
+                "value": "A",
+            }
+        ],
+    }
+
+    resp = client.post(f"/surveys/{str(object_id)}/responses", json=payload)
+    assert resp.status_code == 200
+    assert "id" in resp.json()
+    assert len(fake_session.added) == 1
+    assert fake_session.added[0].survey_id == str(object_id)
+
+
+@pytest.mark.asyncio
+async def test_submit_response_draft_survey_forbidden(monkeypatch):
+    object_id = ObjectId()
+    fake_doc = {
+        "_id": object_id,
+        "title": "Draft Survey",
+        "status": "draft",
+        "created_by_id": str(fake_user.id),
+        "questions": [],
+    }
+
+    async def fake_find_one(query):
+        if query.get("_id") == object_id:
+            return fake_doc
+        return None
+
+    monkeypatch.setattr(surveys_collection, "find_one", fake_find_one)
+    set_db_override(FakeAsyncDbSession())
+
+    payload = {
+        "surveyId": str(object_id),
+        "answers": [{"questionId": "q1", "value": "A"}],
+    }
+    resp = client.post(f"/surveys/{str(object_id)}/responses", json=payload)
+    assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_get_latest_response_for_owner():
+    survey_id = str(ObjectId())
+    latest = SimpleNamespace(
+        id=uuid.uuid4(),
+        survey_id=survey_id,
+        survey_owner_id=fake_user.id,
+        answers=[{"questionId": "q1", "value": "Most recent"}],
+        submitted_at=datetime.now(timezone.utc) + timedelta(minutes=1),
+    )
+    set_db_override(FakeAsyncDbSession(execute_item=latest))
+
+    resp = client.get(f"/surveys/{survey_id}/responses/latest")
+    assert resp.status_code == 200
+    payload = resp.json()
+    assert payload["id"] == str(latest.id)
+    assert payload["answers"][0]["value"] == "Most recent"
+
+
+@pytest.mark.asyncio
+async def test_get_response_by_id_scoped_to_survey_and_owner():
+    survey_id = str(ObjectId())
+    response_id = uuid.uuid4()
+    stored = SimpleNamespace(
+        id=response_id,
+        survey_id=survey_id,
+        survey_owner_id=fake_user.id,
+        answers=[{"questionId": "q1", "value": True}],
+        submitted_at=datetime.now(timezone.utc),
+    )
+    set_db_override(FakeAsyncDbSession(execute_item=stored))
+
+    ok_resp = client.get(f"/surveys/{survey_id}/responses/{response_id}")
+    assert ok_resp.status_code == 200
+    assert ok_resp.json()["id"] == str(response_id)
+
+    set_db_override(FakeAsyncDbSession(execute_item=None))
+    missing_resp = client.get(f"/surveys/{survey_id}/responses/{response_id}")
+    assert missing_resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_create_survey_persists_status_and_layouts(monkeypatch):
+    inserted_id = ObjectId()
+
+    class FakeInsertResult:
+        def __init__(self, result_id):
+            self.inserted_id = result_id
+
+    async def fake_insert_one(document):
+        assert document["status"] == "published"
+        assert "layouts" in document
+        assert document["layouts"]["lg"][0]["i"] == "q1"
+        return FakeInsertResult(inserted_id)
+
+    monkeypatch.setattr(surveys_collection, "insert_one", fake_insert_one)
+
+    payload = {
+        "title": "Layout Survey",
+        "status": "published",
+        "questions": [
+            {
+                "id": "q1",
+                "questionText": "Question",
+                "component": "TextInput",
+                "layout": {"i": "q1", "x": 1, "y": 2, "w": 3, "h": 3},
+            }
+        ],
+        "layouts": {
+            "lg": [{"i": "q1", "x": 1, "y": 2, "w": 3, "h": 3}],
+            "md": [{"i": "q1", "x": 1, "y": 2, "w": 3, "h": 3}],
+            "sm": [{"i": "q1", "x": 1, "y": 2, "w": 3, "h": 3}],
+            "xs": [{"i": "q1", "x": 1, "y": 2, "w": 3, "h": 3}],
+            "xxs": [{"i": "q1", "x": 0, "y": 2, "w": 2, "h": 3}],
+        },
+    }
+
+    resp = client.post("/surveys/", json=payload)
+    assert resp.status_code == 200
+    assert resp.json() == {"id": str(inserted_id)}

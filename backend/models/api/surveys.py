@@ -1,8 +1,10 @@
 """
 Models for survey questions and options.
 """
+from enum import Enum
 from typing import List, Optional, Union
-from pydantic import BaseModel, field_validator
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class RadioProps(BaseModel):
@@ -75,20 +77,45 @@ class QuestionItem(BaseModel):
     questionText: str
     component: str
     option: Optional[Option] = None
+    layout: Optional["LayoutItem"] = None
+
+
+class SurveyStatus(str, Enum):
+    draft = "draft"
+    published = "published"
+
+
+class LayoutItem(BaseModel):
+    i: str
+    x: int
+    y: int
+    w: int
+    h: int
+    minW: Optional[int] = None
+    minH: Optional[int] = None
+
+
+class SurveyLayouts(BaseModel):
+    lg: List[LayoutItem] = Field(default_factory=list)
+    md: List[LayoutItem] = Field(default_factory=list)
+    sm: List[LayoutItem] = Field(default_factory=list)
+    xs: List[LayoutItem] = Field(default_factory=list)
+    xxs: List[LayoutItem] = Field(default_factory=list)
 
 
 class Survey(BaseModel):
     id: Optional[str] = None
     title: Optional[str] = None
-    is_public: Optional[bool] = False
-    created_by_id: str = None
+    status: SurveyStatus = SurveyStatus.draft
     questions: List[QuestionItem]
+    layouts: Optional[SurveyLayouts] = None
 
 
 class SurveyCreate(BaseModel):
     title: str
-    is_public: Optional[bool] = False
+    status: SurveyStatus = SurveyStatus.draft
     questions: List[QuestionItem]
+    layouts: Optional[SurveyLayouts] = None
 
     @field_validator("title")
     @classmethod
@@ -106,3 +133,24 @@ class SurveyListResponse(BaseModel):
 class SurveyOption(BaseModel):
     id: str
     title: str
+    status: SurveyStatus = SurveyStatus.draft
+
+
+class SurveyAnswer(BaseModel):
+    questionId: str
+    value: Union[str, bool, List[str]]
+
+
+class SurveyResponseCreate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    surveyId: Optional[str] = None
+    answers: List[SurveyAnswer]
+    submitted_at: Optional[datetime] = Field(default=None, alias="submittedAt")
+
+
+class SurveyResponseRead(BaseModel):
+    id: str
+    surveyId: str
+    answers: List[SurveyAnswer]
+    submittedAt: datetime
