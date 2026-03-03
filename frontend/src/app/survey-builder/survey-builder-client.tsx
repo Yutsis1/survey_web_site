@@ -24,6 +24,8 @@ import { TextInput } from '@/components/app/text-field/text-field'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { CreateQuestionPopUp } from './components/create-question-pop-up'
+import { LoadSurveyPopUp } from './components/load-survey-pop-up'
 
 interface SurveyBuilderClientProps {
   initialSurveyId?: string
@@ -250,7 +252,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
       )
       setActiveSurveyId(id)
       setSurveyTitle(trimmedTitle)
-      alert(`Survey saved with id: ${id}`)
+      // alert(`Survey saved with id: ${id}`)
     } catch (error) {
       console.error(error)
       alert('Failed to save survey')
@@ -542,47 +544,26 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
         </main>
       </div>
 
-      <PopUp
+      <CreateQuestionPopUp
         isOpen={isPopUpCreationOpen}
         onClose={handleClose}
         onApply={handleApply}
-        popUpTitle={popup.questionText}
-        popUpDescription="Choose a type and configure its options."
+        title={popup.questionText}
       >
         {popup.components}
-      </PopUp>
+      </CreateQuestionPopUp>
 
-      <PopUp
+      <LoadSurveyPopUp
         isOpen={isLoadingPopup}
         onClose={handleCloseLoadSurveyPopup}
-        onCancel={handleCloseLoadSurveyPopup}
         onApply={handleApplyLoadSurvey}
-        applyDisabled={
-          loadingSurveyOptions ||
-          loadingSelectedSurvey ||
-          surveyOptions.length === 0 ||
-          !selectedSurveyId
-        }
-        popUpTitle="Load Survey"
-        popUpDescription="Select a saved survey to load."
-      >
-        <div className="space-y-3">
-          <DropDown
-            options={surveyOptions}
-            selectedOption={selectedSurveyId}
-            onSelect={setSelectedSurveyId}
-            label="Saved surveys"
-            id="saved-surveys"
-            name="saved-surveys"
-            disabled={loadingSurveyOptions || loadingSelectedSurvey || surveyOptions.length === 0}
-          />
-          {loadingSurveyOptions && <p className="text-sm text-muted-foreground">Loading surveys...</p>}
-          {surveyOptionsError && <p className="text-sm text-destructive">{surveyOptionsError}</p>}
-          {!loadingSurveyOptions && !surveyOptionsError && surveyOptions.length === 0 && (
-            <p className="text-sm text-muted-foreground">No surveys available</p>
-          )}
-        </div>
-      </PopUp>
+        loadingSurveyOptions={loadingSurveyOptions}
+        loadingSelectedSurvey={loadingSelectedSurvey}
+        surveyOptions={surveyOptions}
+        surveyOptionsError={surveyOptionsError}
+        selectedSurveyId={selectedSurveyId}
+        setSelectedSurveyId={setSelectedSurveyId}
+      />
 
       <DeleteDropzone
         isDragging={isDragging}
