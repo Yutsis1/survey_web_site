@@ -1,20 +1,15 @@
 """
 Route for managing surveys.
 """
-from datetime import datetime, timezone
-import uuid
 from bson import ObjectId
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.exceptions import RequestValidationError
 from pymongo.errors import DuplicateKeyError
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.api.surveys import *
 from ..db.mongo.mongoDB import surveys_collection
 from ..routers.auth.auth import get_current_user
-from ..db.sql.sql_driver import get_async_db
-from ..models.db.sql.auth import User, SurveyResponse
+from ..models.db.sql.auth import User
 
 router = APIRouter(
     prefix="/surveys",
@@ -42,15 +37,6 @@ def _parse_survey_object_id(id: str) -> ObjectId:
         return ObjectId(id)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid survey ID format")
-
-
-def _serialize_response(response: SurveyResponse) -> dict:
-    return {
-        "id": str(response.id),
-        "surveyId": response.survey_id,
-        "answers": response.answers,
-        "submittedAt": response.submitted_at,
-    }
 
 
 @router.post("/")
@@ -134,96 +120,6 @@ async def get_public_survey(id: str):
     if not survey or _to_survey_status(survey) != SurveyStatus.published:
         raise HTTPException(status_code=404, detail="Survey not found")
     return Survey(**_normalize_survey(survey))
-
-
-@router.post("/{id}/responses")
-async def submit_response(
-    id: str,
-    payload: SurveyResponseCreate,
-    db: AsyncSession = Depends(get_async_db),
-):
-    """
-    Submit an anonymous response for a published survey.
-    """
-    object_id = _parse_survey_object_id(id)
-    survey = await surveys_collection.find_one({"_id": object_id})
-    if not survey:
-        raise HTTPException(status_code=404, detail="Survey not found")
-
-    if _to_survey_status(survey) != SurveyStatus.published:
-        raise HTTPException(status_code=403, detail="Survey is not published")
-
-    try:
-        survey_owner_id = uuid.UUID(str(survey["created_by_id"]))
-    except Exception:
-        raise HTTPException(status_code=500, detail="Survey owner is invalid")
-
-    submitted_at = payload.submitted_at or datetime.now(timezone.utc)
-    if submitted_at.tzinfo is None:
-        submitted_at = submitted_at.replace(tzinfo=timezone.utc)
-
-    response = SurveyResponse(
-        survey_id=id,
-        survey_owner_id=survey_owner_id,
-        answers=[answer.model_dump() for answer in payload.answers],
-        submitted_at=submitted_at,
-    )
-    db.add(response)
-    await db.commit()
-    await db.refresh(response)
-    return {"id": str(response.id)}
-
-
-@router.get("/{id}/responses/latest", response_model=SurveyResponseRead)
-async def get_latest_response(
-    id: str,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_async_db),
-):
-    """
-    Return latest response for a survey owned by the current user.
-    """
-    _parse_survey_object_id(id)
-    query = (
-        select(SurveyResponse)
-        .where(
-            SurveyResponse.survey_id == id,
-            SurveyResponse.survey_owner_id == current_user.id,
-        )
-        .order_by(desc(SurveyResponse.submitted_at), desc(SurveyResponse.id))
-        .limit(1)
-    )
-    latest = (await db.execute(query)).scalars().first()
-    if not latest:
-        raise HTTPException(status_code=404, detail="Response not found")
-    return _serialize_response(latest)
-
-
-@router.get("/{id}/responses/{response_id}", response_model=SurveyResponseRead)
-async def get_response_by_id(
-    id: str,
-    response_id: str,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_async_db),
-):
-    """
-    Return a specific response for a survey owned by the current user.
-    """
-    _parse_survey_object_id(id)
-    try:
-        response_uuid = uuid.UUID(response_id)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid response ID format")
-
-    query = select(SurveyResponse).where(
-        SurveyResponse.id == response_uuid,
-        SurveyResponse.survey_id == id,
-        SurveyResponse.survey_owner_id == current_user.id,
-    )
-    response = (await db.execute(query)).scalars().first()
-    if not response:
-        raise HTTPException(status_code=404, detail="Response not found")
-    return _serialize_response(response)
 
 
 @router.get("/{id}", response_model=Survey)

@@ -32,13 +32,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Separator } from "@/components/ui/separator"
-
-function formatAnswerValue(value: string | boolean | string[]) {
-  if (Array.isArray(value)) return value.join(", ")
-  if (typeof value === "boolean") return value ? "Yes" : "No"
-  return value
-}
 
 function SummaryCard({
   title,

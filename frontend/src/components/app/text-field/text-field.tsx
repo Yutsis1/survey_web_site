@@ -33,7 +33,14 @@ const TextInput: React.FC<TextFieldProps> = ({
     const [isPasswordVisible, setIsPasswordVisible] = useState(false)
     const canTogglePassword = showPasswordToggle && type === 'password'
     const resolvedType = canTogglePassword && isPasswordVisible ? 'text' : type
-    const safeValue = value ?? ''
+    
+    // Use controlled mode (value + onChange) when onChange is provided,
+    // otherwise use uncontrolled mode with defaultValue
+    const inputValueProps = onChange 
+        ? { value: value ?? '', onChange } 
+        : value !== undefined 
+            ? { defaultValue: value } 
+            : {}
 
     useEffect(() => {
         if (!canTogglePassword) {
@@ -46,8 +53,7 @@ const TextInput: React.FC<TextFieldProps> = ({
             <Input
                 type={resolvedType}
                 placeholder={placeholder}
-                value={safeValue}
-                onChange={onChange}
+                {...inputValueProps}
                 id={id}
                 name={name}
                 className={cn(

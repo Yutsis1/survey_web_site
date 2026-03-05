@@ -154,3 +154,32 @@ class SurveyResponseRead(BaseModel):
     surveyId: str
     answers: List[SurveyAnswer]
     submittedAt: datetime
+
+
+class PaginatedResponseList(BaseModel):
+    responses: List[SurveyResponseRead]
+    page: int
+    page_size: int
+    total_count: int
+
+
+class TrendPoint(BaseModel):
+    date: str
+    responses: int
+
+
+class QuestionStats(BaseModel):
+    questionId: str
+    questionText: str
+    counts: List[dict]  # List of {"option": str, "count": int}
+
+
+class SurveyResponseStats(BaseModel):
+    surveyId: str
+    title: str
+    status: SurveyStatus
+    createdDate: str
+    responsesCount: int
+    completionRate: float
+    trend: List[TrendPoint]
+    questionBreakdown: List[QuestionStats]

@@ -7,7 +7,7 @@ from fastapi.responses import RedirectResponse
 
 from backend.config import settings
 from backend.routers.auth import auth
-from backend.routers import surveys
+from backend.routers import surveys, responses
 from backend.middleware.error_handling import cache_body_middleware, validation_exception_handler
 from backend.db.mongo.migrations import run_migrations
 from backend.db.mongo.seed_data import seed_demo_survey
@@ -44,6 +44,10 @@ tags_metadata = [
         "name": "surveys",
         "description": "Operations for creating and managing surveys.",
     },
+    {
+        "name": "responses",
+        "description": "Operations for managing survey responses and statistics.",
+    },
 ]
 
 app = FastAPI(
@@ -79,6 +83,7 @@ app.add_middleware(
 )
 
 app.include_router(surveys.router)
+app.include_router(responses.router)
 app.include_router(auth.router)
 
 

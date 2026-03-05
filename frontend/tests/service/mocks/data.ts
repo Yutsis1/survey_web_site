@@ -201,3 +201,81 @@ export function createMockAuthResponse(): MockAuthResponse {
     email: DEFAULT_USER_EMAIL,
   }
 }
+
+export type MockSurveyStats = {
+  surveyId: string
+  title: string
+  status: 'draft' | 'published'
+  createdDate: string
+  responsesCount: number
+  completionRate: number
+  trend: Array<{ date: string; responses: number }>
+  questionBreakdown: Array<{
+    questionId: string
+    questionText: string
+    counts: Array<{ option: string; count: number }>
+  }>
+}
+
+export function createMockStatsForSurvey(survey: MockSurvey): MockSurveyStats {
+  const today = new Date().toISOString().slice(0, 10)
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  const twoDaysAgo = new Date(Date.now() - 172800000).toISOString().slice(0, 10)
+
+  // Generate mock question breakdown based on survey questions
+  const questionBreakdown = survey.questions.map((question) => {
+    let counts: Array<{ option: string; count: number }> = []
+
+    // Generate realistic counts based on question type
+    if (question.component === 'RadioBar') {
+      const buttons = (question.option.optionProps as any).buttons || []
+      counts = buttons.map((btn: any, idx: number) => ({
+        option: btn.label,
+        count: 10 - idx * 2, // Decreasing counts
+      }))
+    } else if (question.component === 'Switch') {
+      counts = [
+        { option: 'Yes', count: 15 },
+        { option: 'No', count: 8 },
+      ]
+    } else if (question.component === 'DropDown') {
+      const options = (question.option.optionProps as any).options || []
+      counts = options.map((opt: any, idx: number) => ({
+        option: opt.label,
+        count: 7 - idx,
+      }))
+    } else if (question.component === 'CheckboxTiles') {
+      const buttons = (question.option.optionProps as any).buttons || []
+      counts = buttons.map((btn: any, idx: number) => ({
+        option: btn.label,
+        count: 5 + idx,
+      }))
+    } else {
+      counts = [
+        { option: 'Sample Answer 1', count: 12 },
+        { option: 'Sample Answer 2', count: 8 },
+      ]
+    }
+
+    return {
+      questionId: question.id,
+      questionText: question.questionText,
+      counts,
+    }
+  })
+
+  return {
+    surveyId: survey.id,
+    title: survey.title,
+    status: survey.status,
+    createdDate: twoDaysAgo,
+    responsesCount: 23,
+    completionRate: 87.5,
+    trend: [
+      { date: twoDaysAgo, responses: 5 },
+      { date: yesterday, responses: 10 },
+      { date: today, responses: 8 },
+    ],
+    questionBreakdown,
+  }
+}

@@ -1,5 +1,5 @@
-import { fetchSurvey, fetchSurveyOptions } from "./surveys"
-import { fetchLatestSurveyResponse, StoredSurveyResponse } from "./survey-responses"
+import { fetchSurveyOptions } from "./surveys"
+import { apiClient } from "./api-client"
 
 export interface DashboardSummary {
   totalSurveys: number
@@ -28,7 +28,6 @@ export interface DashboardSurveyAnalytics {
   completionRate: number
   trend: SurveyChartPoint[]
   questionBreakdown: QuestionBreakdown[]
-  latestResponse: StoredSurveyResponse | null
 }
 
 export interface DashboardData {
@@ -40,47 +39,10 @@ function round(value: number) {
   return Math.round(value * 10) / 10
 }
 
-function buildTrend(responses: StoredSurveyResponse[]): SurveyChartPoint[] {
-  const grouped = responses.reduce<Record<string, number>>((acc, response) => {
-    const date = new Date(response.submittedAt ?? Date.now()).toISOString().slice(0, 10)
-    acc[date] = (acc[date] ?? 0) + 1
-    return acc
-  }, {})
-
-  return Object.keys(grouped)
-    .sort()
-    .map((date) => ({ date, responses: grouped[date] }))
-}
-
-function buildQuestionBreakdown(
-  responses: StoredSurveyResponse[],
-  questions: Array<{ id: string; questionText: string }>
-): QuestionBreakdown[] {
-  return questions.map((question) => {
-    const tally = new Map<string, number>()
-    responses.forEach((response) => {
-      const answer = response.answers.find((item) => item.questionId === question.id)
-      if (!answer) return
-      const key = String(answer.value)
-      tally.set(key, (tally.get(key) ?? 0) + 1)
-    })
-
-    return {
-      questionId: question.id,
-      questionText: question.questionText,
-      counts: Array.from(tally.entries()).map(([option, count]) => ({ option, count })),
-    }
-  })
-}
-
-function computeCompletionRate(
-  responses: StoredSurveyResponse[],
-  questionCount: number
-) {
-  if (questionCount === 0 || responses.length === 0) return 0
-  const answered = responses.map((response) => response.answers.length / questionCount)
-  const avg = answered.reduce((sum, value) => sum + value, 0) / answered.length
-  return round(avg * 100)
+async function fetchSurveyStats(surveyId: string): Promise<DashboardSurveyAnalytics> {
+  const res = await apiClient.fetch(`/surveys/${surveyId}/responses/stats`)
+  if (!res.ok) throw new Error(`Failed to load stats for survey ${surveyId}`)
+  return res.json()
 }
 
 export async function fetchDashboardData(): Promise<DashboardData> {
@@ -88,26 +50,8 @@ export async function fetchDashboardData(): Promise<DashboardData> {
 
   const surveys = await Promise.all(
     options.map(async (surveyOption) => {
-      const [survey, latestResponse] = await Promise.all([
-        fetchSurvey(surveyOption.id),
-        fetchLatestSurveyResponse(surveyOption.id),
-      ])
-      const responses = latestResponse ? [latestResponse] : []
-
-      const completionRate = computeCompletionRate(responses, survey.questions.length)
-      const status: "published" | "draft" = survey.status
-
-      return {
-        surveyId: survey.id,
-        title: survey.title || "Untitled Survey",
-        createdDate: new Date().toISOString().slice(0, 10),
-        status,
-        responsesCount: responses.length,
-        completionRate,
-        trend: buildTrend(responses),
-        questionBreakdown: buildQuestionBreakdown(responses, survey.questions),
-        latestResponse,
-      } satisfies DashboardSurveyAnalytics
+      const stats = await fetchSurveyStats(surveyOption.id)
+      return stats
     })
   )
 

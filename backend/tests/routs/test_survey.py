@@ -1,6 +1,7 @@
 from backend.routers.auth.auth import get_current_user
 from backend.db.sql.sql_driver import get_async_db
 from backend.routers.surveys import router
+from backend.routers import responses
 import uuid
 import pytest
 from datetime import datetime, timezone, timedelta
@@ -13,6 +14,7 @@ from backend.db.mongo.mongoDB import surveys_collection
 
 app = FastAPI()
 app.include_router(router)
+app.include_router(responses.router)
 
 client = TestClient(app)
 
@@ -51,6 +53,16 @@ class FakeExecuteResult:
 
     def first(self):
         return self._item
+
+    def scalar(self):
+        """Return the item directly for count queries."""
+        return self._item
+    
+    def all(self):
+        """Return a list for queries that fetch multiple items."""
+        if isinstance(self._item, list):
+            return self._item
+        return []
 
 
 class FakeAsyncDbSession:
@@ -894,3 +906,365 @@ async def test_create_survey_persists_status_and_layouts(monkeypatch):
     resp = client.post("/surveys/", json=payload)
     assert resp.status_code == 200
     assert resp.json() == {"id": str(inserted_id)}
+
+
+@pytest.mark.asyncio
+async def test_list_responses_paginated(monkeypatch):
+    """Test pagination of survey responses."""
+    object_id = ObjectId()
+    survey_id = str(object_id)
+    fake_doc = {
+        "_id": object_id,
+        "title": "Survey with Responses",
+        "status": "published",
+        "created_by_id": str(fake_user.id),
+        "questions": [],
+    }
+
+    async def fake_find_one(query):
+        if query.get("_id") == object_id:
+            return fake_doc
+        return None
+
+    monkeypatch.setattr(surveys_collection, "find_one", fake_find_one)
+
+    # Mock database session with paginated responses
+    class PaginatedDbSession:
+        def __init__(self, responses, total_count):
+            self.responses = responses
+            self.total_count = total_count
+            self.added = []
+
+        def add(self, item):
+            self.added.append(item)
+
+        async def commit(self):
+            pass
+
+        async def refresh(self, item):
+            if getattr(item, "id", None) is None:
+                item.id = uuid.uuid4()
+
+        async def execute(self, query):
+            # Check if this is a count query
+            query_str = str(query)
+            if "count" in query_str.lower():
+                class CountResult:
+                    def scalar(self):
+                        return self.value
+                    def __init__(self, val):
+                        self.value = val
+                return CountResult(self.total_count)
+            # Otherwise return paginated results
+            class AllResult:
+                def __init__(self, items):
+                    self._items = items
+                def scalars(self):
+                    return self
+                def all(self):
+                    return self._items
+            return AllResult(self.responses)
+
+    responses = [
+        SimpleNamespace(
+            id=uuid.uuid4(),
+            survey_id=survey_id,
+            survey_owner_id=fake_user.id,
+            answers=[{"questionId": "q1", "value": f"Answer {i}"}],
+            submitted_at=datetime.now(timezone.utc) - timedelta(hours=i),
+        )
+        for i in range(15)
+    ]
+
+    session = PaginatedDbSession(responses[:10], 15)
+    set_db_override(session)
+
+    # Test first page
+    resp = client.get(f"/surveys/{survey_id}/responses?page=1&page_size=10")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["page"] == 1
+    assert data["page_size"] == 10
+    assert data["total_count"] == 15
+    assert len(data["responses"]) == 10
+
+
+@pytest.mark.asyncio
+async def test_list_responses_requires_auth(monkeypatch):
+    """Test that listing responses requires authentication and ownership."""
+    object_id = ObjectId()
+    survey_id = str(object_id)
+    different_user_id = str(uuid.uuid4())  # Different from fake_user.id
+
+    async def fake_find_one(query):
+        # Survey exists but owned by different user
+        if query.get("_id") == object_id:
+            # Check if query includes created_by_id (which it should)
+            requested_owner = query.get("created_by_id")
+            if requested_owner == different_user_id:
+                # This is the actual owner
+                return {
+                    "_id": object_id,
+                    "title": "Someone Else's Survey",
+                    "status": "published",
+                    "created_by_id": different_user_id,
+                    "questions": [],
+                }
+        # No match - query includes fake_user.id but survey owned by different_user_id
+        return None
+
+    monkeypatch.setattr(surveys_collection, "find_one", fake_find_one)
+    set_db_override(FakeAsyncDbSession())
+
+    # fake_user (current user) tries to access different_user's survey
+    resp = client.get(f"/surveys/{survey_id}/responses")
+    # Should return 404 since survey with this ID + fake_user.id combo doesn't exist
+    assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_list_responses_for_owned_survey(monkeypatch):
+    """Test that listing responses succeeds for owned surveys."""
+    object_id = ObjectId()
+    survey_id = str(object_id)
+    fake_doc = {
+        "_id": object_id,
+        "title": "My Survey",
+        "status": "published",
+        "created_by_id": str(fake_user.id),
+        "questions": [],
+    }
+
+    async def fake_find_one(query):
+        if query.get("_id") == object_id and query.get("created_by_id") == str(fake_user.id):
+            return fake_doc
+        return None
+
+    monkeypatch.setattr(surveys_collection, "find_one", fake_find_one)
+    
+    class SimpleDbSession:
+        def __init__(self):
+            self.added = []
+        
+        def add(self, item):
+            self.added.append(item)
+        
+        async def commit(self):
+            pass
+        
+        async def refresh(self, item):
+            pass
+        
+        async def execute(self, query):
+            # Return 0 count or empty list
+            return FakeExecuteResult(0)
+    
+    set_db_override(SimpleDbSession())
+
+    resp = client.get(f"/surveys/{survey_id}/responses")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["page"] == 1
+    assert data["total_count"] == 0
+
+
+@pytest.mark.asyncio
+async def test_get_survey_stats(monkeypatch):
+    """Test fetching survey statistics with responses."""
+    object_id = ObjectId()
+    survey_id = str(object_id)
+    fake_doc = {
+        "_id": object_id,
+        "title": "Stats Survey",
+        "status": "published",
+        "created_by_id": str(fake_user.id),
+        "created_at": datetime(2024, 1, 15, tzinfo=timezone.utc),
+        "questions": [
+            {"id": "q1", "questionText": "What is your favorite color?"},
+            {"id": "q2", "questionText": "Do you like surveys?"},
+        ],
+    }
+
+    async def fake_find_one(query):
+        if query.get("_id") == object_id:
+            return fake_doc
+        return None
+
+    monkeypatch.setattr(surveys_collection, "find_one", fake_find_one)
+
+    # Mock responses
+    class StatsDbSession:
+        def __init__(self, responses):
+            self.responses = responses
+            self.added = []
+
+        def add(self, item):
+            self.added.append(item)
+
+        async def commit(self):
+            pass
+
+        async def refresh(self, item):
+            pass
+
+        async def execute(self, query):
+            class AllResult:
+                def __init__(self, items):
+                    self._items = items
+                def scalars(self):
+                    return self
+                def all(self):
+                    return self._items
+            return AllResult(self.responses)
+
+    responses = [
+        SimpleNamespace(
+            id=uuid.uuid4(),
+            survey_id=survey_id,
+            survey_owner_id=fake_user.id,
+            answers=[
+                {"questionId": "q1", "value": "Blue"},
+                {"questionId": "q2", "value": True},
+            ],
+            submitted_at=datetime(2024, 1, 20, tzinfo=timezone.utc),
+        ),
+        SimpleNamespace(
+            id=uuid.uuid4(),
+            survey_id=survey_id,
+            survey_owner_id=fake_user.id,
+            answers=[
+                {"questionId": "q1", "value": "Blue"},
+                {"questionId": "q2", "value": False},
+            ],
+            submitted_at=datetime(2024, 1, 21, tzinfo=timezone.utc),
+        ),
+        SimpleNamespace(
+            id=uuid.uuid4(),
+            survey_id=survey_id,
+            survey_owner_id=fake_user.id,
+            answers=[
+                {"questionId": "q1", "value": "Red"},
+            ],
+            submitted_at=datetime(2024, 1, 21, tzinfo=timezone.utc),
+        ),
+    ]
+
+    session = StatsDbSession(responses)
+    set_db_override(session)
+
+    resp = client.get(f"/surveys/{survey_id}/responses/stats")
+    if resp.status_code != 200:
+        print(f"Error response: {resp.json()}")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["surveyId"] == survey_id
+    assert data["title"] == "Stats Survey"
+    assert data["responsesCount"] == 3
+    assert data["createdDate"] == "2024-01-15"
+    
+    # Check trend data
+    assert len(data["trend"]) == 2  # Two different dates
+    assert any(t["date"] == "2024-01-20" and t["responses"] == 1 for t in data["trend"])
+    assert any(t["date"] == "2024-01-21" and t["responses"] == 2 for t in data["trend"])
+    
+    # Check question breakdown
+    assert len(data["questionBreakdown"]) == 2
+    q1_breakdown = next(q for q in data["questionBreakdown"] if q["questionId"] == "q1")
+    assert any(c["option"] == "Blue" and c["count"] == 2 for c in q1_breakdown["counts"])
+    assert any(c["option"] == "Red" and c["count"] == 1 for c in q1_breakdown["counts"])
+
+
+@pytest.mark.asyncio
+async def test_get_survey_stats_date_filter(monkeypatch):
+    """Test fetching survey statistics with date filtering."""
+    object_id = ObjectId()
+    survey_id = str(object_id)
+    fake_doc = {
+        "_id": object_id,
+        "title": "Filtered Stats Survey",
+        "status": "published",
+        "created_by_id": str(fake_user.id),
+        "questions": [{"id": "q1", "questionText": "Question"}],
+    }
+
+    async def fake_find_one(query):
+        if query.get("_id") == object_id:
+            return fake_doc
+        return None
+
+    monkeypatch.setattr(surveys_collection, "find_one", fake_find_one)
+
+    # Mock responses with different dates
+    class FilteredDbSession:
+        def __init__(self):
+            self.added = []
+
+        def add(self, item):
+            self.added.append(item)
+
+        async def commit(self):
+            pass
+
+        async def refresh(self, item):
+            pass
+
+        async def execute(self, query):
+            # Return only responses within date range
+            filtered = [
+                SimpleNamespace(
+                    id=uuid.uuid4(),
+                    survey_id=survey_id,
+                    survey_owner_id=fake_user.id,
+                    answers=[{"questionId": "q1", "value": "Filtered"}],
+                    submitted_at=datetime(2024, 1, 21, tzinfo=timezone.utc),
+                ),
+            ]
+            class AllResult:
+                def __init__(self, items):
+                    self._items = items
+                def scalars(self):
+                    return self
+                def all(self):
+                    return self._items
+            return AllResult(filtered)
+
+    session = FilteredDbSession()
+    set_db_override(session)
+
+    resp = client.get(
+        f"/surveys/{survey_id}/responses/stats?start_date=2024-01-21&end_date=2024-01-21"
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["responsesCount"] == 1
+
+
+@pytest.mark.asyncio
+async def test_stats_access_control(monkeypatch):
+    """Test that users cannot access stats for surveys they don't own."""
+    object_id = ObjectId()
+    survey_id = str(object_id)
+    different_user_id = str(uuid.uuid4())  # Different from fake_user.id
+
+    async def fake_find_one(query):
+        # Survey exists but owned by different user
+        if query.get("_id") == object_id:
+            requested_owner = query.get("created_by_id")
+            if requested_owner == different_user_id:
+                # This is the actual owner
+                return {
+                    "_id": object_id,
+                    "title": "Private Survey",
+                    "status": "published",
+                    "created_by_id": different_user_id,
+                    "questions": [],
+                }
+        # No match - survey not found for this user
+        return None
+
+    monkeypatch.setattr(surveys_collection, "find_one", fake_find_one)
+    set_db_override(FakeAsyncDbSession())
+
+    # fake_user tries to access different_user's stats
+    resp = client.get(f"/surveys/{survey_id}/responses/stats")
+    assert resp.status_code == 404
