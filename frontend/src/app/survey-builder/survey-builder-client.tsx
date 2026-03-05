@@ -6,7 +6,7 @@ import { Link as LinkIcon, LayoutGrid, Sparkles } from 'lucide-react'
 import type { Layout, Layouts } from 'react-grid-layout'
 
 import { useAuth } from '../contexts/auth-context'
-import { Sidebar } from '../app-modules/sidebar/sidebar'
+import { Sidebar, Section, ButtonGroup } from '../app-modules/sidebar'
 import { ResponsiveGridLayout } from '../app-modules/grid/responsive-grid-layout'
 import { DynamicComponentRenderer } from '@/components/app/dynamic-component-renderer'
 import type { ComponentPropsMapping } from '@/components/app/interfaceMapping'
@@ -379,93 +379,89 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
   return (
     <>
       <div className="app-container">
-        <aside className="sidebar border-r border-border bg-card/70 p-4 backdrop-blur-md">
-          <div className="mb-4 rounded-xl border border-border bg-card p-4">
-            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
-              <Sparkles className="h-4 w-4 text-primary" />
-              Survey Builder
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Drag, resize, and configure your survey with modular question cards.
-            </p>
-          </div>
-
-          <div className="survey-title-field mb-3">
-            <TextInput
-              label="Survey Name"
-              placeholder="Enter survey name..."
-              value={surveyTitle}
-              onChange={(e) => setSurveyTitle(e.target.value)}
-              id="survey-title-input"
-              name="survey-title-input"
-              test_id="survey-title-input"
-            />
-          </div>
-
-          <div className="mb-3 rounded-xl border border-border bg-card p-3">
-            <label htmlFor="survey-status" className="mb-1 block text-xs font-medium text-foreground">
-              Survey Status
-            </label>
-            <select
-              id="survey-status"
-              data-testid="survey-status-select"
-              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-              value={surveyStatus}
-              onChange={(event) => setSurveyStatus(event.target.value as SurveyStatus)}
-            >
-              <option value="draft">draft</option>
-              <option value="published">published</option>
-            </select>
-          </div>
-
-          <Sidebar
-            buttons={[
-              {
-                label: 'New Question',
-                onClick: () => setIsPopUpCreationOpen(true),
-                className: 'button-base',
-                test_id: 'button-1',
-              },
-              {
-                label: 'Clear Questions',
-                onClick: () => {
-                  setQuestions([])
-                  layoutsApi.reset()
-                  setSurveyStatus('draft')
-                },
-                className: 'button-base',
-                test_id: 'button-2',
-              },
-              {
-                label: saving ? 'Saving...' : 'Save Survey',
-                onClick: handleSaveSurvey,
-                className: 'button-base',
-                test_id: 'button-save',
-                disabled: saving,
-              },
-              {
-                label: loadingSurveyOptions || loadingSelectedSurvey ? 'Loading...' : 'Load Survey',
-                onClick: handleLoadSurvey,
-                className: 'button-base',
-                test_id: 'button-load',
-                disabled: loadingSurveyOptions || loadingSelectedSurvey,
-              },
-              {
-                label: 'Logout',
-                onClick: handleLogout,
-                className: 'button-base',
-                test_id: 'button-logout',
-              },
-            ]}
+        <Sidebar>
+          <Section
+            title="Survey Builder"
+            description="Drag, resize, and configure your survey with modular question cards."
+            icon={Sparkles}
           />
+
+          <Section title="Survey Details" contentClassName="space-y-3">
+            <div className="survey-title-field">
+              <TextInput
+                label="Survey Name"
+                placeholder="Enter survey name..."
+                value={surveyTitle}
+                onChange={(e) => setSurveyTitle(e.target.value)}
+                id="survey-title-input"
+                name="survey-title-input"
+                test_id="survey-title-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="survey-status" className="mb-1 block text-xs font-medium text-foreground">
+                Survey Status
+              </label>
+              <select
+                id="survey-status"
+                data-testid="survey-status-select"
+                className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+                value={surveyStatus}
+                onChange={(event) => setSurveyStatus(event.target.value as SurveyStatus)}
+              >
+                <option value="draft">draft</option>
+                <option value="published">published</option>
+              </select>
+            </div>
+          </Section>
+
+          <Section title="Actions">
+            <ButtonGroup
+              buttons={[
+                {
+                  label: 'New Question',
+                  onClick: () => setIsPopUpCreationOpen(true),
+                  className: 'button-base',
+                  test_id: 'button-1',
+                },
+                {
+                  label: 'Clear Questions',
+                  onClick: () => {
+                    setQuestions([])
+                    layoutsApi.reset()
+                    setSurveyStatus('draft')
+                  },
+                  className: 'button-base',
+                  test_id: 'button-2',
+                },
+                {
+                  label: saving ? 'Saving...' : 'Save Survey',
+                  onClick: handleSaveSurvey,
+                  className: 'button-base',
+                  test_id: 'button-save',
+                  disabled: saving,
+                },
+                {
+                  label: loadingSurveyOptions || loadingSelectedSurvey ? 'Loading...' : 'Load Survey',
+                  onClick: handleLoadSurvey,
+                  className: 'button-base',
+                  test_id: 'button-load',
+                  disabled: loadingSurveyOptions || loadingSelectedSurvey,
+                },
+                {
+                  label: 'Logout',
+                  onClick: handleLogout,
+                  className: 'button-base',
+                  test_id: 'button-logout',
+                },
+              ]}
+            />
+          </Section>
 
           <Separator className="my-4" />
 
-          <div className="rounded-xl border border-border bg-card p-3 text-xs">
-            <div className="mb-2 flex items-center gap-2 font-medium text-foreground">
-              <LayoutGrid className="h-4 w-4 text-primary" />
-              Public Survey Link
-            </div>
+          <Section title="Public Survey Link" icon={LayoutGrid} contentClassName="space-y-2">
             <Button
               variant="outline"
               className="w-full justify-start text-xs"
@@ -487,12 +483,12 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
               <LinkIcon className="h-3.5 w-3.5" />
               Copy public survey
             </Button>
-            {!activeSurveyId && <p className="mt-2 text-muted-foreground">Save survey first to get a public link.</p>}
+            {!activeSurveyId && <p className="text-xs text-muted-foreground">Save survey first to get a public link.</p>}
             {activeSurveyId && surveyStatus !== 'published' && (
-              <p className="mt-2 text-muted-foreground">Publish survey to make the link accessible.</p>
+              <p className="text-xs text-muted-foreground">Publish survey to make the link accessible.</p>
             )}
-          </div>
-        </aside>
+          </Section>
+        </Sidebar>
 
         <main className="content">
           <div className="grid-container dot-grid-bg min-h-[calc(100vh-8rem)] rounded-xl border border-border bg-background p-2">
