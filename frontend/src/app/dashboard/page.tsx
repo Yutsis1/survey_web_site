@@ -297,7 +297,7 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card className="xl:col-span-3" data-testid="latest-response-preview">
+              {/* <Card className="xl:col-span-3" data-testid="latest-response-preview">
                 <CardHeader>
                   <CardTitle>Latest Response Preview</CardTitle>
                 </CardHeader>
@@ -333,7 +333,7 @@ export default function DashboardPage() {
                     <p className="text-sm text-muted-foreground">No responses yet.</p>
                   )}
                 </CardContent>
-              </Card>
+              </Card> */}
 
               {selectedSurvey.questionBreakdown.map((question) => (
                 <Card key={question.questionId} className="xl:col-span-1">
