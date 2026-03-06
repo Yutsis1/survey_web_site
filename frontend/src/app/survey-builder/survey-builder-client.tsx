@@ -24,6 +24,7 @@ import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { CreateQuestionPopUp } from './components/create-question-pop-up'
 import { LoadSurveyPopUp } from './components/load-survey-pop-up'
+import { useToast } from '@/components/app/toast'
 
 interface SurveyBuilderClientProps {
   initialSurveyId?: string
@@ -41,6 +42,7 @@ const NON_SHRINKABLE_COMPONENTS = new Set<QuestionItem['component']>(['TextInput
 export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProps) {
   const { isAuthenticated, isLoading, logout } = useAuth()
   const router = useRouter()
+  const { notify } = useToast()
   const initialLoadRef = useRef(false)
 
   const [isPopUpCreationOpen, setIsPopUpCreationOpen] = useState(false)
@@ -187,7 +189,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
       })
       .catch((error) => {
         console.error(error)
-        alert('Failed to load survey')
+        notify({ type: 'error', title: 'Failed to load survey' })
       })
       .finally(() => {
         setLoadingSelectedSurvey(false)
@@ -232,7 +234,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
   const handleSaveSurvey = async () => {
     const trimmedTitle = surveyTitle.trim()
     if (!trimmedTitle) {
-      alert('Survey name is required')
+      notify({ type: 'warning', title: 'Survey name is required' })
       return
     }
 
@@ -250,10 +252,10 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
       )
       setActiveSurveyId(id)
       setSurveyTitle(trimmedTitle)
-      // alert(`Survey saved with id: ${id}`)
+      notify({ type: 'success', title: 'Survey saved successfully' })
     } catch (error) {
       console.error(error)
-      alert('Failed to save survey')
+      notify({ type: 'error', title: 'Failed to save survey' })
     } finally {
       setSaving(false)
     }
@@ -316,7 +318,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
       handleCloseLoadSurveyPopup()
     } catch (error) {
       console.error(error)
-      alert('Failed to load survey')
+      notify({ type: 'error', title: 'Failed to load survey' })
     } finally {
       setLoadingSelectedSurvey(false)
     }
@@ -375,6 +377,27 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
   }
 
   const surveySharePath = activeSurveyId ? `/survey/${activeSurveyId}` : ''
+
+  const handleCopyPublicSurvey = async () => {
+    if (!activeSurveyId) {
+      notify({ type: 'info', title: "Survey isn't saved. Please save it first." })
+      return
+    }
+
+    if (surveyStatus !== 'published') {
+      notify({ type: 'warning', title: "Survey isn't published. Please publish it first." })
+      return
+    }
+
+    try {
+      const origin = window.location.origin
+      await navigator.clipboard.writeText(`${origin}${surveySharePath}`)
+      notify({ type: 'success', title: 'Public survey link copied' })
+    } catch (error) {
+      console.error(error)
+      notify({ type: 'error', title: 'Failed to copy public survey link' })
+    }
+  }
 
   return (
     <>
@@ -466,19 +489,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
               variant="outline"
               className="w-full justify-start text-xs"
               data-testid="button-copy-public-survey"
-              onClick={() => {
-                if (!activeSurveyId) {
-                  alert("survey isn't saved. please save it")
-                  return
-                }
-                if (surveyStatus !== 'published') {
-                  alert("survey isn't published. please publish it")
-                  return
-                }
-
-                const origin = window.location.origin
-                navigator.clipboard.writeText(`${origin}${surveySharePath}`)
-              }}
+              onClick={handleCopyPublicSurvey}
             >
               <LinkIcon className="h-3.5 w-3.5" />
               Copy public survey
