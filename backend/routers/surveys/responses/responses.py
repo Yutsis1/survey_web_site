@@ -10,19 +10,12 @@ from sqlalchemy import desc, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from collections import defaultdict
 
-from ..models.api.surveys import (
-    SurveyResponseCreate,
-    SurveyResponseRead,
-    PaginatedResponseList,
-    SurveyResponseStats,
-    TrendPoint,
-    QuestionStats,
-    SurveyStatus,
-)
-from ..db.mongo.mongoDB import surveys_collection
-from ..routers.auth.auth import get_current_user
-from ..db.sql.sql_driver import get_async_db
-from ..models.db.sql.auth import User, SurveyResponse
+from backend.db.sql.sql_driver import get_async_db
+from backend.models.api.surveys import PaginatedResponseList, QuestionStats, SurveyResponseCreate, SurveyResponseRead, SurveyResponseStats, SurveyStatus, TrendPoint
+from backend.models.db.sql.auth import SurveyResponse, User
+from backend.routers.auth.auth import get_current_user
+from backend.db.mongo.mongoDB import surveys_collection
+
 
 router = APIRouter(
     prefix="/surveys",
@@ -97,7 +90,8 @@ async def list_responses(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_db),
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
-    page_size: int = Query(10, ge=1, le=100, description="Number of responses per page"),
+    page_size: int = Query(
+        10, ge=1, le=100, description="Number of responses per page"),
 ):
     """
     List responses for a survey owned by the current user with pagination.
@@ -107,9 +101,10 @@ async def list_responses(
         "_id": object_id,
         "created_by_id": str(current_user.id)
     })
-    
+
     if not survey:
-        raise HTTPException(status_code=404, detail="Survey not found or access denied")
+        raise HTTPException(
+            status_code=404, detail="Survey not found or access denied")
 
     # Count total responses
     count_query = select(func.count()).select_from(SurveyResponse).where(
@@ -146,8 +141,10 @@ async def get_survey_stats(
     id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_db),
-    start_date: Optional[str] = Query(None, description="Start date filter (ISO format YYYY-MM-DD)"),
-    end_date: Optional[str] = Query(None, description="End date filter (ISO format YYYY-MM-DD)"),
+    start_date: Optional[str] = Query(
+        None, description="Start date filter (ISO format YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(
+        None, description="End date filter (ISO format YYYY-MM-DD)"),
 ):
     """
     Get aggregated statistics for a survey owned by the current user.
@@ -158,31 +155,36 @@ async def get_survey_stats(
         "_id": object_id,
         "created_by_id": str(current_user.id)
     })
-    
+
     if not survey:
-        raise HTTPException(status_code=404, detail="Survey not found or access denied")
+        raise HTTPException(
+            status_code=404, detail="Survey not found or access denied")
 
     # Parse date filters if provided
     start_dt = None
     end_dt = None
     if start_date:
         try:
-            start_dt = datetime.fromisoformat(start_date).replace(tzinfo=timezone.utc)
+            start_dt = datetime.fromisoformat(
+                start_date).replace(tzinfo=timezone.utc)
         except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid start_date format. Use YYYY-MM-DD")
+            raise HTTPException(
+                status_code=400, detail="Invalid start_date format. Use YYYY-MM-DD")
     if end_date:
         try:
             # Set to end of day
-            end_dt = datetime.fromisoformat(end_date).replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+            end_dt = datetime.fromisoformat(end_date).replace(
+                hour=23, minute=59, second=59, tzinfo=timezone.utc)
         except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid end_date format. Use YYYY-MM-DD")
+            raise HTTPException(
+                status_code=400, detail="Invalid end_date format. Use YYYY-MM-DD")
 
     # Build query for responses
     query = select(SurveyResponse).where(
         SurveyResponse.survey_id == id,
         SurveyResponse.survey_owner_id == current_user.id,
     )
-    
+
     if start_dt:
         query = query.where(SurveyResponse.submitted_at >= start_dt)
     if end_dt:
@@ -195,23 +197,25 @@ async def get_survey_stats(
     total_responses = len(responses)
     questions = survey.get("questions", [])
     total_questions = len(questions)
-    
+
     # Calculate completion rate
     completion_rate = 0.0
     if total_responses > 0 and total_questions > 0:
         completion_rates = []
         for response in responses:
             answered = len(response.answers)
-            rate = (answered / total_questions) * 100 if total_questions > 0 else 0
+            rate = (answered / total_questions) * \
+                100 if total_questions > 0 else 0
             completion_rates.append(rate)
-        completion_rate = round(sum(completion_rates) / len(completion_rates), 1)
+        completion_rate = round(
+            sum(completion_rates) / len(completion_rates), 1)
 
     # Build trend data (group by date)
     trend_data = defaultdict(int)
     for response in responses:
         date_str = response.submitted_at.date().isoformat()
         trend_data[date_str] += 1
-    
+
     trend = [
         TrendPoint(date=date, responses=count)
         for date, count in sorted(trend_data.items())
@@ -222,7 +226,7 @@ async def get_survey_stats(
     for question in questions:
         question_id = question.get("id")
         question_text = question.get("questionText", f"Question {question_id}")
-        
+
         # Count answers for this question
         option_counts = defaultdict(int)
         for response in responses:
@@ -239,12 +243,12 @@ async def get_survey_stats(
                         key = str(value)
                     option_counts[key] += 1
                     break
-        
+
         counts = [
             {"option": option, "count": count}
             for option, count in sorted(option_counts.items())
         ]
-        
+
         question_breakdown.append(QuestionStats(
             questionId=question_id,
             questionText=question_text,
@@ -257,7 +261,8 @@ async def get_survey_stats(
         if isinstance(created_date, datetime):
             created_date_str = created_date.date().isoformat()
         else:
-            created_date_str = str(created_date)[:10]  # Take first 10 chars (YYYY-MM-DD)
+            # Take first 10 chars (YYYY-MM-DD)
+            created_date_str = str(created_date)[:10]
     else:
         created_date_str = datetime.now().date().isoformat()
 
@@ -312,7 +317,8 @@ async def get_response_by_id(
     try:
         response_uuid = uuid.UUID(response_id)
     except Exception:
-        raise HTTPException(status_code=400, detail="Invalid response ID format")
+        raise HTTPException(
+            status_code=400, detail="Invalid response ID format")
 
     query = select(SurveyResponse).where(
         SurveyResponse.id == response_uuid,

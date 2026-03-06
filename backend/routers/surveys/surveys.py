@@ -1,15 +1,17 @@
 """
 Route for managing surveys.
 """
+from typing import List
+
 from bson import ObjectId
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.exceptions import RequestValidationError
 from pymongo.errors import DuplicateKeyError
 
-from ..models.api.surveys import *
-from ..db.mongo.mongoDB import surveys_collection
-from ..routers.auth.auth import get_current_user
-from ..models.db.sql.auth import User
+from backend.models.api.surveys import Survey, SurveyCreate, SurveyListResponse, SurveyOption, SurveyStatus
+from backend.models.db.sql.auth import User
+from backend.routers.auth.auth import get_current_user
+from backend.db.mongo import surveys_collection
 
 router = APIRouter(
     prefix="/surveys",
@@ -138,11 +140,13 @@ async def get_survey(id: str, current_user: User = Depends(get_current_user)):
     object_id = _parse_survey_object_id(id)
     survey = await surveys_collection.find_one({
         "_id": object_id,
-        "created_by_id": str(current_user.id)  # Only get surveys owned by current user
+        # Only get surveys owned by current user
+        "created_by_id": str(current_user.id)
     })
 
     if not survey:
-        raise HTTPException(status_code=404, detail="Survey not found or access denied")
+        raise HTTPException(
+            status_code=404, detail="Survey not found or access denied")
 
     return Survey(**_normalize_survey(survey))
 
@@ -185,7 +189,8 @@ async def update_survey(id: str, survey: SurveyCreate, current_user: User = Depe
         raise HTTPException(status_code=422, detail=str(e))
 
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Survey not found or access denied")
+        raise HTTPException(
+            status_code=404, detail="Survey not found or access denied")
 
     return {"id": id}
 
@@ -206,12 +211,14 @@ async def delete_survey(id: str, current_user: User = Depends(get_current_user))
     try:
         result = await surveys_collection.delete_one({
             "_id": _parse_survey_object_id(id),
-            "created_by_id": str(current_user.id)  # Only delete if owned by current user
+            # Only delete if owned by current user
+            "created_by_id": str(current_user.id)
         })
     except HTTPException:
         raise
 
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Survey not found or access denied")
+        raise HTTPException(
+            status_code=404, detail="Survey not found or access denied")
 
     return {"message": "Survey deleted successfully"}
