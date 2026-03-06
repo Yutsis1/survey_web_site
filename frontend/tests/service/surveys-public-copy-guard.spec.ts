@@ -15,14 +15,14 @@ test.describe('Survey Public Copy Guard Service Tests', () => {
     await surveyCreatingPage.sidebar.newQuestionButton.waitFor({ state: 'visible', timeout: defaultTimeout })
   })
 
-  test("shows popup when copying public survey before first save", async ({ page }) => {
-    let dialogMessage = ''
-    page.once('dialog', async (dialog) => {
-      dialogMessage = dialog.message()
-      await dialog.accept()
-    })
-
+  test("shows toast when copying public survey before first save", async ({ page }) => {
     await surveyCreatingPage.clickCopyPublicSurvey()
-    expect(dialogMessage).toBe("survey isn't saved. please save it")
+    
+    // Wait for toast to appear
+    await surveyCreatingPage.toast.waitForToast('info')
+    
+    // Verify toast message
+    const toastTitle = await surveyCreatingPage.toast.getToastTitle('info')
+    expect(toastTitle).toBe("Survey isn't saved. Please save it first.")
   })
 })
