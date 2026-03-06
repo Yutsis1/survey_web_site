@@ -3,12 +3,16 @@ import { PopupComponent } from './common-components/pop-up';
 import { SidebarComponent } from './common-components/sidebar';
 import { PopupNewQuestionComponent } from './common-components/pop-up-newQuestions';
 import { LoadSurveyPopup } from './common-components/pop-up-loadSurvey';
+import { ToastComponent } from './common-components/toast';
 
 export class SurveyCreatorsPage {
   readonly page: Page;
 
   // Sidebar buttons
   readonly sidebar: SidebarComponent;
+
+  // Toast notifications
+  readonly toast: ToastComponent;
 
   // Main content
   readonly gridContainer: Locator;
@@ -23,6 +27,7 @@ export class SurveyCreatorsPage {
   constructor(page: Page) {
     this.page = page;
     this.sidebar = new SidebarComponent(page);
+    this.toast = new ToastComponent(page);
     this.gridContainer = page.locator('.grid-container');
 
     // Delete dropzone
