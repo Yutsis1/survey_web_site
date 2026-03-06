@@ -1,20 +1,44 @@
 """
 Route for managing surveys.
 """
+from typing import List
+
 from bson import ObjectId
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.exceptions import RequestValidationError
 from pymongo.errors import DuplicateKeyError
 
-from ..models.api.surveys import *
-from ..db.mongo.mongoDB import surveys_collection
-from ..routers.auth.auth import get_current_user
-from ..models.db.sql.auth import User
+from backend.models.api.surveys import Survey, SurveyCreate, SurveyListResponse, SurveyOption, SurveyStatus
+from backend.models.db.sql.auth import User
+from backend.routers.auth.auth import get_current_user
+from backend.db.mongo import surveys_collection
 
 router = APIRouter(
     prefix="/surveys",
     tags=["surveys"]
 )
+
+
+def _to_survey_status(survey: dict) -> SurveyStatus:
+    raw_status = survey.get("status")
+    if raw_status in {SurveyStatus.draft.value, SurveyStatus.published.value}:
+        return SurveyStatus(raw_status)
+    return SurveyStatus.published if bool(survey.get("is_public")) else SurveyStatus.draft
+
+
+def _normalize_survey(survey: dict) -> dict:
+    normalized = dict(survey)
+    normalized["id"] = str(normalized["_id"])
+    normalized.pop("_id", None)
+    normalized["status"] = _to_survey_status(survey).value
+    return normalized
+
+
+def _parse_survey_object_id(id: str) -> ObjectId:
+    try:
+        return ObjectId(id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid survey ID format")
 
 
 @router.post("/")
@@ -30,11 +54,10 @@ async def create_survey(survey: SurveyCreate, current_user: User = Depends(get_c
     """
     try:
         survey_dict = survey.model_dump(exclude_none=True)
-        # Add user information to the survey
+        survey_dict["status"] = survey.status.value
         survey_dict["created_by_id"] = str(current_user.id)
         survey_dict["created_by_email"] = current_user.email
-        survey_dict["is_public"] = survey.is_public if survey.is_public is not None else False
-        
+
         result = await surveys_collection.insert_one(survey_dict)
         return {"id": str(result.inserted_id)}
     except DuplicateKeyError:
@@ -62,7 +85,8 @@ async def get_survey_options(current_user: User = Depends(get_current_user)):
     async for survey in cursor:
         options.append({
             "id": str(survey["_id"]),
-            "title": survey.get("title", f"Untitled Survey {survey['_id']}")
+            "title": survey.get("title", f"Untitled Survey {survey['_id']}"),
+            "status": _to_survey_status(survey).value,
         })
 
     return options
@@ -81,13 +105,23 @@ async def list_surveys(current_user: User = Depends(get_current_user)):
     # Get surveys created by the current user
     cursor = surveys_collection.find({"created_by_id": str(current_user.id)})
     surveys = []
-    
+
     async for survey in cursor:
-        survey["id"] = str(survey["_id"])
-        survey.pop("_id", None)
-        surveys.append(survey)
-    
+        surveys.append(_normalize_survey(survey))
+
     return {"surveys": surveys}
+
+
+@router.get("/public/{id}", response_model=Survey)
+async def get_public_survey(id: str):
+    """
+    Return a published survey for anonymous responders.
+    """
+    object_id = _parse_survey_object_id(id)
+    survey = await surveys_collection.find_one({"_id": object_id})
+    if not survey or _to_survey_status(survey) != SurveyStatus.published:
+        raise HTTPException(status_code=404, detail="Survey not found")
+    return Survey(**_normalize_survey(survey))
 
 
 @router.get("/{id}", response_model=Survey)
@@ -103,20 +137,18 @@ async def get_survey(id: str, current_user: User = Depends(get_current_user)):
     :return: The requested survey.
     :rtype: Survey
     """
-    try:
-        survey = await surveys_collection.find_one({
-            "_id": ObjectId(id),
-            "created_by_id": str(current_user.id)  # Only get surveys owned by current user
-        })
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid survey ID format")
-    
-    if not survey:
-        raise HTTPException(status_code=404, detail="Survey not found or access denied")
+    object_id = _parse_survey_object_id(id)
+    survey = await surveys_collection.find_one({
+        "_id": object_id,
+        # Only get surveys owned by current user
+        "created_by_id": str(current_user.id)
+    })
 
-    survey["id"] = str(survey["_id"])
-    survey.pop("_id", None)
-    return Survey(**survey)
+    if not survey:
+        raise HTTPException(
+            status_code=404, detail="Survey not found or access denied")
+
+    return Survey(**_normalize_survey(survey))
 
 
 @router.put("/{id}")
@@ -134,13 +166,11 @@ async def update_survey(id: str, survey: SurveyCreate, current_user: User = Depe
     :return: The ID of the updated survey.
     :rtype: dict
     """
-    try:
-        object_id = ObjectId(id)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid survey ID format")
+    object_id = _parse_survey_object_id(id)
 
     try:
         survey_dict = survey.model_dump(exclude_none=True)
+        survey_dict["status"] = survey.status.value
         survey_dict["created_by_email"] = current_user.email
 
         result = await surveys_collection.update_one(
@@ -159,7 +189,8 @@ async def update_survey(id: str, survey: SurveyCreate, current_user: User = Depe
         raise HTTPException(status_code=422, detail=str(e))
 
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Survey not found or access denied")
+        raise HTTPException(
+            status_code=404, detail="Survey not found or access denied")
 
     return {"id": id}
 
@@ -179,13 +210,15 @@ async def delete_survey(id: str, current_user: User = Depends(get_current_user))
     """
     try:
         result = await surveys_collection.delete_one({
-            "_id": ObjectId(id),
-            "created_by_id": str(current_user.id)  # Only delete if owned by current user
+            "_id": _parse_survey_object_id(id),
+            # Only delete if owned by current user
+            "created_by_id": str(current_user.id)
         })
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid survey ID format")
-    
+    except HTTPException:
+        raise
+
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Survey not found or access denied")
-    
+        raise HTTPException(
+            status_code=404, detail="Survey not found or access denied")
+
     return {"message": "Survey deleted successfully"}

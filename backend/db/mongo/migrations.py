@@ -99,7 +99,7 @@ async def _cleanup_duplicate_owner_titles() -> None:
                 title,
                 to_keep,
             )
-        elif MIGRATION_STRATEGY == "update":
+        elif MONGO_MIGRATION_STRATEGY == "update":
             for i, doc_id in enumerate(to_process, start=1):
                 new_title = f"{title} (Duplicate {i}-{str(doc_id)[-6:]})"
                 await surveys_collection.update_one(
@@ -108,12 +108,29 @@ async def _cleanup_duplicate_owner_titles() -> None:
                 )
 
 
+async def _backfill_status_from_legacy_public_flag() -> None:
+    """
+    Ensure every survey has a status field after replacing legacy is_public.
+    """
+    # Explicitly map previous is_public states.
+    await surveys_collection.update_many(
+        {"status": {"$exists": False}, "is_public": True},
+        {"$set": {"status": "published"}, "$unset": {"is_public": ""}},
+    )
+    await surveys_collection.update_many(
+        {"status": {"$exists": False}},
+        {"$set": {"status": "draft"}, "$unset": {"is_public": ""}},
+    )
+
+
 async def run_migrations() -> None:
     """
     Idempotent index migration.
     Ensures a unique partial index on (created_by_id, title) so titles are unique per user.
     """
     existing = await _indexes_by_name(surveys_collection)
+
+    await _backfill_status_from_legacy_public_flag()
 
     if INDEX_NAME in existing and _spec_matches(existing[INDEX_NAME]):
         logger.info("Owner/title index already correct; skipping creation.")

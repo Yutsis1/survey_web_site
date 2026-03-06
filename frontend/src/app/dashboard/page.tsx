@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import type { MouseEvent } from "react"
@@ -18,11 +18,13 @@ import {
 
 import { useAuth } from "@/app/contexts/auth-context"
 import { fetchDashboardData, DashboardData } from "@/app/services/dashboard"
+import { fetchLatestSurveyResponse, StoredSurveyResponse } from "@/app/services/survey-responses"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Progress } from "@/components/ui/progress"
+import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -32,6 +34,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+
+function formatAnswerValue(value: string | boolean | string[]) {
+  if (Array.isArray(value)) return value.join(", ")
+  if (typeof value === "boolean") return value ? "Yes" : "No"
+  return value
+}
 
 function SummaryCard({
   title,
@@ -64,6 +72,10 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<DashboardData | null>(null)
   const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null)
+  const [latestResponsesBySurveyId, setLatestResponsesBySurveyId] = useState<Record<string, StoredSurveyResponse | null>>({})
+  const [latestResponseLoadingBySurveyId, setLatestResponseLoadingBySurveyId] = useState<Record<string, boolean>>({})
+  const [latestResponseErrorBySurveyId, setLatestResponseErrorBySurveyId] = useState<Record<string, string | null>>({})
+  const latestResponseInFlightRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -77,6 +89,10 @@ export default function DashboardPage() {
     const run = async () => {
       setLoadingData(true)
       setError(null)
+      setLatestResponsesBySurveyId({})
+      setLatestResponseLoadingBySurveyId({})
+      setLatestResponseErrorBySurveyId({})
+      latestResponseInFlightRef.current.clear()
       try {
         const dashboardData = await fetchDashboardData()
         setData(dashboardData)
@@ -92,10 +108,47 @@ export default function DashboardPage() {
     run()
   }, [isAuthenticated])
 
+  useEffect(() => {
+    if (!selectedSurveyId) return
+    if (Object.prototype.hasOwnProperty.call(latestResponsesBySurveyId, selectedSurveyId)) return
+    if (latestResponseInFlightRef.current.has(selectedSurveyId)) return
+
+    latestResponseInFlightRef.current.add(selectedSurveyId)
+    setLatestResponseLoadingBySurveyId((current) => ({ ...current, [selectedSurveyId]: true }))
+    setLatestResponseErrorBySurveyId((current) => ({ ...current, [selectedSurveyId]: null }))
+
+    const loadLatestResponse = async () => {
+      try {
+        const latestResponse = await fetchLatestSurveyResponse(selectedSurveyId)
+        setLatestResponsesBySurveyId((current) => ({ ...current, [selectedSurveyId]: latestResponse }))
+      } catch (requestError) {
+        console.error(requestError)
+        setLatestResponsesBySurveyId((current) => ({ ...current, [selectedSurveyId]: null }))
+        setLatestResponseErrorBySurveyId((current) => ({
+          ...current,
+          [selectedSurveyId]: "Failed to load latest response.",
+        }))
+      } finally {
+        latestResponseInFlightRef.current.delete(selectedSurveyId)
+        setLatestResponseLoadingBySurveyId((current) => ({ ...current, [selectedSurveyId]: false }))
+      }
+    }
+
+    loadLatestResponse()
+  }, [selectedSurveyId, latestResponsesBySurveyId])
+
   const selectedSurvey = useMemo(() => {
     if (!data || !selectedSurveyId) return data?.surveys[0] ?? null
     return data.surveys.find((survey) => survey.surveyId === selectedSurveyId) ?? data.surveys[0] ?? null
   }, [data, selectedSurveyId])
+  const selectedLatestResponse = selectedSurveyId ? latestResponsesBySurveyId[selectedSurveyId] ?? null : null
+  const selectedLatestResponseError = selectedSurveyId ? latestResponseErrorBySurveyId[selectedSurveyId] : null
+  const hasLoadedLatestResponse = selectedSurveyId
+    ? Object.prototype.hasOwnProperty.call(latestResponsesBySurveyId, selectedSurveyId)
+    : false
+  const isLoadingLatestResponse = selectedSurveyId
+    ? !hasLoadedLatestResponse || Boolean(latestResponseLoadingBySurveyId[selectedSurveyId])
+    : false
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -158,9 +211,9 @@ export default function DashboardPage() {
               testId="summary-card-avg-completion-rate"
             />
             <SummaryCard
-              title="Active Surveys"
+              title="Published Surveys"
               value={String(data.summary.activeSurveys)}
-              description="Surveys with at least one response."
+              description="Surveys visible to responders."
               testId="summary-card-active-surveys"
             />
           </div>
@@ -190,7 +243,7 @@ export default function DashboardPage() {
                     >
                       <TableCell className="font-medium">{survey.title}</TableCell>
                       <TableCell>
-                        <Badge variant={survey.status === "active" ? "success" : "outline"} data-testid="survey-status-badge">
+                        <Badge variant={survey.status === "published" ? "success" : "outline"} data-testid="survey-status-badge">
                           {survey.status}
                         </Badge>
                       </TableCell>
@@ -227,7 +280,7 @@ export default function DashboardPage() {
                             asChild
                             onClick={(event: MouseEvent<HTMLElement>) => event.stopPropagation()}
                           >
-                            <Link href={`/survey/${survey.surveyId}`} target="_blank">
+                            <Link href={`/survey/${survey.surveyId}?preview=1`} target="_blank">
                               <ExternalLink className="h-3.5 w-3.5" />
                               View
                             </Link>
@@ -287,6 +340,51 @@ export default function DashboardPage() {
                   <p className="text-xs text-muted-foreground">
                     Average completion based on answered questions per response.
                   </p>
+                </CardContent>
+              </Card>
+
+              <Card className="xl:col-span-3" data-testid="latest-response-preview">
+                <CardHeader>
+                  <CardTitle>Latest Response Preview</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {isLoadingLatestResponse ? (
+                    <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading latest response...
+                    </div>
+                  ) : selectedLatestResponseError ? (
+                    <p className="text-sm text-destructive">{selectedLatestResponseError}</p>
+                  ) : selectedLatestResponse ? (
+                    <>
+                      <div className="text-xs text-muted-foreground">
+                        Response ID: {selectedLatestResponse.id}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Submitted: {new Date(selectedLatestResponse.submittedAt ?? "").toLocaleString()}
+                      </div>
+                      <Separator />
+                      <div className="space-y-3">
+                        {selectedLatestResponse.answers.map((answer) => {
+                          const question = selectedSurvey.questionBreakdown.find(
+                            (item) => item.questionId === answer.questionId
+                          )
+                          return (
+                            <div key={answer.questionId} className="rounded-md border border-border p-3">
+                              <div className="text-sm font-medium">
+                                {question?.questionText ?? answer.questionId}
+                              </div>
+                              <div className="text-sm text-muted-foreground" data-testid={`latest-answer-${answer.questionId}`}>
+                                {formatAnswerValue(answer.value)}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No responses yet.</p>
+                  )}
                 </CardContent>
               </Card>
 

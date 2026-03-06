@@ -38,4 +38,24 @@ test.describe('Survey Builder Service Tests', () => {
       })
     }
   })
+
+  test('uses persisted layout coordinates when loading survey', async () => {
+    await surveyCreatingPage.clickLoadSurvey()
+    await surveyCreatingPage.loadSurveyPopup.dropdown.waitFor({ state: 'visible', timeout: defaultTimeout })
+    await surveyCreatingPage.loadSurveyPopup.waitForSurveysToLoad()
+    await surveyCreatingPage.loadSurveyPopup.selectSurveyById('survey-radio')
+    await surveyCreatingPage.applyPopup()
+
+    const questionCard = surveyCreatingPage.page.locator('.grid-item').first()
+    await expect(questionCard).toBeVisible()
+
+    const [questionBox, containerBox] = await Promise.all([
+      questionCard.boundingBox(),
+      surveyCreatingPage.gridContainer.boundingBox(),
+    ])
+
+    expect(questionBox).not.toBeNull()
+    expect(containerBox).not.toBeNull()
+    expect(questionBox!.y).toBeGreaterThan(containerBox!.y + 120)
+  })
 })

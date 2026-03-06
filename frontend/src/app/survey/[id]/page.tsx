@@ -1,15 +1,18 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import { CheckCircle2, Loader2 } from "lucide-react"
+import type { Layout, Layouts } from "react-grid-layout"
 
 import { DynamicComponentRenderer } from "@/components/app/dynamic-component-renderer"
 import { QuestionItem } from "@/app/app-modules/questions/question-types"
+import { ResponsiveGridLayout } from "@/app/app-modules/grid/responsive-grid-layout"
 import {
   fetchPublicSurveyById,
   submitSurveyResponse,
 } from "@/app/services/survey-responses"
+import { fetchSurvey } from "@/app/services/surveys"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -20,11 +23,45 @@ interface SurveyData {
   id: string
   title: string
   questions: QuestionItem[]
+  layouts?: Layouts
+}
+
+const NON_SHRINKABLE_COMPONENTS = new Set<QuestionItem["component"]>(["TextInput", "RadioBar", "CheckboxTiles"])
+
+function buildFallbackLayouts(questions: QuestionItem[]): Layouts {
+  const base: Layout[] = questions.map((question, index) => {
+    if (question.layout) {
+      return {
+        ...question.layout,
+        i: question.id,
+      }
+    }
+
+    const isNonShrinkable = NON_SHRINKABLE_COMPONENTS.has(question.component)
+    return {
+      i: question.id,
+      x: (index * 3) % 12,
+      y: Math.floor((index * 3) / 12) * 3,
+      w: isNonShrinkable ? 3 : 2,
+      h: isNonShrinkable ? 3 : 2,
+      minW: isNonShrinkable ? 3 : undefined,
+      minH: isNonShrinkable ? 3 : undefined,
+    }
+  })
+
+  return { lg: base, md: base, sm: base, xs: base, xxs: base }
+}
+
+function hasLayouts(layouts?: Layouts | null) {
+  if (!layouts) return false
+  return Object.values(layouts).some((breakpointLayouts) => (breakpointLayouts ?? []).length > 0)
 }
 
 export default function SurveyResponsePage() {
   const params = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
   const surveyId = params?.id
+  const isPreview = searchParams.get("preview") === "1"
 
   const [survey, setSurvey] = useState<SurveyData | null>(null)
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({})
@@ -40,11 +77,17 @@ export default function SurveyResponsePage() {
       setLoading(true)
       setError(null)
       try {
-        const data = await fetchPublicSurveyById(surveyId)
-        setSurvey(data)
+        const data = isPreview
+          ? await fetchSurvey(surveyId)
+          : await fetchPublicSurveyById(surveyId)
+        const surveyWithLayouts: SurveyData = {
+          ...data,
+          layouts: hasLayouts(data.layouts) ? data.layouts : buildFallbackLayouts(data.questions),
+        }
+        setSurvey(surveyWithLayouts)
 
         const initialAnswers: Record<string, AnswerValue> = {}
-        data.questions.forEach((question) => {
+        surveyWithLayouts.questions.forEach((question) => {
           const optionProps = question.option?.optionProps as Record<string, unknown> | undefined
           if (!optionProps) return
           if (question.component === "Switch") {
@@ -65,14 +108,14 @@ export default function SurveyResponsePage() {
         setAnswers(initialAnswers)
       } catch (requestError) {
         console.error(requestError)
-        setError("Survey not found or unavailable.")
+        setError(isPreview ? "Unable to load preview." : "Survey not found or unavailable.")
       } finally {
         setLoading(false)
       }
     }
 
     run()
-  }, [surveyId])
+  }, [surveyId, isPreview])
 
   const totalQuestions = survey?.questions.length ?? 0
   const answeredCount = useMemo(() => {
@@ -148,7 +191,7 @@ export default function SurveyResponsePage() {
   }
 
   const handleSubmit = async () => {
-    if (!surveyId || !survey) return
+    if (!surveyId || !survey || isPreview) return
     setSubmitting(true)
     setError(null)
 
@@ -212,10 +255,15 @@ export default function SurveyResponsePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-10">
+    <div className="mx-auto w-full max-w-6xl px-4 py-10">
       <Card className="mb-6 border-border bg-card/90">
         <CardHeader>
           <CardTitle>{survey?.title || "Untitled Survey"}</CardTitle>
+          {isPreview ? (
+            <p className="text-xs text-muted-foreground" data-testid="survey-preview-note">
+              Preview mode: responses are not submitted.
+            </p>
+          ) : null}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Progress</span>
@@ -228,36 +276,50 @@ export default function SurveyResponsePage() {
         </CardHeader>
       </Card>
 
-      <div className="space-y-4">
-        {survey?.questions.map((question, index) => (
-          <Card key={question.id} className="border-border bg-card">
-            <CardContent className="p-5">
-              <div className="mb-3 text-xs uppercase tracking-wide text-muted-foreground">
-                Question {index + 1}
-              </div>
-              <DynamicComponentRenderer
-                component={question.component}
-                option={getQuestionOption(question)}
-                questionText={question.questionText}
-                showQuestionText
-              />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid-container dot-grid-bg rounded-xl border border-border bg-background p-2" data-testid="public-survey-grid">
+        <ResponsiveGridLayout
+          className="layout"
+          layouts={survey?.layouts}
+          rowHeight={60}
+          isDraggable={false}
+          isResizable={false}
+          compactType={null}
+          preventCollision={false}
+        >
+          {survey?.questions.map((question, index) => (
+            <Card key={question.id} className="grid-item h-full border-border bg-card">
+              <CardContent className="p-5">
+                <div className="mb-3 text-xs uppercase tracking-wide text-muted-foreground">
+                  Question {index + 1}
+                </div>
+                <div data-testid={`public-question-${question.id}`}>
+                  <DynamicComponentRenderer
+                    component={question.component}
+                    option={getQuestionOption(question)}
+                    questionText={question.questionText}
+                    showQuestionText
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </ResponsiveGridLayout>
       </div>
 
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
 
-      <div className="mt-8">
-        <Button
-          className="w-full"
-          onClick={handleSubmit}
-          disabled={submitting}
-        >
-          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {submitting ? "Submitting..." : "Submit Response"}
-        </Button>
-      </div>
+      {!isPreview ? (
+        <div className="mt-8">
+          <Button
+            className="w-full"
+            onClick={handleSubmit}
+            disabled={submitting}
+          >
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {submitting ? "Submitting..." : "Submit Response"}
+          </Button>
+        </div>
+      ) : null}
     </div>
   )
 }

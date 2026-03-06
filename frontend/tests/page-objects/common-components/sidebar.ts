@@ -36,4 +36,12 @@ export class SidebarComponent {
   get addNameTextInput(): Locator {
     return this.baseLocator.locator('[data-testid="survey-title-input"] input');
   }
+
+  get copyPublicSurveyButton(): Locator {
+    return this.baseLocator.getByTestId('button-copy-public-survey');
+  }
+
+  get surveyStatusSelect(): Locator {
+    return this.baseLocator.getByTestId('survey-status-select');
+  }
 }

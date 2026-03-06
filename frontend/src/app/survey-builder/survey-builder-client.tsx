@@ -6,8 +6,7 @@ import { Link as LinkIcon, LayoutGrid, Sparkles } from 'lucide-react'
 import type { Layout, Layouts } from 'react-grid-layout'
 
 import { useAuth } from '../contexts/auth-context'
-import { Sidebar } from '../app-modules/sidebar/sidebar'
-import { PopUp } from '../app-modules/pop-up/pop-up'
+import { Sidebar, Section, ButtonGroup } from '../app-modules/sidebar'
 import { ResponsiveGridLayout } from '../app-modules/grid/responsive-grid-layout'
 import { DynamicComponentRenderer } from '@/components/app/dynamic-component-renderer'
 import type { ComponentPropsMapping } from '@/components/app/interfaceMapping'
@@ -18,12 +17,13 @@ import { getPopupComponentsAndOptions } from '../app-modules/pop-up/pop-up-quest
 import { createNewQuestion } from '../app-modules/questions/questions-factory'
 import { DeleteDropzone } from '@/components/app/deleteDropzone/deleteDropzone'
 import '../styles.css'
-import { saveSurvey, fetchSurvey, fetchSurveyOptions } from '../services/surveys'
-import { DropDown } from '@/components/app/dropDown/dropDown'
+import { saveSurvey, fetchSurvey, fetchSurveyOptions, SurveyStatus } from '../services/surveys'
 import { TextInput } from '@/components/app/text-field/text-field'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { CreateQuestionPopUp } from './components/create-question-pop-up'
+import { LoadSurveyPopUp } from './components/load-survey-pop-up'
 
 interface SurveyBuilderClientProps {
   initialSurveyId?: string
@@ -51,6 +51,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
   const [isOverTrash, setIsOverTrash] = useState(false)
   const [saving, setSaving] = useState(false)
   const [surveyTitle, setSurveyTitle] = useState('')
+  const [surveyStatus, setSurveyStatus] = useState<SurveyStatus>('draft')
 
   const [isLoadingPopup, setIsLoadingPopup] = useState(false)
   const [surveyOptions, setSurveyOptions] = useState<Array<{ value: string; label: string }>>([])
@@ -117,6 +118,26 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
     return { lg: base, md: base, sm: base, xs: base, xxs: base }
   }, [])
 
+  const hasLayoutEntries = useCallback((layouts?: Layouts | null) => {
+    if (!layouts) return false
+    return Object.values(layouts).some((breakpointLayouts) => (breakpointLayouts ?? []).length > 0)
+  }, [])
+
+  const buildPersistedLayouts = useCallback(
+    (sourceLayouts: Layouts, items: QuestionItem[]): Layouts => {
+      const questionIds = new Set(items.map((question) => question.id))
+      const filtered = Object.fromEntries(
+        Object.entries(sourceLayouts).map(([breakpoint, breakpointLayouts]) => [
+          breakpoint,
+          (breakpointLayouts ?? []).filter((layoutItem) => questionIds.has(layoutItem.i)),
+        ])
+      ) as Layouts
+
+      return normalizeLayouts(filtered)
+    },
+    [normalizeLayouts]
+  )
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/auth')
@@ -157,8 +178,12 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
       .then((survey) => {
         setQuestions(survey.questions)
         setSurveyTitle(survey.title?.trim() ?? '')
+        setSurveyStatus(survey.status ?? 'draft')
         setActiveSurveyId(survey.id)
-        layoutsApi.setLayouts(normalizeLayouts(generateLayouts(survey.questions)))
+        const nextLayouts = hasLayoutEntries(survey.layouts)
+          ? normalizeLayouts(survey.layouts)
+          : normalizeLayouts(generateLayouts(survey.questions))
+        layoutsApi.setLayouts(nextLayouts)
       })
       .catch((error) => {
         console.error(error)
@@ -167,7 +192,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
       .finally(() => {
         setLoadingSelectedSurvey(false)
       })
-  }, [generateLayouts, initialSurveyId, isAuthenticated, isLoading, layoutsApi, normalizeLayouts])
+  }, [generateLayouts, hasLayoutEntries, initialSurveyId, isAuthenticated, isLoading, layoutsApi, normalizeLayouts])
 
   if (isLoading) {
     return (
@@ -213,10 +238,19 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
 
     setSaving(true)
     try {
-      const { id } = await saveSurvey({ title: trimmedTitle, questions }, activeSurveyId ?? undefined)
+      const persistedLayouts = buildPersistedLayouts(layoutsApi.layouts, questions)
+      const { id } = await saveSurvey(
+        {
+          title: trimmedTitle,
+          status: surveyStatus,
+          questions,
+          layouts: persistedLayouts,
+        },
+        activeSurveyId ?? undefined
+      )
       setActiveSurveyId(id)
       setSurveyTitle(trimmedTitle)
-      alert(`Survey saved with id: ${id}`)
+      // alert(`Survey saved with id: ${id}`)
     } catch (error) {
       console.error(error)
       alert('Failed to save survey')
@@ -273,8 +307,11 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
       const survey = await fetchSurvey(selectedSurveyId)
       setQuestions(survey.questions)
       setSurveyTitle(survey.title?.trim() ?? '')
+      setSurveyStatus(survey.status ?? 'draft')
       setActiveSurveyId(survey.id)
-      const layouts = normalizeLayouts(generateLayouts(survey.questions))
+      const layouts = hasLayoutEntries(survey.layouts)
+        ? normalizeLayouts(survey.layouts)
+        : normalizeLayouts(generateLayouts(survey.questions))
       layoutsApi.setLayouts(layouts)
       handleCloseLoadSurveyPopup()
     } catch (error) {
@@ -342,93 +379,116 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
   return (
     <>
       <div className="app-container">
-        <aside className="sidebar border-r border-border bg-card/70 p-4 backdrop-blur-md">
-          <div className="mb-4 rounded-xl border border-border bg-card p-4">
-            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
-              <Sparkles className="h-4 w-4 text-primary" />
-              Survey Builder
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Drag, resize, and configure your survey with modular question cards.
-            </p>
-          </div>
-
-          <div className="survey-title-field mb-3">
-            <TextInput
-              label="Survey Name"
-              placeholder="Enter survey name..."
-              value={surveyTitle}
-              onChange={(e) => setSurveyTitle(e.target.value)}
-              id="survey-title-input"
-              name="survey-title-input"
-              test_id="survey-title-input"
-            />
-          </div>
-
-          <Sidebar
-            buttons={[
-              {
-                label: 'New Question',
-                onClick: () => setIsPopUpCreationOpen(true),
-                className: 'button-base',
-                test_id: 'button-1',
-              },
-              {
-                label: 'Clear Questions',
-                onClick: () => {
-                  setQuestions([])
-                  layoutsApi.reset()
-                },
-                className: 'button-base',
-                test_id: 'button-2',
-              },
-              {
-                label: saving ? 'Saving...' : 'Save Survey',
-                onClick: handleSaveSurvey,
-                className: 'button-base',
-                test_id: 'button-save',
-                disabled: saving,
-              },
-              {
-                label: loadingSurveyOptions || loadingSelectedSurvey ? 'Loading...' : 'Load Survey',
-                onClick: handleLoadSurvey,
-                className: 'button-base',
-                test_id: 'button-load',
-                disabled: loadingSurveyOptions || loadingSelectedSurvey,
-              },
-              {
-                label: 'Logout',
-                onClick: handleLogout,
-                className: 'button-base',
-                test_id: 'button-logout',
-              },
-            ]}
+        <Sidebar>
+          <Section
+            title="Survey Builder"
+            description="Drag, resize, and configure your survey with modular question cards."
+            icon={Sparkles}
           />
+
+          <Section title="Survey Details" contentClassName="space-y-3">
+            <div className="survey-title-field">
+              <TextInput
+                label="Survey Name"
+                placeholder="Enter survey name..."
+                value={surveyTitle}
+                onChange={(e) => setSurveyTitle(e.target.value)}
+                id="survey-title-input"
+                name="survey-title-input"
+                test_id="survey-title-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="survey-status" className="mb-1 block text-xs font-medium text-foreground">
+                Survey Status
+              </label>
+              <select
+                id="survey-status"
+                data-testid="survey-status-select"
+                className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+                value={surveyStatus}
+                onChange={(event) => setSurveyStatus(event.target.value as SurveyStatus)}
+              >
+                <option value="draft">draft</option>
+                <option value="published">published</option>
+              </select>
+            </div>
+          </Section>
+
+          <Section title="Actions">
+            <ButtonGroup
+              buttons={[
+                {
+                  label: 'New Question',
+                  onClick: () => setIsPopUpCreationOpen(true),
+                  className: 'button-base',
+                  test_id: 'button-1',
+                },
+                {
+                  label: 'Clear Questions',
+                  onClick: () => {
+                    setQuestions([])
+                    layoutsApi.reset()
+                    setSurveyStatus('draft')
+                  },
+                  className: 'button-base',
+                  test_id: 'button-2',
+                },
+                {
+                  label: saving ? 'Saving...' : 'Save Survey',
+                  onClick: handleSaveSurvey,
+                  className: 'button-base',
+                  test_id: 'button-save',
+                  disabled: saving,
+                },
+                {
+                  label: loadingSurveyOptions || loadingSelectedSurvey ? 'Loading...' : 'Load Survey',
+                  onClick: handleLoadSurvey,
+                  className: 'button-base',
+                  test_id: 'button-load',
+                  disabled: loadingSurveyOptions || loadingSelectedSurvey,
+                },
+                {
+                  label: 'Logout',
+                  onClick: handleLogout,
+                  className: 'button-base',
+                  test_id: 'button-logout',
+                },
+              ]}
+            />
+          </Section>
 
           <Separator className="my-4" />
 
-          <div className="rounded-xl border border-border bg-card p-3 text-xs">
-            <div className="mb-2 flex items-center gap-2 font-medium text-foreground">
-              <LayoutGrid className="h-4 w-4 text-primary" />
-              Public Survey Link
-            </div>
-            {surveySharePath ? (
-              <Button
-                variant="outline"
-                className="w-full justify-start text-xs"
-                onClick={() => {
-                  const origin = window.location.origin
-                  navigator.clipboard.writeText(`${origin}${surveySharePath}`)
-                }}
-              >
-                <LinkIcon className="h-3.5 w-3.5" />
-                Copy survey URL
-              </Button>
-            ) : (
-              <p className="text-muted-foreground">Save a survey to generate a shareable link.</p>
+          <Section title="Public Survey Link" icon={LayoutGrid} contentClassName="space-y-2">
+            <Button
+              variant="outline"
+              className="w-full justify-start text-xs"
+              data-testid="button-copy-public-survey"
+              onClick={() => {
+                if (!activeSurveyId) {
+                  alert("survey isn't saved. please save it")
+                  return
+                }
+                if (surveyStatus !== 'published') {
+                  alert("survey isn't published. please publish it")
+                  return
+                }
+
+                const origin = window.location.origin
+                navigator.clipboard.writeText(`${origin}${surveySharePath}`)
+              }}
+            >
+              <LinkIcon className="h-3.5 w-3.5" />
+              Copy public survey
+            </Button>
+            {!activeSurveyId && <p className="text-xs text-muted-foreground">Save survey first to get a public link.</p>}
+            {activeSurveyId && surveyStatus !== 'published' && (
+              <p className="text-xs text-muted-foreground">Publish survey to make the link accessible.</p>
             )}
-          </div>
-        </aside>
+          </Section>
+        </Sidebar>
 
         <main className="content">
           <div className="grid-container dot-grid-bg min-h-[calc(100vh-8rem)] rounded-xl border border-border bg-background p-2">
@@ -478,47 +538,26 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
         </main>
       </div>
 
-      <PopUp
+      <CreateQuestionPopUp
         isOpen={isPopUpCreationOpen}
         onClose={handleClose}
         onApply={handleApply}
-        popUpTitle={popup.questionText}
-        popUpDescription="Choose a type and configure its options."
+        title={popup.questionText}
       >
         {popup.components}
-      </PopUp>
+      </CreateQuestionPopUp>
 
-      <PopUp
+      <LoadSurveyPopUp
         isOpen={isLoadingPopup}
         onClose={handleCloseLoadSurveyPopup}
-        onCancel={handleCloseLoadSurveyPopup}
         onApply={handleApplyLoadSurvey}
-        applyDisabled={
-          loadingSurveyOptions ||
-          loadingSelectedSurvey ||
-          surveyOptions.length === 0 ||
-          !selectedSurveyId
-        }
-        popUpTitle="Load Survey"
-        popUpDescription="Select a saved survey to load."
-      >
-        <div className="space-y-3">
-          <DropDown
-            options={surveyOptions}
-            selectedOption={selectedSurveyId}
-            onSelect={setSelectedSurveyId}
-            label="Saved surveys"
-            id="saved-surveys"
-            name="saved-surveys"
-            disabled={loadingSurveyOptions || loadingSelectedSurvey || surveyOptions.length === 0}
-          />
-          {loadingSurveyOptions && <p className="text-sm text-muted-foreground">Loading surveys...</p>}
-          {surveyOptionsError && <p className="text-sm text-destructive">{surveyOptionsError}</p>}
-          {!loadingSurveyOptions && !surveyOptionsError && surveyOptions.length === 0 && (
-            <p className="text-sm text-muted-foreground">No surveys available</p>
-          )}
-        </div>
-      </PopUp>
+        loadingSurveyOptions={loadingSurveyOptions}
+        loadingSelectedSurvey={loadingSelectedSurvey}
+        surveyOptions={surveyOptions}
+        surveyOptionsError={surveyOptionsError}
+        selectedSurveyId={selectedSurveyId}
+        setSelectedSurveyId={setSelectedSurveyId}
+      />
 
       <DeleteDropzone
         isDragging={isDragging}

@@ -19,8 +19,8 @@ Attributes:
 """
 
 from sqlalchemy.orm import declarative_base, relationship
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Integer, Index, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Integer, Index, Text, func
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from datetime import datetime, timezone
 import uuid
 
@@ -85,4 +85,34 @@ class RefreshToken(Base):
     __table_args__ = (
         Index("ix_refresh_tokens_user_id", "user_id"),
         Index("ix_refresh_tokens_created_at", "created_at"),
+    )
+
+
+class SurveyResponse(Base):
+    """
+    Stores responder submissions for surveys.
+    Responses are stored in PostgreSQL to keep query/index operations low-cost and
+    separate from MongoDB survey definition documents.
+    """
+
+    __tablename__ = "survey_responses"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    survey_id = Column(Text, nullable=False, index=True)
+    survey_owner_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    answers = Column(JSONB, nullable=False)
+    submitted_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+
+    __table_args__ = (
+        Index(
+            "ix_survey_responses_survey_owner_submitted_desc",
+            "survey_id",
+            "survey_owner_id",
+            "submitted_at",
+        ),
+        Index(
+            "ix_survey_responses_id_survey_owner",
+            "id",
+            "survey_id",
+            "survey_owner_id",
+        ),
     )

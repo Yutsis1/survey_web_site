@@ -1,5 +1,6 @@
 import { config } from "@/config"
 import { SurveyResponse } from "./surveys"
+import { apiClient } from "./api-client"
 
 export interface SurveyAnswer {
   questionId: string
@@ -16,27 +17,8 @@ export interface StoredSurveyResponse extends SubmitSurveyResponsePayload {
   id: string
 }
 
-const localResponsesKey = "surveyflow:responses"
-
-function readLocalResponses(): StoredSurveyResponse[] {
-  if (typeof window === "undefined") return []
-  try {
-    const raw = window.localStorage.getItem(localResponsesKey)
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as StoredSurveyResponse[]
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
-
-function writeLocalResponses(responses: StoredSurveyResponse[]) {
-  if (typeof window === "undefined") return
-  window.localStorage.setItem(localResponsesKey, JSON.stringify(responses))
-}
-
 export async function fetchPublicSurveyById(id: string): Promise<SurveyResponse> {
-  const res = await fetch(`${config.apiUrl}/surveys/${id}`, {
+  const res = await fetch(`${config.apiUrl}/surveys/public/${id}`, {
     method: "GET",
     credentials: "include",
   })
@@ -56,49 +38,46 @@ export async function submitSurveyResponse(
     submittedAt: payload.submittedAt ?? new Date().toISOString(),
   }
 
-  try {
-    const res = await fetch(`${config.apiUrl}/surveys/${payload.surveyId}/responses`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    })
+  const res = await fetch(`${config.apiUrl}/surveys/${payload.surveyId}/responses`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  })
 
-    if (res.ok) return res.json()
-
-    if (res.status !== 404 && res.status !== 405 && res.status !== 501) {
-      throw new Error(`Failed to submit survey response: ${res.status}`)
-    }
-  } catch (error) {
-    console.warn("submitSurveyResponse endpoint unavailable, falling back to local storage.", error)
+  if (!res.ok) {
+    throw new Error(`Failed to submit survey response: ${res.status}`)
   }
 
-  const localResponses = readLocalResponses()
-  const id = `local-${Date.now()}-${Math.random().toString(16).slice(2)}`
-  localResponses.push({ id, ...body })
-  writeLocalResponses(localResponses)
-  return { id }
+  return res.json()
 }
 
-export async function fetchSurveyResponses(surveyId: string): Promise<StoredSurveyResponse[]> {
-  try {
-    const res = await fetch(`${config.apiUrl}/surveys/${surveyId}/responses`, {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
+export async function fetchLatestSurveyResponse(surveyId: string): Promise<StoredSurveyResponse | null> {
+  const res = await apiClient.fetch(`/surveys/${surveyId}/responses/latest`, {
+    method: "GET",
+  })
 
-    if (res.ok) return res.json()
-    if (res.status !== 404 && res.status !== 405 && res.status !== 501) {
-      throw new Error(`Failed to fetch survey responses: ${res.status}`)
-    }
-  } catch (error) {
-    console.warn("fetchSurveyResponses endpoint unavailable, using local storage fallback.", error)
+  if (res.status === 404) return null
+  if (!res.ok) {
+    throw new Error(`Failed to fetch latest response: ${res.status}`)
   }
 
-  return readLocalResponses().filter((item) => item.surveyId === surveyId)
+  return res.json()
+}
+
+export async function fetchSurveyResponseById(
+  surveyId: string,
+  responseId: string
+): Promise<StoredSurveyResponse> {
+  const res = await apiClient.fetch(`/surveys/${surveyId}/responses/${responseId}`, {
+    method: "GET",
+  })
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch response: ${res.status}`)
+  }
+
+  return res.json()
 }

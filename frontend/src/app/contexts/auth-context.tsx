@@ -101,6 +101,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [accessToken, setAccessToken] = useState<string | null>(null)
     const [tokenExpiry, setTokenExpiry] = useState<number | null>(null)
 
+    const accessTokenRef = React.useRef<string | null>(null)
+    accessTokenRef.current = accessToken
+
     const checkAuth = async () => {
         try {
             const res = await refresh()
@@ -131,7 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (res.ok) {
             const data = await res.json()
             setAccessToken(data.access_token)
-            setTokenExpiry(Date.now() + data.expires_in * 1000)
+            setTokenExpiry(Date.now() + (data.expires_in || 900) * 1000)
             setIsAuthenticated(true)
         }
     }
@@ -141,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (res.ok) {
             const data = await res.json()
             setAccessToken(data.access_token)
-            setTokenExpiry(Date.now() + data.expires_in * 1000)
+            setTokenExpiry(Date.now() + (data.expires_in || 900) * 1000)
             setIsAuthenticated(true)
         }
     }
@@ -185,13 +188,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         apiClient.initialize(
-            () => accessToken,
+            () => accessTokenRef.current,
             () => {
                 setIsAuthenticated(false)
                 setAccessToken(null)
+            },
+            (nextAccessToken) => {
+                setAccessToken(nextAccessToken)
+                setIsAuthenticated(true)
+                setTokenExpiry(Date.now() + 15 * 60 * 1000)
             }
         )
-    }, [accessToken])
+    }, [])
 
     return (
         <AuthContext.Provider

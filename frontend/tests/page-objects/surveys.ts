@@ -112,6 +112,10 @@ export class SurveyCreatorsPage {
     await this.sidebar.loadSurveyButton.click();
   }
 
+  async clickCopyPublicSurvey() {
+    await this.sidebar.copyPublicSurveyButton.click();
+  }
+
   async isPopupOpen(): Promise<boolean> {
     return await this.popup.isVisible();
   }

@@ -1,69 +1,91 @@
-import React, { useState } from "react";
-import { Responsive, WidthProvider } from "react-grid-layout";
-import type { Layout, Layouts } from "react-grid-layout";
-import "./responsive-grid-layout.css";
+import React, { useState } from 'react'
+import { Responsive, WidthProvider } from 'react-grid-layout'
+import type { Layout, Layouts } from 'react-grid-layout'
+import './responsive-grid-layout.css'
 
-import "react-grid-layout/css/styles.css";
-import "react-resizable/css/styles.css";
+import 'react-grid-layout/css/styles.css'
+import 'react-resizable/css/styles.css'
 
-
-
-const ResponsiveGridLayoutComponent = WidthProvider(Responsive);
+const ResponsiveGridLayoutComponent = WidthProvider(Responsive)
 
 export interface ResponsiveGridLayoutProps {
-  className?: string;
-  rowHeight?: number;
-  onLayoutChange?: (layout: Layout[], layouts: Layouts) => void;
-  onDragStart?: (...args: unknown[]) => void;
-  cols?: Record<string, number>;
-  layouts?: Layouts;
-  breakpoints?: Record<string, number>;
-  containerPadding?: [number, number];
-  margin?: [number, number];
-  isDraggable?: boolean;
-  isResizable?: boolean;
-  compactType?: "vertical" | "horizontal" | null;
-  preventCollision?: boolean;
-  children?: React.ReactNode;
-  draggableCancel?: string;
-  draggableHandle?: string;
-  onDragStop?: (layout: Layout[], layouts: Layouts) => void;
-  onResizeStop?: (layout: Layout[], layouts: Layouts) => void;
+    className?: string
+    rowHeight?: number
+    onLayoutChange?: (layout: Layout[], layouts: Layouts) => void
+    onDragStart?: (...args: unknown[]) => void
+    cols?: Record<string, number>
+    layouts?: Layouts
+    breakpoints?: Record<string, number>
+    containerPadding?: [number, number]
+    margin?: [number, number]
+    isDraggable?: boolean
+    isResizable?: boolean
+    compactType?: 'vertical' | 'horizontal' | null
+    preventCollision?: boolean
+    children?: React.ReactNode
+    draggableCancel?: string
+    draggableHandle?: string
+    onDragStop?: (layout: Layout[], layouts: Layouts) => void
+    onResizeStop?: (layout: Layout[], layouts: Layouts) => void
 }
 
 const ResponsiveGridLayout = (props: ResponsiveGridLayoutProps) => {
-  const [, setIsDragging] = useState(false);
+    const [isDraggingInternal, setIsDraggingInternal] = useState(false)
 
-  return (
-    <ResponsiveGridLayoutComponent
-      className={props.className || "layout"}
-      layouts={props.layouts}
-      breakpoints={
-        props.breakpoints ?? { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }
-      }
-      cols={props.cols ?? { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-      rowHeight={props.rowHeight || 30}
-      containerPadding={props.containerPadding || [15, 15]}
-      margin={props.margin || [10, 10]}
-      isDraggable={props.isDraggable !== undefined ? props.isDraggable : true}
-      isResizable={props.isResizable !== undefined ? props.isResizable : true}
-      onDragStart={(...args: unknown[]) => {
-        setIsDragging(true);
-        if (props.onDragStart) props.onDragStart(...args);
-      }}
-      onDragStop={(...args: unknown[]) => {
-        setIsDragging(false);
-        if (props.onDragStop) props.onDragStop(args[0] as Layout[], args[1] as Layouts);
-      }}
-      compactType={props.compactType ?? null}
-      preventCollision={props.preventCollision ?? false}
-      onLayoutChange={props.onLayoutChange}
-      draggableCancel={props.draggableCancel ?? ".no-drag, input, textarea, select, button, label, a, [role='button']"}
-      draggableHandle={props.draggableHandle ?? ".drag-handle"}
-    >
-      {props.children}
-    </ResponsiveGridLayoutComponent>
-  );
-};
+    const handleDragStart = (...args: unknown[]) => {
+        setIsDraggingInternal(true)
+        props.onDragStart?.(...args)
+    }
 
-export { ResponsiveGridLayout };
+    const handleDragStop = (
+        layout: Layout[],
+        oldItem: unknown,
+        newItem: unknown,
+        placeholder: unknown,
+        e: unknown,
+        element: unknown
+    ) => {
+        setIsDraggingInternal(false)
+        props.onDragStop?.(layout, {} as Layouts)
+    }
+
+    return (
+        <ResponsiveGridLayoutComponent
+            className={props.className || 'layout'}
+            layouts={props.layouts}
+            breakpoints={
+                props.breakpoints ?? {
+                    lg: 1200,
+                    md: 996,
+                    sm: 768,
+                    xs: 480,
+                    xxs: 0,
+                }
+            }
+            cols={props.cols ?? { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+            rowHeight={props.rowHeight || 30}
+            containerPadding={props.containerPadding || [15, 15]}
+            margin={props.margin || [10, 10]}
+            isDraggable={
+                props.isDraggable !== undefined ? props.isDraggable : true
+            }
+            isResizable={
+                props.isResizable !== undefined ? props.isResizable : true
+            }
+            onDragStart={handleDragStart}
+            onDragStop={handleDragStop}
+            compactType={props.compactType ?? null}
+            preventCollision={props.preventCollision ?? false}
+            onLayoutChange={props.onLayoutChange}
+            draggableCancel={
+                props.draggableCancel ??
+                ".no-drag, input, textarea, select, button, label, a, [role='button']"
+            }
+            draggableHandle={props.draggableHandle ?? '.drag-handle'}
+        >
+            {props.children}
+        </ResponsiveGridLayoutComponent>
+    )
+}
+
+export { ResponsiveGridLayout }

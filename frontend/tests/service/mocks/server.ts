@@ -1,5 +1,5 @@
 import type { MockSurvey, MockAuthResponse } from './data'
-import { getMockSurveyById, toOptions } from './data'
+import { getMockSurveyById, toOptions, createMockStatsForSurvey } from './data'
 
 export type MockResponse = {
   status: number
@@ -46,6 +46,10 @@ export class MockApiServer {
 
     // Get specific survey by ID
     if (pathname.startsWith('/surveys/') && method === 'GET') {
+      // Check if it's a stats request
+      if (pathname.includes('/responses/stats')) {
+        return this.getSurveyStatsResponse(pathname)
+      }
       return this.getSurveyResponse(pathname)
     }
 
@@ -68,6 +72,28 @@ export class MockApiServer {
     }
 
     return { status: 200, data: survey }
+  }
+
+  /**
+   * Get survey stats response
+   */
+  private getSurveyStatsResponse(pathname: string): MockResponse {
+    // Extract survey ID from path like /surveys/{id}/responses/stats
+    const parts = pathname.split('/')
+    const surveyIdIndex = parts.findIndex((p) => p === 'surveys') + 1
+    const surveyId = parts[surveyIdIndex]
+
+    if (!surveyId) {
+      return { status: 404, data: { message: 'Not found' } }
+    }
+
+    const survey = getMockSurveyById(surveyId)
+    if (!survey) {
+      return { status: 404, data: { message: 'Not found' } }
+    }
+
+    const stats = createMockStatsForSurvey(survey)
+    return { status: 200, data: stats }
   }
 
   /**
