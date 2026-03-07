@@ -363,6 +363,12 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
     builder.reset()
   }
 
+  const updateQuestionTitle = (id: string, questionText: string) => {
+    setQuestions((prev) =>
+      prev.map((question) => (question.id === id ? { ...question, questionText } : question))
+    )
+  }
+
   const onTrashDragLeave = () => {
     setIsOverTrash(false)
   }
@@ -540,7 +546,23 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
                     Drag
                   </div>
                   <div className="no-drag mt-3">
-                    <DynamicComponentRenderer component={q.component} option={q.option} questionText={q.questionText} />
+                    <input
+                      type="text"
+                      aria-label="Question title"
+                      value={q.questionText}
+                      onChange={(event) => updateQuestionTitle(q.id, event.target.value)}
+                      id={`question-title-${q.id}`}
+                      name={`question-title-${q.id}`}
+                      className="mb-0 h-6 w-full rounded-md border border-input bg-background px-2 text-xs text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      data-testid={`question-title-input-${q.id}`}
+                    />
+                    <span className="sr-only">{q.questionText}</span>
+                    <DynamicComponentRenderer
+                      component={q.component}
+                      option={q.option}
+                      questionText={q.questionText}
+                      showQuestionText={false}
+                    />
                   </div>
                 </Card>
               ))}
