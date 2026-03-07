@@ -137,6 +137,34 @@ export class SurveyCreatorsPage {
     return await this.page.locator('.grid-item').count();
   }
 
+  get questionCards(): Locator {
+    return this.page.locator('.grid-item');
+  }
+
+  getQuestionCardByIndex(index: number): Locator {
+    return this.questionCards.nth(index);
+  }
+
+  getQuestionCardByQuestionText(questionText: string): Locator {
+    return this.questionCards.filter({ hasText: questionText }).first();
+  }
+
+  getQuestionCardInlineTitleInput(questionCard: Locator): Locator {
+    return questionCard.getByLabel('Question title');
+  }
+
+  getQuestionCardSwitch(questionCard: Locator): Locator {
+    return questionCard.getByRole('switch');
+  }
+
+  getQuestionCardRadioOption(questionCard: Locator, optionLabel: string): Locator {
+    return questionCard.getByRole('radio', { name: optionLabel });
+  }
+
+  getCheckedRadioOptions(questionCard: Locator): Locator {
+    return questionCard.locator('[role="radio"][aria-checked="true"]');
+  }
+
   async dragQuestionToTrash(questionIndex: number) {
     const question = this.page.locator('.grid-item').nth(questionIndex);
     const dragHandle = question.locator('.drag-handle');

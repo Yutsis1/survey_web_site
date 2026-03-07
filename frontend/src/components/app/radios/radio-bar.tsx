@@ -52,6 +52,12 @@ const RadioBar: React.FC<RadioBarProps> = ({
                     <RadioGroupItem
                         id={`${name ?? 'radio'}-${index}`}
                         value={button.value}
+                        onClick={(event) => {
+                            if (currentSelectedValue !== button.value) return
+                            event.preventDefault()
+                            setInternalSelectedValue('')
+                            onChange?.('')
+                        }}
                     />
                     <Label htmlFor={`${name ?? 'radio'}-${index}`}>
                         {button.label}

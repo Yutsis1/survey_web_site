@@ -50,4 +50,18 @@ describe('RadioBar Component', () => {
         )
         expect(getByTestId('radio-bar')).toBeInTheDocument()
     })
+
+    test('clears selection when clicking selected option again', () => {
+        const { getByRole } = render(
+            <RadioBar buttons={buttons} name="testRadio" />
+        )
+
+        const option1 = getByRole('radio', { name: 'Option 1' })
+
+        fireEvent.click(option1)
+        expect(option1).toHaveAttribute('aria-checked', 'true')
+
+        fireEvent.click(option1)
+        expect(option1).toHaveAttribute('aria-checked', 'false')
+    })
 })
