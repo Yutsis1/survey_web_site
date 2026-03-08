@@ -21,10 +21,26 @@ export interface SurveyOption {
   status: SurveyStatus
 }
 
+export interface GeneratedSurveyDraft extends SurveyPayload {}
+
 interface SurveyListResponse {
   surveys: Array<Pick<SurveyResponse, 'id' | 'title' | 'status'>>
 }
 
+interface ErrorResponse {
+  detail?: string
+  message?: string
+  error?: string
+}
+
+async function parseErrorMessage(response: Response, fallback: string): Promise<string> {
+  try {
+    const payload = (await response.json()) as ErrorResponse
+    return payload.detail ?? payload.message ?? payload.error ?? fallback
+  } catch {
+    return fallback
+  }
+}
 
 export async function saveSurvey(payload: SurveyPayload, surveyId?: string): Promise<{ id: string }> {
   const endpoint = surveyId ? `/surveys/${surveyId}` : '/surveys'
@@ -42,6 +58,20 @@ export async function saveSurvey(payload: SurveyPayload, surveyId?: string): Pro
 export async function fetchSurvey(id: string): Promise<SurveyResponse> {
   const res = await apiClient.fetch(`/surveys/${id}`)
   if (!res.ok) throw new Error('Failed to load survey')
+  return res.json()
+}
+
+export async function generateSurveyFromPrompt(prompt: string): Promise<GeneratedSurveyDraft> {
+  const res = await apiClient.fetch('/surveys/generate-from-prompt', {
+    method: 'POST',
+    body: JSON.stringify({ prompt }),
+  })
+
+  if (!res.ok) {
+    const message = await parseErrorMessage(res, 'Failed to generate survey draft')
+    throw new Error(message)
+  }
+
   return res.json()
 }
 

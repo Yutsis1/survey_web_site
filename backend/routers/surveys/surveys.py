@@ -8,9 +8,23 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.exceptions import RequestValidationError
 from pymongo.errors import DuplicateKeyError
 
-from backend.models.api.surveys import Survey, SurveyCreate, SurveyListResponse, SurveyOption, SurveyStatus
+from backend.config import settings
+from backend.models.api.surveys import (
+    Survey,
+    SurveyCreate,
+    SurveyGenerateRequest,
+    SurveyGenerateResponse,
+    SurveyListResponse,
+    SurveyOption,
+    SurveyStatus,
+)
 from backend.models.db.sql.auth import User
 from backend.routers.auth.auth import get_current_user
+from backend.routers.surveys.generation import (
+    SurveyGenerationProviderError,
+    generate_survey_from_prompt,
+    is_suspicious_prompt,
+)
 from backend.db.mongo import surveys_collection
 
 router = APIRouter(
@@ -110,6 +124,39 @@ async def list_surveys(current_user: User = Depends(get_current_user)):
         surveys.append(_normalize_survey(survey))
 
     return {"surveys": surveys}
+
+
+@router.post("/generate-from-prompt", response_model=SurveyGenerateResponse)
+async def generate_survey(payload: SurveyGenerateRequest, current_user: User = Depends(get_current_user)):
+    """
+    Generate a draft survey from a natural-language prompt.
+    """
+    _ = current_user
+    prompt = payload.prompt.strip()
+
+    if len(prompt) > settings.SURVEY_GENERATION_PROMPT_MAX_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Prompt is too long. Maximum allowed length is "
+                f"{settings.SURVEY_GENERATION_PROMPT_MAX_LENGTH} characters."
+            ),
+        )
+
+    if is_suspicious_prompt(prompt):
+        raise HTTPException(
+            status_code=400,
+            detail="Prompt appears unsafe. Remove instruction-manipulation text and try again.",
+        )
+
+    try:
+        generated = await generate_survey_from_prompt(prompt=prompt, max_questions=5)
+        return SurveyGenerateResponse(**generated)
+    except SurveyGenerationProviderError:
+        raise HTTPException(
+            status_code=502,
+            detail="Survey generation provider is unavailable. Please try again.",
+        )
 
 
 @router.get("/public/{id}", response_model=Survey)

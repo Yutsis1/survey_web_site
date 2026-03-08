@@ -33,8 +33,16 @@ export class SidebarComponent {
     return this.getButtonLocatorByTestID('button-load');
   }
 
+  get generateSurveyButton(): Locator {
+    return this.getButtonLocatorByTestID('button-generate-survey');
+  }
+
   get addNameTextInput(): Locator {
     return this.baseLocator.locator('[data-testid="survey-title-input"] input');
+  }
+
+  get generatePromptTextArea(): Locator {
+    return this.baseLocator.getByTestId('survey-generate-prompt');
   }
 
   get copyPublicSurveyButton(): Locator {

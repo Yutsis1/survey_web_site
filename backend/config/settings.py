@@ -36,6 +36,13 @@ ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
 
 # CORS Configuration
 ALLOWED_ORIGINS: list[str] = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+# OpenAI Survey Generation Configuration
+OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-5-nano")
+OPENAI_API_BASE: str = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+OPENAI_TIMEOUT_SECONDS: float = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "30"))
+OPENAI_GENERATION_RETRIES: int = int(os.getenv("OPENAI_GENERATION_RETRIES", "1"))
+SURVEY_GENERATION_PROMPT_MAX_LENGTH: int = int(os.getenv("SURVEY_GENERATION_PROMPT_MAX_LENGTH", "2000"))
 
 
 # def validate_settings():

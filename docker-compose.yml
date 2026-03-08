@@ -29,6 +29,12 @@ services:
       # Set to 'update' to update documents with unique titles, 'delete' to remove them, or 'safe' to skip migration
       - MONGO_MIGRATION_STRATEGY=delete
       - SQL_MIGRATION_STRATEGY=delete
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-5-nano}
+      - OPENAI_API_BASE=${OPENAI_API_BASE:-https://api.openai.com/v1}
+      - OPENAI_TIMEOUT_SECONDS=${OPENAI_TIMEOUT_SECONDS:-30}
+      - OPENAI_GENERATION_RETRIES=${OPENAI_GENERATION_RETRIES:-1}
+      - SURVEY_GENERATION_PROMPT_MAX_LENGTH=${SURVEY_GENERATION_PROMPT_MAX_LENGTH:-2000}
 
   mongodb:
     image: mongo:latest
@@ -56,3 +62,4 @@ services:
 volumes:
   mongodb_data:
   pgdata:
+

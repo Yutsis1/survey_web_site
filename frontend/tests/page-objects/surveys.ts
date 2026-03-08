@@ -117,6 +117,14 @@ export class SurveyCreatorsPage {
     await this.sidebar.loadSurveyButton.click();
   }
 
+  async fillGeneratePrompt(prompt: string) {
+    await this.sidebar.generatePromptTextArea.fill(prompt);
+  }
+
+  async clickGenerateSurvey() {
+    await this.sidebar.generateSurveyButton.click();
+  }
+
   async clickCopyPublicSurvey() {
     await this.sidebar.copyPublicSurveyButton.click();
   }
@@ -187,3 +195,5 @@ export class SurveyCreatorsPage {
 
   // Add more methods as needed for specific interactions
 }
+
+

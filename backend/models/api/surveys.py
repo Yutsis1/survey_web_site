@@ -183,3 +183,22 @@ class SurveyResponseStats(BaseModel):
     completionRate: float
     trend: List[TrendPoint]
     questionBreakdown: List[QuestionStats]
+
+
+class SurveyGenerateRequest(BaseModel):
+    prompt: str
+
+    @field_validator("prompt")
+    @classmethod
+    def validate_prompt(cls, value: str) -> str:
+        prompt = value.strip()
+        if not prompt:
+            raise ValueError("Prompt must not be empty")
+        return prompt
+
+
+class SurveyGenerateResponse(BaseModel):
+    title: str
+    status: SurveyStatus = SurveyStatus.draft
+    questions: List[QuestionItem]
+    layouts: SurveyLayouts

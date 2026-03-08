@@ -44,6 +44,19 @@ export class MockApiServer {
       return { status: 200, data: { surveys: toOptions(this.surveys) } }
     }
 
+    if (pathname === '/surveys/generate-from-prompt' && method === 'POST') {
+      const generatedSurvey = this.surveys[0]
+      return {
+        status: 200,
+        data: {
+          title: generatedSurvey?.title ?? 'Generated Survey',
+          status: 'draft',
+          questions: generatedSurvey?.questions ?? [],
+          layouts: generatedSurvey?.layouts ?? { lg: [], md: [], sm: [], xs: [], xxs: [] },
+        },
+      }
+    }
+
     // Get specific survey by ID
     if (pathname.startsWith('/surveys/') && method === 'GET') {
       // Check if it's a stats request
