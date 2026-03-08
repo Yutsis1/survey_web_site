@@ -10,7 +10,10 @@ from typing import Any
 import httpx
 
 from backend.config import settings
-from backend.models.api.surveys.survey_generation import survey_generation_schema
+from backend.models.api.surveys.survey_generation import (
+    build_survey_generation_payload,
+)
+from backend.models.api.surveys.surveys import create_fallback_question
 
 ALLOWED_COMPONENTS = {"TextInput", "RadioBar", "CheckboxTiles", "DropDown", "Switch"}
 NON_SHRINKABLE_COMPONENTS = {"TextInput", "RadioBar", "CheckboxTiles"}
@@ -23,8 +26,6 @@ SYSTEM_PROMPT = (
     "Return only JSON that matches the schema. "
     "Infer question count from user description, but never exceed 5 questions."
 )
-
-SURVEY_SCHEMA: dict[str, Any] = survey_generation_schema()
 
 SUSPICIOUS_PROMPT_PATTERNS = [
     re.compile(pattern, re.IGNORECASE)
@@ -63,32 +64,11 @@ async def _request_openai_survey(prompt: str) -> dict[str, Any]:
     if not api_key:
         raise SurveyGenerationProviderError("OpenAI API key is not configured")
 
-    payload = {
-        "model": settings.OPENAI_MODEL,
-        "input": [
-            {
-                "role": "system",
-                "content": [{"type": "input_text", "text": SYSTEM_PROMPT}],
-            },
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "input_text",
-                        "text": f"USER_DESCRIPTION:\n<<<\n{prompt}\n>>>",
-                    }
-                ],
-            },
-        ],
-        "text": {
-            "format": {
-                "type": "json_schema",
-                "name": "survey_generation",
-                "strict": True,
-                "schema": SURVEY_SCHEMA,
-            }
-        },
-    }
+    payload = build_survey_generation_payload(
+        model=settings.OPENAI_MODEL,
+        prompt=prompt,
+        system_prompt=SYSTEM_PROMPT,
+    ).model_dump(mode="json", by_alias=True)
 
     request_headers = {
         "Authorization": f"Bearer {api_key}",
@@ -158,7 +138,7 @@ def _normalize_model_payload(payload: dict[str, Any], prompt: str, max_questions
             normalized_questions.append(normalized)
 
     if not normalized_questions:
-        normalized_questions = [_fallback_question()]
+        normalized_questions = [create_fallback_question()]
 
     title = _clean_text(payload.get("title"), fallback=_default_title_from_prompt(prompt), max_len=120)
     layouts = _build_layouts(normalized_questions)
@@ -280,21 +260,6 @@ def _build_layouts(questions: list[dict[str, Any]]) -> dict[str, list[dict[str, 
         "sm": [dict(layout) for layout in base],
         "xs": [dict(layout) for layout in base],
         "xxs": [dict(layout) for layout in base],
-    }
-
-
-def _fallback_question() -> dict[str, Any]:
-    fallback_id = f"generated-1-{uuid.uuid4().hex[:8]}"
-    return {
-        "id": fallback_id,
-        "questionText": "What would you like to tell us?",
-        "component": "TextInput",
-        "option": {
-            "optionProps": {
-                "label": "Your feedback",
-                "placeholder": "Type your answer...",
-            }
-        },
     }
 
 

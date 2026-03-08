@@ -41,6 +41,78 @@ class GeneratedSurveyDraft(BaseModel):
     questions: list[GeneratedSurveyQuestion] = Field(min_length=1, max_length=MAX_GENERATED_QUESTIONS)
 
 
+class SurveyGenerationPayloadContent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["input_text"]
+    text: str
+
+
+class SurveyGenerationPayloadMessage(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    role: Literal["system", "user"]
+    content: list[SurveyGenerationPayloadContent] = Field(min_length=1)
+
+
+class SurveyGenerationPayloadSchemaFormat(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["json_schema"]
+    name: str
+    strict: bool
+    json_schema: dict[str, Any] = Field(alias="schema")
+
+
+class SurveyGenerationPayloadText(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    format: SurveyGenerationPayloadSchemaFormat
+
+
+class SurveyGenerationPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    model: str
+    input: list[SurveyGenerationPayloadMessage] = Field(min_length=1)
+    text: SurveyGenerationPayloadText
+
+
 def survey_generation_schema() -> dict[str, Any]:
     """Return JSON Schema used by the OpenAI response format contract."""
     return GeneratedSurveyDraft.model_json_schema()
+
+
+def build_survey_generation_payload(
+    *,
+    model: str,
+    prompt: str,
+    system_prompt: str,
+) -> SurveyGenerationPayload:
+    """Build the OpenAI responses payload for survey draft generation."""
+    return SurveyGenerationPayload(
+        model=model,
+        input=[
+            SurveyGenerationPayloadMessage(
+                role="system",
+                content=[SurveyGenerationPayloadContent(type="input_text", text=system_prompt)],
+            ),
+            SurveyGenerationPayloadMessage(
+                role="user",
+                content=[
+                    SurveyGenerationPayloadContent(
+                        type="input_text",
+                        text=f"USER_DESCRIPTION:\n<<<\n{prompt}\n>>>",
+                    )
+                ],
+            ),
+        ],
+        text=SurveyGenerationPayloadText(
+            format=SurveyGenerationPayloadSchemaFormat(
+                type="json_schema",
+                name="survey_generation",
+                strict=True,
+                schema=survey_generation_schema(),
+            )
+        ),
+    )

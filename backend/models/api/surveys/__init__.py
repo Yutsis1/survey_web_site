@@ -1,4 +1,10 @@
-from .survey_generation import GeneratedSurveyDraft, GeneratedSurveyQuestion, survey_generation_schema
+from .survey_generation import (
+    GeneratedSurveyDraft,
+    GeneratedSurveyQuestion,
+    SurveyGenerationPayload,
+    build_survey_generation_payload,
+    survey_generation_schema,
+)
 from .surveys import (
     CheckboxTileProps,
     CheckboxTilesProps,
@@ -35,6 +41,8 @@ __all__ = [
     "DropDownProps",
     "GeneratedSurveyDraft",
     "GeneratedSurveyQuestion",
+    "SurveyGenerationPayload",
+    "build_survey_generation_payload",
     "LayoutItem",
     "Option",
     "PaginatedResponseList",

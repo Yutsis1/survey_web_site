@@ -11,7 +11,7 @@ python-jose
 asyncpg
 dotenv
 pydantic[email]
-bcrypt<4
+bcrypt>=4.0.0
 
 
 # For PostgreSQL two different packages due to problem with python versions
