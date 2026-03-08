@@ -7,9 +7,9 @@ from fastapi.testclient import TestClient
 
 from backend.routers.auth.auth import get_current_user
 from backend.routers.surveys import router
-from backend.routers.surveys import generation as generation_module
+from backend.services.surveys import survey_generation as generation_module
 from backend.routers.surveys import surveys as surveys_router
-from backend.routers.surveys.generation import SurveyGenerationProviderError
+from backend.services.surveys.survey_generation import SurveyGenerationProviderError
 
 app = FastAPI()
 app.include_router(router)

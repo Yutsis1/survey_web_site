@@ -20,7 +20,7 @@ from backend.models.api.surveys import (
 )
 from backend.models.db.sql.auth import User
 from backend.routers.auth.auth import get_current_user
-from backend.routers.surveys.generation import (
+from backend.services.surveys.survey_generation import (
     SurveyGenerationProviderError,
     generate_survey_from_prompt,
     is_suspicious_prompt,
