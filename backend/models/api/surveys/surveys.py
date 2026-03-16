@@ -1,6 +1,7 @@
 """
 Models for survey questions and options.
 """
+import uuid
 from enum import Enum
 from typing import List, Optional, Union
 from datetime import datetime
@@ -183,3 +184,38 @@ class SurveyResponseStats(BaseModel):
     completionRate: float
     trend: List[TrendPoint]
     questionBreakdown: List[QuestionStats]
+
+
+class SurveyGenerateRequest(BaseModel):
+    prompt: str
+
+    @field_validator("prompt")
+    @classmethod
+    def validate_prompt(cls, value: str) -> str:
+        prompt = value.strip()
+        if not prompt:
+            raise ValueError("Prompt must not be empty")
+        return prompt
+
+
+class SurveyGenerateResponse(BaseModel):
+    title: str
+    status: SurveyStatus = SurveyStatus.draft
+    questions: List[QuestionItem]
+    layouts: SurveyLayouts
+
+
+def create_fallback_question() -> QuestionItem:
+    """Create a default fallback question when survey generation returns no valid questions."""
+    fallback_id = f"generated-1-{uuid.uuid4().hex[:8]}"
+    return QuestionItem(
+        id=fallback_id,
+        questionText="What would you like to tell us?",
+        component="TextInput",
+        option=Option(
+            optionProps=TextFieldProps(
+                label="Your feedback",
+                placeholder="Type your answer...",
+            )
+        ),
+    )

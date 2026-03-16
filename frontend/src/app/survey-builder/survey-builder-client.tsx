@@ -17,7 +17,13 @@ import { getPopupComponentsAndOptions } from '../app-modules/pop-up/pop-up-quest
 import { createNewQuestion } from '../app-modules/questions/questions-factory'
 import { DeleteDropzone } from '@/components/app/deleteDropzone/deleteDropzone'
 import '../styles.css'
-import { saveSurvey, fetchSurvey, fetchSurveyOptions, SurveyStatus } from '../services/surveys'
+import {
+  saveSurvey,
+  fetchSurvey,
+  fetchSurveyOptions,
+  generateSurveyFromPrompt,
+  SurveyStatus,
+} from '../services/surveys'
 import { TextInput } from '@/components/app/text-field/text-field'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -52,6 +58,8 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
   const [isDragging, setIsDragging] = useState(false)
   const [isOverTrash, setIsOverTrash] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [generatingSurvey, setGeneratingSurvey] = useState(false)
+  const [generationPrompt, setGenerationPrompt] = useState('')
   const [surveyTitle, setSurveyTitle] = useState('')
   const [surveyStatus, setSurveyStatus] = useState<SurveyStatus>('draft')
 
@@ -261,6 +269,40 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
     }
   }
 
+
+  const handleGenerateSurvey = async () => {
+    const prompt = generationPrompt.trim()
+    if (!prompt) {
+      notify({ type: 'warning', title: 'Describe what survey you want to generate' })
+      return
+    }
+
+    setGeneratingSurvey(true)
+    try {
+      const generated = await generateSurveyFromPrompt(prompt)
+      const generatedQuestions = generated.questions ?? []
+      setQuestions(generatedQuestions)
+      setSurveyTitle(generated.title?.trim() ?? '')
+      setSurveyStatus('draft')
+      setActiveSurveyId(null)
+
+      const nextLayouts = hasLayoutEntries(generated.layouts)
+        ? normalizeLayouts(generated.layouts)
+        : normalizeLayouts(generateLayouts(generatedQuestions))
+      layoutsApi.setLayouts(nextLayouts)
+
+      notify({
+        type: 'success',
+        title: `Generated ${generatedQuestions.length} question${generatedQuestions.length === 1 ? '' : 's'}`,
+      })
+    } catch (error) {
+      console.error(error)
+      const message = error instanceof Error ? error.message : 'Failed to generate survey draft'
+      notify({ type: 'error', title: message })
+    } finally {
+      setGeneratingSurvey(false)
+    }
+  }
   const resetLoadSurveyPopupState = () => {
     setSurveyOptions([])
     setSelectedSurveyId('')
@@ -445,6 +487,28 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
             </div>
           </Section>
 
+
+          <Section title="Generate Draft" contentClassName="space-y-2">
+            <label htmlFor="survey-generate-prompt" className="block text-xs font-medium text-foreground">
+              Survey prompt
+            </label>
+            <textarea
+              id="survey-generate-prompt"
+              data-testid="survey-generate-prompt"
+              className="min-h-24 w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder="Example: Create a customer satisfaction survey with up to 5 questions."
+              value={generationPrompt}
+              onChange={(event) => setGenerationPrompt(event.target.value)}
+            />
+            <Button
+              className="w-full"
+              data-testid="button-generate-survey"
+              onClick={handleGenerateSurvey}
+              disabled={generatingSurvey}
+            >
+              {generatingSurvey ? 'Generating...' : 'Generate Survey'}
+            </Button>
+          </Section>
           <Section title="Actions">
             <ButtonGroup
               buttons={[
@@ -603,3 +667,7 @@ export function SurveyBuilderClient({ initialSurveyId }: SurveyBuilderClientProp
     </>
   )
 }
+
+
+
+
