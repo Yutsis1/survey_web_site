@@ -11,14 +11,16 @@ MAX_GENERATED_OPTIONS = 10
 
 
 class GeneratedSurveyQuestion(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid", json_schema_serialization_defaults_required=True)
 
     questionText: str = Field(min_length=1, max_length=200)
-    component: Literal["TextInput", "RadioBar", "CheckboxTiles", "DropDown", "Switch"]
-    options: list[str] | None = Field(default=None, max_length=MAX_GENERATED_OPTIONS)
-    placeholder: str | None = Field(default=None, max_length=120)
-    activeLabel: str | None = Field(default=None, max_length=40)
-    inactiveLabel: str | None = Field(default=None, max_length=40)
+    component: Literal["TextInput", "RadioBar",
+                       "CheckboxTiles", "DropDown", "Switch"]
+    options: list[str] | None = Field(max_length=MAX_GENERATED_OPTIONS)
+    placeholder: str | None = Field(max_length=120)
+    activeLabel: str | None = Field(max_length=40)
+    inactiveLabel: str | None = Field(max_length=40)
 
     @field_validator("options")
     @classmethod
@@ -26,7 +28,8 @@ class GeneratedSurveyQuestion(BaseModel):
         if value is None:
             return value
 
-        cleaned = [option.strip() for option in value if isinstance(option, str)]
+        cleaned = [option.strip()
+                   for option in value if isinstance(option, str)]
         if not all(cleaned):
             raise ValueError("Options must not be empty")
         if any(len(option) > 80 for option in cleaned):
@@ -38,7 +41,8 @@ class GeneratedSurveyDraft(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     title: str = Field(min_length=1, max_length=120)
-    questions: list[GeneratedSurveyQuestion] = Field(min_length=1, max_length=MAX_GENERATED_QUESTIONS)
+    questions: list[GeneratedSurveyQuestion] = Field(
+        min_length=1, max_length=MAX_GENERATED_QUESTIONS)
 
 
 class SurveyGenerationPayloadContent(BaseModel):
@@ -95,7 +99,8 @@ def build_survey_generation_payload(
         input=[
             SurveyGenerationPayloadMessage(
                 role="system",
-                content=[SurveyGenerationPayloadContent(type="input_text", text=system_prompt)],
+                content=[SurveyGenerationPayloadContent(
+                    type="input_text", text=system_prompt)],
             ),
             SurveyGenerationPayloadMessage(
                 role="user",
